@@ -61,6 +61,8 @@ and `design` may import `core`; no package imports an app.
   a provider redirect target; `safeRedirect` is mandatory. Access tokens are not persisted yet.
 - When `INVITE_REQUIRED=1`, only a first identity needs an invite; codes are SHA-256 hashed and consumed
   atomically. `ADMIN_USERNAMES` promotes matching accounts on sign-in. Admin CLI: `pnpm invites`.
+  Forgejo self-registration is separate: `FORGEJO_DISABLE_REGISTRATION=false` exposes its sign-up page;
+  `INVITE_REQUIRED=0` is what makes the gallery itself open.
 - Every project read/write goes through `can()` in `@gallery/core`; invisible resources are `404`,
   never `403`.
 - Validate external input with Zod at the boundary and throw `AppError` for the API envelope.

@@ -47,6 +47,7 @@ All configuration is environment variables. Secrets are mounted as files in prod
 | `FORGEJO_INTERNAL_URL` | no | public URL | server-to-server URL, e.g. `http://forgejo:3000` |
 | `FORGEJO_CLIENT_ID` / `_SECRET` | yes | — | OAuth2 app |
 | `FORGEJO_ADMIN_TOKEN` | no | — | provisioning token for hosted repos; unset uses local git |
+| `FORGEJO_DISABLE_REGISTRATION` | no | `true` | set `false` for Forgejo self-registration |
 | `FORGEJO_ADMIN_TOKEN` | no | — | provisioning fallback; scoped, rotatable |
 | `GITHUB_CLIENT_ID` / `_SECRET` | yes | — | OAuth for external repos |
 | `GITHUB_WEBHOOK_SECRET` | no | — | GitHub push webhook HMAC; disabled when unset |

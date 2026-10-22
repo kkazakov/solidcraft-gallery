@@ -73,12 +73,17 @@ A real Forgejo stack is running locally via Compose (not a mock):
 
 - Web: `http://localhost:8080`; Forgejo: `http://localhost:8081`.
 - Postgres: `localhost:5432/gallery`; worker uses nsjail and the mounted CLI.
+- **Self-registration is enabled on staging:** Forgejo's sign-up page is linked from the gallery login,
+  `FORGEJO_DISABLE_REGISTRATION=false`, and `INVITE_REQUIRED=0`. Production defaults keep both gates
+  closed.
 - Forgejo admin: `gallery-admin`; password in `/tmp/forgejo-admin-password.txt` (staging only).
 - Provisioning token: `/tmp/forgejo-admin-token.txt`; OAuth app credentials and gallery secrets:
   `/tmp/gallery-staging.env` (mode 0600). The OAuth app redirect is
   `http://localhost:8080/auth/callback/forgejo`.
 - The worker override `/tmp/gallery-staging-override.yaml` mounts the CLI from `/tmp`; this is not a
   durable deployment path.
+- Verified self-registration: `selfuser` signed up on Forgejo, approved OAuth and got a gallery account
+  without an invite (`role=user`).
 - Verified end to end: real Forgejo OAuth consent/login created `gallery-admin`, a hosted project
   provisioned a real private repo, publish wrote `project.json` + the 449-byte lean design, nsjail
   rendered five artifacts, public visibility flipped the Forgejo repo to public, and the public page,

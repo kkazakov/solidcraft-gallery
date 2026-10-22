@@ -49,6 +49,13 @@
     Provider sign-in uses OAuth with PKCE. Existing accounts do not need an invite again.
   </p>
 
+  {#if data.registrationUrl}
+    <p style="color: var(--muted); font-size: 13px; margin-top: 8px">
+      New here? <a href={data.registrationUrl}>Create a Forgejo account</a>, then return to this page.
+      {#if data.inviteRequired}An invite is still required while the beta gate is on.{/if}
+    </p>
+  {/if}
+
   {#if data.devLogin}
     <div class="card" style="margin-top: 28px">
       <h2>Development sign-in</h2>
