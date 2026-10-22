@@ -1,14 +1,9 @@
 import { json } from '@sveltejs/kit';
 import { AppError, can, canChangeVisibility } from '@gallery/core';
-import {
-  findProjectById,
-  getDatabase,
-  latestReadyVersion,
-  setProjectVisibility,
-  type ProjectVisibility,
-} from '@gallery/db';
+import { findProjectById, getDatabase, latestReadyVersion, type ProjectVisibility } from '@gallery/db';
 import { currentViewer } from '../../../../../lib/server/auth.js';
 import { errorResponse, readJson } from '../../../../../lib/server/http.js';
+import { applyProjectVisibility } from '../../../../../lib/server/projects.js';
 
 const VISIBILITIES = new Set<ProjectVisibility>(['public', 'unlisted', 'private']);
 
@@ -41,7 +36,7 @@ export async function PATCH(event) {
     });
     if (!change.ok) throw new AppError('validation_failed', change.reason);
 
-    await setProjectVisibility(db, project.id, visibility as ProjectVisibility, license);
+    await applyProjectVisibility(project, visibility as ProjectVisibility, license);
     return json({ id: project.id, visibility, license });
   } catch (error) {
     return errorResponse(error, event.locals.requestId);

@@ -1,16 +1,9 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import { AppError, can, canChangeVisibility, LIMITS } from '@gallery/core';
-import {
-  findProjectById,
-  getDatabase,
-  latestReadyVersion,
-  listVersions,
-  setProjectVisibility,
-  type ProjectVisibility,
-} from '@gallery/db';
+import { findProjectById, getDatabase, latestReadyVersion, listVersions, type ProjectVisibility } from '@gallery/db';
 import { requireViewer } from '../../../../lib/server/auth.js';
 import { syncGitHubProject } from '../../../../lib/server/external.js';
-import { publishDesign } from '../../../../lib/server/projects.js';
+import { applyProjectVisibility, publishDesign } from '../../../../lib/server/projects.js';
 
 export async function load(event) {
   const viewer = await requireViewer(event);
@@ -47,7 +40,7 @@ export const actions = {
     });
     if (!change.ok) return fail(400, { settings: true, message: change.reason });
 
-    await setProjectVisibility(getDatabase(), project.id, visibility as ProjectVisibility, license || project.license);
+    await applyProjectVisibility(project, visibility as ProjectVisibility, license || project.license);
     return { settings: true, ok: true, message: 'Saved' };
   },
 

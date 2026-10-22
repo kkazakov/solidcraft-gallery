@@ -163,6 +163,14 @@ Forgejo retry, so only return `5xx` for genuine transient failures.
 repo disabled). After 30 days a job deletes the Forgejo repository and all artifacts. The owner can
 download a bundle (`.zip` of the repo) before deletion from the dashboard.
 
+**Implementation status (hosted Forgejo):** when `FORGEJO_ADMIN_TOKEN` is configured, creating a
+hosted project provisions a private Forgejo repository, adds the signed-in Forgejo identity as a
+collaborator and stores `provider = forgejo`. Publishing writes `project.json` and the lean design
+through the contents API, caches the lean design in artifact storage for rendering, tags the
+manifest commit and queues `version.render`. Visibility changes call the Forgejo API before the DB
+row is updated. User OAuth tokens are not persisted; the admin token is the provisioning credential.
+Without `FORGEJO_ADMIN_TOKEN`, hosted projects use the local git backend.
+
 ## External repositories
 
 ### Supported providers (MVP)

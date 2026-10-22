@@ -1,24 +1,31 @@
 import { AppError, LIMITS, can, isValidSlug, nextAvailableSlug, slugify } from '@gallery/core';
-import { leanDesign } from '@gallery/design';
-import { sha256Hex } from '@gallery/storage';
 import {
   countProjectsForOwner,
+  createExternalProject,
   createLocalProject,
   enqueueJob,
+  findIdentityUsername,
   findProjectById,
   findProjectByOwnerSlug,
+  findRepoById,
   getDatabase,
   insertVersion,
   listProjectSlugs,
+  setProjectVisibility,
+  setRepoPrivate,
   type Project,
+  type ProjectVisibility,
   type SessionUser,
 } from '@gallery/db';
+import { leanDesign } from '@gallery/design';
 import type { LocalRepo } from '@gallery/git';
-import { git } from './config.js';
+import { artifactKey, sha256Hex } from '@gallery/storage';
+import { git, storage } from './config.js';
+import { forgejoContext, forgejoForProject } from './forgejo.js';
 
 export function localRepo(project: Project): LocalRepo {
   if (project.repoProvider !== 'local' || !project.localPath) {
-    throw new AppError('validation_failed', 'this project does not use the local git backend yet');
+    throw new AppError('validation_failed', 'this project does not use the local git backend');
   }
   return {
     owner: project.ownerUsername,
@@ -53,6 +60,36 @@ export async function createHostedProject(input: {
   const held = await listProjectSlugs(db, input.viewer.id);
   const slug = uniqueProjectSlug(input.slug?.trim() || title, held);
   if (!isValidSlug(slug)) throw new AppError('validation_failed', 'invalid project slug');
+  const designPath = `designs/${slug}.solidcraft`;
+
+  const forgejo = forgejoContext();
+  if (forgejo) {
+    const remote = await forgejo.client.createRepo({ name: slug, private: true });
+    const providerUsername = await findIdentityUsername(db, input.viewer.id, 'forgejo');
+    if (providerUsername) {
+      try {
+        await forgejo.client.addCollaborator(remote.owner, remote.name, providerUsername);
+      } catch (error) {
+        // The site remains usable even if the collaborator grant fails; the
+        // admin token still owns the repository.
+        console.warn('could not add Forgejo collaborator', { project: slug, error });
+      }
+    }
+
+    const created = await createExternalProject(db, {
+      ownerId: input.viewer.id,
+      ownerUsername: input.viewer.username,
+      provider: 'forgejo',
+      externalId: remote.fullName,
+      url: remote.url,
+      defaultBranch: remote.defaultBranch,
+      commitSha: null,
+      slug,
+      title,
+      designPath,
+    });
+    return { id: created.projectId, slug, owner: input.viewer.username };
+  }
 
   const repo = await git.createRepo({ owner: input.viewer.username, slug, title });
   const id = await createLocalProject(db, {
@@ -98,6 +135,9 @@ export async function publishDesign(input: {
   if (!project || !canPublish(project, input.viewer)) {
     throw new AppError('not_found', 'No such project');
   }
+  if (project.repoProvider === 'github') {
+    throw new AppError('forbidden', 'GitHub projects are read-only; push to the repository and sync instead');
+  }
 
   if (input.bytes.byteLength > LIMITS.designBytes) {
     throw new AppError('payload_too_large', `design is larger than ${LIMITS.designBytes / (1024 * 1024)} MB`, {
@@ -111,36 +151,82 @@ export async function publishDesign(input: {
   }
 
   const lean = leanDesign(input.bytes);
-  const repo = localRepo(project);
   const message =
     input.message?.trim() || `${project.title} ${tag ? `— ${tag}` : new Date().toISOString().slice(0, 10)}`;
 
-  const commit = await git.commitFiles({
-    repo,
-    files: {
-      'project.json': projectManifest(project),
-      [project.designPath]: lean,
-    },
-    message,
-  });
+  let commit: string;
+  let designKey: string | null = null;
 
-  if (tag) await git.tag({ repo, commit: commit.commit, tag });
+  if (project.repoProvider === 'forgejo') {
+    const { client, owner, repo } = await forgejoForProject(project);
+    const sha = sha256Hex(lean);
+    designKey = artifactKey(sha, 'design.solidcraft');
+    await storage.put(designKey, lean);
+
+    await client.upsertFile({
+      owner,
+      repo,
+      path: project.designPath,
+      content: lean,
+      message,
+      branch: 'main',
+    });
+    const manifest = await client.upsertFile({
+      owner,
+      repo,
+      path: 'project.json',
+      content: new TextEncoder().encode(projectManifest(project)),
+      message,
+      branch: 'main',
+    });
+    commit = manifest.commit;
+    if (tag) await client.tag({ owner, repo, name: tag, target: commit, message });
+  } else {
+    const repo = localRepo(project);
+    const result = await git.commitFiles({
+      repo,
+      files: {
+        'project.json': projectManifest(project),
+        [project.designPath]: lean,
+      },
+      message,
+    });
+    commit = result.commit;
+    if (tag) await git.tag({ repo, commit, tag });
+  }
 
   const versionId = await insertVersion(db, {
     projectId: project.id,
-    commitSha: commit.commit,
+    commitSha: commit,
     tag: tag ?? null,
     message,
     authorName: input.viewer.username,
     authoredAt: new Date(),
     designPath: project.designPath,
+    ...(designKey ? { designKey } : {}),
     designSha256: new Uint8Array(Buffer.from(sha256Hex(lean), 'hex')),
     designBytes: lean.byteLength,
     lean: true,
   });
 
   await enqueueJob(db, 'version.render', { versionId }, { priority: 10 });
-  return { versionId, commit: commit.commit };
+  return { versionId, commit };
+}
+
+/** Keep the Forgejo repository visibility in step before changing the DB row. */
+export async function applyProjectVisibility(
+  project: Project,
+  visibility: ProjectVisibility,
+  license: string | null,
+): Promise<void> {
+  const db = getDatabase();
+  if (project.repoProvider === 'forgejo') {
+    const { client, owner, repo } = await forgejoForProject(project);
+    await client.setPrivate(owner, repo, visibility === 'private');
+    const repoRow = await findRepoById(db, project.repoId);
+    if (repoRow) await setRepoPrivate(db, repoRow.id, visibility === 'private');
+  }
+  await setProjectVisibility(db, project.id, visibility, license);
 }
 
 export async function getViewableProject(owner: string, slug: string, viewer: SessionUser | null): Promise<Project> {

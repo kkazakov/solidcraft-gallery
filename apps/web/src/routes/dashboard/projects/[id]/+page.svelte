@@ -17,7 +17,7 @@
   </div>
 
   <div class="grid" style="padding: 32px 0 0; grid-template-columns: minmax(280px, 2fr) minmax(260px, 1fr)">
-    {#if data.project.repoProvider === 'local'}
+    {#if data.project.repoProvider !== 'github'}
       <article class="card">
         <h2>Publish a design</h2>
         <p style="margin-bottom: 14px">
@@ -25,6 +25,14 @@
             >designs/{data.project.slug}.solidcraft</span
           >, and queues previews.
         </p>
+        {#if data.project.repoProvider === 'forgejo'}
+          <p style="margin-bottom: 14px; font-size: 13px">
+            Hosted on Forgejo:
+            <a class="mono" href={data.project.repoUrl} target="_blank" rel="noopener noreferrer"
+              >{data.project.repoUrl}</a
+            >
+          </p>
+        {/if}
         <form method="POST" action="?/publish" enctype="multipart/form-data" style="display: grid; gap: 10px">
           <label for="design" style="font-size: 13px; color: var(--muted)">Design file</label>
           <input id="design" name="design" type="file" accept=".solidcraft" required />

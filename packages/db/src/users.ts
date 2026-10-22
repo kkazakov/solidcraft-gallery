@@ -153,3 +153,16 @@ export async function upsertOAuthUser(db: Database, profile: OAuthProfile): Prom
     return users[0]!;
   });
 }
+
+export async function findIdentityUsername(
+  db: Database,
+  userId: string,
+  provider: OAuthProvider,
+): Promise<string | null> {
+  const rows = await db<{ username: string | null }[]>`
+    select username from identities
+    where user_id = ${userId} and provider = ${provider}
+    limit 1
+  `;
+  return rows[0]?.username ?? null;
+}

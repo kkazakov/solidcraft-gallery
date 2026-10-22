@@ -403,11 +403,11 @@ export interface Repo {
 export interface CreateExternalProjectInput {
   ownerId: string;
   ownerUsername: string;
-  provider: 'github' | 'gitlab' | 'gitea' | 'codeberg';
+  provider: 'forgejo' | 'github' | 'gitlab' | 'gitea' | 'codeberg';
   externalId: string;
   url: string;
   defaultBranch: string;
-  commitSha: string;
+  commitSha: string | null;
   slug: string;
   title: string;
   description?: string;
@@ -507,4 +507,8 @@ export async function findProjectByRepoId(db: Database, repoId: string): Promise
     limit 1
   `;
   return rows[0] ?? null;
+}
+
+export async function setRepoPrivate(db: Database, id: string, isPrivate: boolean): Promise<void> {
+  await db`update repos set is_private = ${isPrivate}, updated_at = now() where id = ${id}`;
 }

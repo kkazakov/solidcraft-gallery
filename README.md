@@ -10,7 +10,7 @@ This folder contains the plan and specifications, not the application. It is wri
 to a developer or a small team without further context.
 
 > **Implementation status (22 Oct 2026):** M0 is complete; the M1 slice, public gallery and OAuth
-> work — Forgejo/GitHub sign-in, local and GitHub-backed projects, publish/sync/webhooks, real
+> work — Forgejo/GitHub sign-in, local/Forgejo/GitHub projects, publish/sync/webhooks, real
 > `solidcraft-cli` rendering, project pages, search, sitemap, media, downloads and visibility.
 > See [STATUS.md](STATUS.md).
 

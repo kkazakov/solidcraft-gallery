@@ -140,7 +140,7 @@ create table repos (
   updated_at          timestamptz not null default now(),
   unique (provider, external_id),
   unique (owner_id, url),
-  constraint repos_url_https check (url ~ '^https://'),
+  constraint repos_url_scheme check (url ~ '^(https?|file)://'),
   constraint repos_commit_sha check (
     last_commit_sha is null or last_commit_sha ~ '^[0-9a-f]{40}([0-9a-f]{24})?$'
   )
