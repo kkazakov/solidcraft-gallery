@@ -10,7 +10,7 @@ export async function load(event) {
   const project = await findProjectById(getDatabase(), event.params.id);
   if (!project || !can(project, viewer, 'edit')) throw error(404, 'Not found');
   const versions = await listVersions(getDatabase(), project.id);
-  return { viewer, project, versions };
+  return { viewer, project, versions, saved: event.url.searchParams.get('saved') === '1' };
 }
 
 const VISIBILITIES = new Set<ProjectVisibility>(['public', 'unlisted', 'private']);
@@ -41,7 +41,7 @@ export const actions = {
     if (!change.ok) return fail(400, { settings: true, message: change.reason });
 
     await applyProjectVisibility(project, visibility as ProjectVisibility, license || project.license);
-    return { settings: true, ok: true, message: 'Saved' };
+    throw redirect(303, `${event.url.pathname}?saved=1`);
   },
 
   sync: async (event) => {

@@ -513,3 +513,30 @@ export async function findProjectByRepoId(db: Database, repoId: string): Promise
 export async function setRepoPrivate(db: Database, id: string, isPrivate: boolean): Promise<void> {
   await db`update repos set is_private = ${isPrivate}, updated_at = now() where id = ${id}`;
 }
+
+export async function setProjectVisibilityAndRepo(
+  db: Database,
+  input: {
+    projectId: string;
+    visibility: ProjectVisibility;
+    license: string | null;
+    repoId?: string;
+    repoPrivate?: boolean;
+  },
+): Promise<void> {
+  await db.begin(async (tx) => {
+    if (input.repoId !== undefined && input.repoPrivate !== undefined) {
+      await tx`
+        update repos set is_private = ${input.repoPrivate}, updated_at = now()
+        where id = ${input.repoId}
+      `;
+    }
+    const rows = await tx<{ id: string }[]>`
+      update projects
+      set visibility = ${input.visibility}, license = ${input.license}, updated_at = now()
+      where id = ${input.projectId}
+      returning id
+    `;
+    if (!rows[0]) throw new Error('project not found while changing visibility');
+  });
+}

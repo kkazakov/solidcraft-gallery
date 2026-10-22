@@ -11,8 +11,7 @@ import {
   getDatabase,
   insertVersion,
   listProjectSlugs,
-  setProjectVisibility,
-  setRepoPrivate,
+  setProjectVisibilityAndRepo,
   type Project,
   type ProjectVisibility,
   type SessionUser,
@@ -221,13 +220,40 @@ export async function applyProjectVisibility(
   license: string | null,
 ): Promise<void> {
   const db = getDatabase();
-  if (project.repoProvider === 'forgejo') {
-    const { client, owner, repo } = await forgejoForProject(project);
-    await client.setPrivate(owner, repo, visibility === 'private');
+  const previousPrivate = project.repoPrivate;
+  let forgejo: Awaited<ReturnType<typeof forgejoForProject>> | null = null;
+
+  try {
+    if (project.repoProvider === 'forgejo') {
+      forgejo = await forgejoForProject(project);
+      await forgejo.client.setPrivate(forgejo.owner, forgejo.repo, visibility === 'private');
+    }
+
     const repoRow = await findRepoById(db, project.repoId);
-    if (repoRow) await setRepoPrivate(db, repoRow.id, visibility === 'private');
+    await setProjectVisibilityAndRepo(db, {
+      projectId: project.id,
+      visibility,
+      license,
+      ...(repoRow ? { repoId: repoRow.id, repoPrivate: visibility === 'private' } : {}),
+    });
+    console.info('project visibility changed', {
+      projectId: project.id,
+      from: project.visibility,
+      to: visibility,
+    });
+  } catch (error) {
+    // The external repository is not part of the DB transaction; put it back if
+    // the project row could not be updated so the two never disagree.
+    if (forgejo) {
+      try {
+        await forgejo.client.setPrivate(forgejo.owner, forgejo.repo, previousPrivate);
+      } catch {
+        console.error('could not roll back Forgejo visibility', { projectId: project.id });
+      }
+    }
+    console.error('project visibility change failed', { projectId: project.id, to: visibility, error });
+    throw error;
   }
-  await setProjectVisibility(db, project.id, visibility, license);
 }
 
 export async function getViewableProject(owner: string, slug: string, viewer: SessionUser | null): Promise<Project> {

@@ -133,8 +133,8 @@
       </label>
       <button class="button primary" type="submit">Save</button>
     </form>
-    {#if form?.settings && form.ok}
-      <p style="color: var(--accent); margin: 10px 0 0; font-size: 13px">{form.message}</p>
+    {#if data.saved}
+      <p style="color: var(--accent); margin: 10px 0 0; font-size: 13px">Saved</p>
     {:else if form?.settings && form.message}
       <p style="color: var(--warn); margin: 10px 0 0; font-size: 13px">{form.message}</p>
     {/if}

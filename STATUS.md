@@ -84,6 +84,8 @@ A real Forgejo stack is running locally via Compose (not a mock):
   durable deployment path.
 - Verified self-registration: `selfuser` signed up on Forgejo, approved OAuth and got a gallery account
   without an invite (`role=user`).
+- Visibility saves now update the project row and `repos.is_private` in one transaction, roll the
+  Forgejo repository back if the DB update fails, and redirect to a fresh page with `?saved=1`.
 - Verified end to end: real Forgejo OAuth consent/login created `gallery-admin`, a hosted project
   provisioned a real private repo, publish wrote `project.json` + the 449-byte lean design, nsjail
   rendered five artifacts, public visibility flipped the Forgejo repo to public, and the public page,
