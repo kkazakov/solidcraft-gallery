@@ -1,0 +1,28 @@
+{
+  "note": "Synthetic structural fixtures. Replace/add real designs under real/ as they become available.",
+  "files": [
+    {
+      "name": "box.cached.solidcraft",
+      "kind": "container",
+      "has_cache": true,
+      "lean": false
+    },
+    {
+      "name": "box.lean.solidcraft",
+      "kind": "container",
+      "has_cache": false,
+      "lean": true
+    },
+    {
+      "name": "plain.solidcraft",
+      "kind": "json",
+      "has_cache": false,
+      "lean": true
+    },
+    {
+      "name": "corrupt.solidcraft",
+      "kind": "container",
+      "valid": false
+    }
+  ]
+}

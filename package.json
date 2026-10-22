@@ -11,7 +11,7 @@
     "dev:web": "pnpm --filter @gallery/web dev",
     "dev:worker": "pnpm --filter @gallery/worker dev",
     "build": "pnpm --filter @gallery/web build",
-    "check": "pnpm -r check",
+    "check": "pnpm -r check && tsc -p tsconfig.scripts.json --noEmit",
     "test": "pnpm -r test",
     "test:watch": "pnpm -r --parallel test -- --watch",
     "lint": "eslint . && prettier --check .",
@@ -30,6 +30,9 @@
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.72.0",
-    "vitest": "^5.0.5"
+    "vitest": "^5.0.5",
+    "@gallery/core": "workspace:*",
+    "@gallery/design": "workspace:*",
+    "fflate": "^0.8.3"
   }
 }
