@@ -14,7 +14,10 @@
     "@gallery/core": "workspace:*",
     "@gallery/db": "workspace:*",
     "@sveltejs/kit": "^3.1.0",
-    "svelte": "^5.57.2"
+    "svelte": "^5.57.2",
+    "@gallery/git": "workspace:*",
+    "@gallery/storage": "workspace:*",
+    "@gallery/design": "workspace:*"
   },
   "devDependencies": {
     "@sveltejs/adapter-node": "^6.0.0",

@@ -9,9 +9,9 @@ and git repositories as the source of truth — either hosted by the service or 
 This folder contains the plan and specifications, not the application. It is written to be handed
 to a developer or a small team without further context.
 
-> **Implementation status (22 Oct 2026):** the M0 scaffold is in place — workspace, domain packages,
-> database/queue, render plan, `craftpub`, web shell, worker, Compose and CI. See
-> [STATUS.md](STATUS.md) for what runs and what is next.
+> **Implementation status (22 Oct 2026):** M0 is complete and the first M1 vertical slice works —
+> dev sign-in, local git projects, publish, real `solidcraft-cli` rendering, public project page,
+> media and downloads. See [STATUS.md](STATUS.md) for what runs and what is next.
 
 Despite the folder name, this is **not a SolidCraft plugin**. SolidCraft's plugin boundary is an
 in-document command executor with no storage, accounts, background sync or UI; a gallery needs all

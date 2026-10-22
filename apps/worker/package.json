@@ -12,6 +12,8 @@
   "dependencies": {
     "@gallery/core": "workspace:*",
     "@gallery/db": "workspace:*",
-    "@gallery/render": "workspace:*"
+    "@gallery/render": "workspace:*",
+    "@gallery/storage": "workspace:*",
+    "@gallery/git": "workspace:*"
   }
 }

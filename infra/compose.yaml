@@ -48,7 +48,13 @@ services:
       WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-1}
       WORKER_PAUSED: ${WORKER_PAUSED:-0}
       SOLIDCRAFT_CLI: /usr/local/bin/solidcraft-cli
+      DATA_DIR: /var/lib/gallery
+      # Development only: the nsjail path is wired in the deployment milestone.
+      SANDBOX_MODE: ${SANDBOX_MODE:-direct}
+      ALLOW_UNSANDBOXED_RENDER: ${ALLOW_UNSANDBOXED_RENDER:-1}
       NODE_ENV: production
+    volumes:
+      - gallery_data:/var/lib/gallery
     depends_on:
       postgres:
         condition: service_healthy
@@ -106,3 +112,4 @@ volumes:
   caddy_config:
   pgdata:
   forgejo_data:
+  gallery_data:

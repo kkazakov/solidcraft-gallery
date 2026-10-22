@@ -6,6 +6,8 @@ import { createLogger } from '../src/logger.js';
 const ctx = {
   db: {} as never,
   log: createLogger({ test: true }),
+  storage: {} as never,
+  config: {} as never,
 };
 
 function job(kind: string): Job {
@@ -19,8 +21,12 @@ describe('handleJob', () => {
     log.mockRestore();
   });
 
-  it('fails loudly for pipeline jobs that are not implemented yet', async () => {
-    await expect(handleJob(job('version.render'), ctx)).rejects.toThrow(/not implemented/);
+  it('refuses version.render without an id', async () => {
+    await expect(handleJob(job('version.render'), ctx)).rejects.toThrow(/requires a versionId/);
+  });
+
+  it('fails loudly for ingest jobs that are not implemented yet', async () => {
+    await expect(handleJob(job('repo.sync'), ctx)).rejects.toThrow(/not implemented/);
   });
 
   it('fails loudly for unknown jobs', async () => {

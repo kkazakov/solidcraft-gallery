@@ -12,6 +12,8 @@ describe('loadConfig', () => {
     expect(config.pollMs).toBe(2000);
     expect(config.paused).toBe(false);
     expect(config.concurrency).toBe(1);
+    expect(config.sandboxMode).toBe('nsjail');
+    expect(config.artifactDir).toContain('data');
   });
 
   it('reads overrides and treats bad numbers as defaults', () => {

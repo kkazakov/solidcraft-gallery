@@ -1,5 +1,6 @@
 import { setTimeout as sleep } from 'node:timers/promises';
 import { claimJob, completeJob, createDatabase, failJob, recoverStaleJobs } from '@gallery/db';
+import { LocalStorage } from '@gallery/storage';
 import { loadConfig } from './config.js';
 import { handleJob } from './handlers.js';
 import { createLogger } from './logger.js';
@@ -7,6 +8,7 @@ import { createLogger } from './logger.js';
 const config = loadConfig();
 const log = createLogger({ worker_id: config.workerId });
 const db = createDatabase(config.databaseUrl, { max: 4 });
+const storage = new LocalStorage(config.artifactDir);
 let running = true;
 let stopping = false;
 
@@ -44,7 +46,7 @@ async function loop(slot: number): Promise<void> {
 
     const started = Date.now();
     try {
-      await handleJob(job, { db, log });
+      await handleJob(job, { db, log, storage, config });
       await completeJob(db, job.id);
       log.info('job done', { job_id: job.id, kind: job.kind, duration_ms: Date.now() - started });
     } catch (error) {

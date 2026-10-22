@@ -43,7 +43,9 @@ DATABASE_URL=postgres://gallery:gallery@localhost:5432/gallery pnpm --filter @ga
 | `packages/core` | Pure domain: manifest schema, slugs, visibility, errors, limits |
 | `packages/db` | SQL schema/migrations, query helpers, job queue; the only place SQL lives |
 | `packages/design` | Reads `.solidcraft` containers and strips `cache/*` |
-| `packages/render` | Builds the nsjail argv and the CLI render plan; execution arrives in M1 |
+| `packages/git` | Local git backend: real repos, commits and tags under `DATA_DIR/repos` |
+| `packages/storage` | Content-addressed artifact store under `DATA_DIR/artifacts` |
+| `packages/render` | Builds the nsjail/direct CLI plans and runs them with no shell |
 | `infra` | Compose, Caddy, Postgres init |
 | `docs` | The implementation plan and the decision record |
 
@@ -91,6 +93,9 @@ if (!can(project, viewer, 'view')) throw new AppError('not_found', 'No such proj
 - A `.solidcraft` is a ZIP **or** pretty JSON; detect it by signature, never by extension.
 - `cache/*` is stripped before commit; the embedded 240×150 thumbnail is therefore absent.
 - `public_projects` is the only listing source; do not query `projects` directly for public pages.
+- Local projects are real git repositories under `DATA_DIR/repos/<owner>/<slug>`; the web tier writes
+  them and the worker reads them. Forgejo replaces this backend in production.
+- `SANDBOX_MODE=direct` is a development path. Production must use `nsjail` once that path is wired.
 - `jobs.attempts` increments on claim; `failJob` needs the job's `max_attempts`, not a constant.
 - Local ports: web `8080` via Caddy (`5173` dev), Forgejo `8081`, Postgres `5432`.
 - Behind a proxy, adapter-node defaults the protocol to `https`; set `PROTOCOL_HEADER=x-forwarded-proto`
