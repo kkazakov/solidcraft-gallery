@@ -13,22 +13,40 @@
     One identity for the gallery. Hosted projects use Forgejo; external repositories use GitHub.
   </p>
 
-  <div style="display: grid; gap: 10px">
-    {#each data.providers as provider (provider.id)}
-      {#if provider.configured}
-        <a class="button" href={`/auth/login/${provider.id}?redirect=${encodeURIComponent(data.redirect)}`}>
-          Continue with {provider.label}
-        </a>
-      {:else}
-        <span class="button" style="opacity: 0.55; cursor: not-allowed">
-          Continue with {provider.label} (not configured)
-        </span>
-      {/if}
-    {/each}
-  </div>
+  {#if data.error === 'invite'}
+    <p class="notice">That invite code is missing, expired or already used.</p>
+  {/if}
+
+  <form method="GET" action="/auth/login" style="display: grid; gap: 12px">
+    <input type="hidden" name="redirect" value={data.redirect} />
+    <label for="invite" style="display: grid; gap: 6px; font-size: 13px; color: var(--muted)">
+      Invite code {data.inviteRequired ? '(required for new accounts)' : '(optional)'}
+      <input
+        id="invite"
+        name="invite"
+        value={data.invite}
+        autocomplete="off"
+        placeholder="Paste your beta invite"
+        style="padding: 10px 12px; border-radius: 9px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); font: inherit"
+      />
+    </label>
+    <div style="display: grid; gap: 10px">
+      {#each data.providers as provider (provider.id)}
+        {#if provider.configured}
+          <button class="button" type="submit" formaction={`/auth/login/${provider.id}`}>
+            Continue with {provider.label}
+          </button>
+        {:else}
+          <span class="button" style="opacity: 0.55; cursor: not-allowed">
+            Continue with {provider.label} (not configured)
+          </span>
+        {/if}
+      {/each}
+    </div>
+  </form>
 
   <p style="color: var(--muted); font-size: 13px; margin-top: 16px">
-    Provider sign-in uses OAuth with PKCE. The development sign-in is available only outside production.
+    Provider sign-in uses OAuth with PKCE. Existing accounts do not need an invite again.
   </p>
 
   {#if data.devLogin}
@@ -51,3 +69,15 @@
     </div>
   {/if}
 </section>
+
+<style>
+  .notice {
+    background: color-mix(in srgb, var(--warn) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--warn) 35%, var(--border));
+    color: var(--warn);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin: 0 0 16px;
+    font-size: 13px;
+  }
+</style>

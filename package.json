@@ -20,7 +20,8 @@
     "craftpub": "tsx scripts/craftpub.ts",
     "compose:up": "docker compose -f infra/compose.yaml up -d --build",
     "compose:down": "docker compose -f infra/compose.yaml down",
-    "compose:config": "docker compose -f infra/compose.yaml config --quiet"
+    "compose:config": "docker compose -f infra/compose.yaml config --quiet",
+    "invites": "tsx scripts/invites.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -35,6 +36,7 @@
     "@gallery/design": "workspace:*",
     "fflate": "^0.8.3",
     "prettier-plugin-svelte": "^4.1.1",
-    "svelte": "^5.57.2"
+    "svelte": "^5.57.2",
+    "@gallery/db": "workspace:*"
   }
 }

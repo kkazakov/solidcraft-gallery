@@ -22,6 +22,7 @@ pnpm build                   # adapter-node build into apps/web/build
 pnpm db:migrate              # requires DATABASE_URL
 pnpm craftpub validate fixtures/box.lean.solidcraft
 pnpm craftpub lean fixtures/box.cached.solidcraft --out /tmp/lean.solidcraft
+pnpm invites create --by <admin> --note <text> --uses <n> --days <n>
 docker compose -f infra/compose.yaml up -d --build
 docker compose -f infra/compose.yaml config --quiet
 ```
@@ -41,7 +42,7 @@ DATABASE_URL=postgres://gallery:gallery@localhost:5432/gallery pnpm --filter @ga
 | `apps/web` | SvelteKit SSR pages, OAuth login/callback and `/api/v1` routes; the only HTTP surface |
 | `apps/worker` | Postgres job loop and nsjail renderer; claims jobs with `FOR UPDATE SKIP LOCKED` |
 | `packages/core` | Pure domain: manifest schema, slugs, visibility, errors, limits |
-| `packages/db` | SQL schema/migrations, query helpers, job queue and public search; the only place SQL lives |
+| `packages/db` | SQL schema/migrations, query helpers, job queue, invites and public search; the only place SQL lives |
 | `packages/design` | Reads `.solidcraft` containers and strips `cache/*` |
 | `packages/git` | Local git backend, read-only GitHub client and the Forgejo contents API |
 | `packages/storage` | Content-addressed artifact store under `DATA_DIR/artifacts` |
@@ -58,6 +59,8 @@ and `design` may import `core`; no package imports an app.
   `.svelte` file.
 - OAuth is `src/lib/server/oauth.ts`: PKCE S256 plus a signed HttpOnly transaction cookie. Never trust
   a provider redirect target; `safeRedirect` is mandatory. Access tokens are not persisted yet.
+- When `INVITE_REQUIRED=1`, only a first identity needs an invite; codes are SHA-256 hashed and consumed
+  atomically. `ADMIN_USERNAMES` promotes matching accounts on sign-in. Admin CLI: `pnpm invites`.
 - Every project read/write goes through `can()` in `@gallery/core`; invisible resources are `404`,
   never `403`.
 - Validate external input with Zod at the boundary and throw `AppError` for the API envelope.

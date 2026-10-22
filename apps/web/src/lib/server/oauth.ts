@@ -1,8 +1,15 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import type { RequestEvent } from '@sveltejs/kit';
 import { AppError } from '@gallery/core';
-import { getDatabase, upsertOAuthUser, type SessionUser } from '@gallery/db';
-import { signIn } from './auth.js';
+import {
+  consumeInvite,
+  findOAuthIdentity,
+  getDatabase,
+  hashInviteCode,
+  upsertOAuthUser,
+  type SessionUser,
+} from '@gallery/db';
+import { applyConfiguredAdmin, isConfiguredAdmin, signIn } from './auth.js';
 
 export type OAuthProviderId = 'forgejo' | 'github';
 
@@ -23,6 +30,8 @@ export interface OAuthTransaction {
   provider: OAuthProviderId;
   redirect: string;
   exp: number;
+  /** Hex SHA-256 of an invite code, carried only across the OAuth round trip. */
+  inviteHash?: string;
 }
 
 export interface OAuthProfile {
@@ -85,6 +94,10 @@ export function providerConfig(id: string): OAuthProviderConfig | null {
   return null;
 }
 
+export function inviteRequired(): boolean {
+  return process.env.INVITE_REQUIRED === '1';
+}
+
 export function providerConfigured(id: string): boolean {
   return providerConfig(id) !== null;
 }
@@ -142,7 +155,8 @@ export function decodeTransaction(value: string): OAuthTransaction {
     typeof transaction.verifier !== 'string' ||
     (transaction.provider !== 'forgejo' && transaction.provider !== 'github') ||
     typeof transaction.redirect !== 'string' ||
-    typeof transaction.exp !== 'number'
+    typeof transaction.exp !== 'number' ||
+    (transaction.inviteHash !== undefined && typeof transaction.inviteHash !== 'string')
   ) {
     throw new AppError('unauthorized', 'Invalid sign-in transaction');
   }
@@ -167,7 +181,12 @@ function sameState(provided: string, expected: string): boolean {
 }
 
 /** Build the authorize URL and store the signed transaction cookie. */
-export function startOAuth(event: RequestEvent, provider: OAuthProviderId, requestedRedirect: string | null): string {
+export function startOAuth(
+  event: RequestEvent,
+  provider: OAuthProviderId,
+  requestedRedirect: string | null,
+  inviteCode: string | null = null,
+): string {
   const config = providerConfig(provider);
   if (!config) throw new AppError('validation_failed', `${provider} sign-in is not configured`);
 
@@ -180,6 +199,9 @@ export function startOAuth(event: RequestEvent, provider: OAuthProviderId, reque
     redirect: safeRedirect(requestedRedirect),
     exp: Date.now() + MAX_AGE_SECONDS * 1000,
   };
+  if (inviteCode?.trim()) {
+    transaction.inviteHash = Buffer.from(hashInviteCode(inviteCode)).toString('hex');
+  }
 
   event.cookies.set(COOKIE, encodeTransaction(transaction), {
     path: '/',
@@ -289,7 +311,16 @@ export async function finishOAuth(event: RequestEvent, provider: OAuthProviderId
 
   const accessToken = await exchangeCode(config, code, callbackUrl(event, provider), transaction.verifier);
   const profile = await fetchProfile(config, accessToken);
-  const user: SessionUser = await upsertOAuthUser(getDatabase(), {
+
+  const db = getDatabase();
+  const existing = await findOAuthIdentity(db, provider, profile.subject);
+  if (!existing && inviteRequired() && !isConfiguredAdmin(profile.username)) {
+    if (!transaction.inviteHash) throw new AppError('forbidden', 'invite_required');
+    const valid = await consumeInvite(db, Buffer.from(transaction.inviteHash, 'hex'));
+    if (!valid) throw new AppError('forbidden', 'invite_required');
+  }
+
+  let user: SessionUser = await upsertOAuthUser(db, {
     provider,
     subject: profile.subject,
     username: profile.username,
@@ -297,6 +328,7 @@ export async function finishOAuth(event: RequestEvent, provider: OAuthProviderId
     email: profile.email,
     avatarUrl: profile.avatarUrl,
   });
+  user = await applyConfiguredAdmin(user);
 
   await signIn(event, user.id);
   return safeRedirect(transaction.redirect);

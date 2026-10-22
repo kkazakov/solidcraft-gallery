@@ -162,6 +162,13 @@ https://gallery.example/media/private/<artifactId>?exp=1712345678&sig=<hex>
 - `Cache-Control: private, no-store`; no CDN caching.
 - The secret rotates quarterly; signatures carry a key id.
 
+**Implementation status:** the invite gate is enforced when `INVITE_REQUIRED=1`. Codes are
+high-entropy, stored only as SHA-256, and consumed atomically with one `UPDATE`. The raw code is
+shown once by `pnpm invites create`; OAuth carries only its hash in the signed transaction cookie.
+Existing identities and provider usernames in `ADMIN_USERNAMES` sign in without a code.
+`ADMIN_USERNAMES` is applied on every sign-in (including dev sign-in) and is the bootstrap path;
+there is no web admin UI or audit entry yet.
+
 ## Invites (beta)
 
 - Admins create invites: single-use or up to N uses, optional note, expiry 14 days.

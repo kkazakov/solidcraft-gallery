@@ -1,7 +1,14 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
 import { hashSessionToken, newSessionToken, sessionCookieName } from '@gallery/core';
-import { createSession, deleteSession, findSessionUser, getDatabase, type SessionUser } from '@gallery/db';
+import {
+  createSession,
+  deleteSession,
+  findSessionUser,
+  getDatabase,
+  setUserAdmin,
+  type SessionUser,
+} from '@gallery/db';
 
 const PRODUCTION = process.env.NODE_ENV === 'production';
 const COOKIE = sessionCookieName(PRODUCTION);
@@ -61,4 +68,19 @@ export function assertSameOrigin(event: RequestEvent): void {
   if (origin && origin !== event.url.origin) {
     throw redirect(303, '/');
   }
+}
+
+/** `ADMIN_USERNAMES` is a bootstrap allowlist; it is applied on each sign-in. */
+export function isConfiguredAdmin(username: string): boolean {
+  const configured = (process.env.ADMIN_USERNAMES ?? '')
+    .split(',')
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+  return configured.includes(username.toLowerCase());
+}
+
+export async function applyConfiguredAdmin(user: SessionUser): Promise<SessionUser> {
+  if (!isConfiguredAdmin(user.username)) return user;
+  await setUserAdmin(getDatabase(), user.id);
+  return { ...user, role: 'admin' };
 }

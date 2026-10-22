@@ -166,3 +166,22 @@ export async function findIdentityUsername(
   `;
   return rows[0]?.username ?? null;
 }
+
+export async function findOAuthIdentity(
+  db: Database,
+  provider: OAuthProvider,
+  subject: string,
+): Promise<SessionUser | null> {
+  const rows = await db<SessionUser[]>`
+    select u.id, u.username::text as username, u.role::text as role
+    from identities i
+    join users u on u.id = i.user_id
+    where i.provider = ${provider} and i.subject = ${subject}
+    limit 1
+  `;
+  return rows[0] ?? null;
+}
+
+export async function setUserAdmin(db: Database, id: string): Promise<void> {
+  await db`update users set role = 'admin' where id = ${id} and role <> 'admin'`;
+}

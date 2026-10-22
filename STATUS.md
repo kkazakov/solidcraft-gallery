@@ -1,6 +1,6 @@
 # Implementation status
 
-**Updated:** 2026-10-22 · **Milestone:** M0 complete; M1 slice, gallery, GitHub sources, OAuth, hosted Forgejo, **nsjail sandbox** · **Next:** user-owned tokens, invites, deployment hardening
+**Updated:** 2026-10-22 · **Milestone:** M0 complete; M1 slice, gallery, GitHub sources, OAuth, hosted Forgejo, nsjail, **invites/admin** · **Next:** user-owned tokens, deployment hardening
 
 This file records what actually runs, not what is planned. The plan remains in
 [README.md](README.md) and [docs/14-roadmap.md](docs/14-roadmap.md).
@@ -12,7 +12,7 @@ This file records what actually runs, not what is planned. The plan remains in
 | pnpm workspace, TypeScript, ESLint, Prettier, Vitest | done | `pnpm lint`, `pnpm check`, `pnpm test` |
 | `@gallery/core` — manifest, slugs, visibility, errors, limits, session tokens | done | 33 unit tests |
 | `@gallery/design` — read ZIP/JSON, strip `cache/*`, real fixture | done | 11 unit tests |
-| `@gallery/db` — schema, migrations, queue, users/identities/sessions, projects/versions, search, external/Forgejo repos | done | 19 integration tests on PostgreSQL 16 |
+| `@gallery/db` — schema, migrations, queue, users/identities/sessions, invites, projects/versions, search, repos | done | 21 integration tests on PostgreSQL 16 |
 | `@gallery/git` — local repository, read-only GitHub client, Forgejo contents API | done | 17 tests (real git + mock HTTP) |
 | `@gallery/storage` — content-addressed artifacts, atomic writes | done | 2 tests |
 | `@gallery/render` — nsjail plan, direct plan, no-shell runner | done | 12 tests |
@@ -61,18 +61,23 @@ Verified with a real `solidcraft-cli 0.19.0` and `fixtures/real/box.solidcraft`:
     external-source version with `SANDBOX_MODE=nsjail` under `SYS_ADMIN`/unconfined seccomp. The job
     produced all five artifacts in 375 ms. Raw nsjail runs of `snapshot`, `eval`, STEP and STL all
     succeeded with no network namespace and no `/proc`.
+14. **Invite-gated OAuth works.** With `INVITE_REQUIRED=1`, a new provider login without a code is
+    redirected back to `/auth/login?error=invite`; a code created by `pnpm invites create --by admin`
+    completes the login, increments the invite atomically and creates the account. An existing
+    identity signs in without a code. `ADMIN_USERNAMES=invitee` promoted that new account to admin.
+    A fresh `ADMIN_USERNAMES=adminboot` identity also bypassed the invite and was promoted on first login.
 
 ## Not implemented (next)
 
 1. GitHub polling (webhooks + manual **Sync now** work), GitLab/Gitea sources, private external repos.
 2. Persist encrypted OAuth tokens and use user-owned repositories; add a hosted-Forgejo webhook for
    direct pushes; linking/unlinking identities.
-3. Invites, API tokens, published-project quotas.
+3. API tokens, published-project quotas, a web invite-admin UI and audit entries.
 4. `repo.sync` / `version.ingest` queue handlers (external sync currently runs synchronously in web).
 5. A dedicated nsjail rootfs and per-jail seccomp profile; today the worker needs `SYS_ADMIN` and the
    image root is read-only but shared.
 6. Cursor pagination (search/home use `?page=N`), sync rate limits, featured-content admin UI.
-7. Pre-receive lean hook, invites, API tokens, moderation and reports.
+7. Pre-receive lean hook, moderation and reports.
 
 ## Quick start
 
@@ -122,6 +127,8 @@ design, wait for the preview, and use the visibility form.
   `FORGEJO_INTERNAL_URL`).
 - The repo URL constraint now permits `http://` so the bundled local Forgejo can be stored; production
   must still use HTTPS. Existing Forgejo tags are not replaced on republish.
+- Invite administration is CLI-only (`pnpm invites`); setting `ADMIN_USERNAMES` and signing in once is
+  the bootstrap path. There is no audit table write for invite creation/acceptance yet.
 - The GitHub API base is injectable for tests (`GITHUB_API_BASE`/`GITHUB_RAW_BASE`); production
   uses github.com. The design is cached, so a deleted upstream repo leaves the site working.
 - The public GitHub repository is private while the scaffold is in flux.

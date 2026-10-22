@@ -1,0 +1,75 @@
+import { createHash, randomBytes } from 'node:crypto';
+import type { Database } from './client.js';
+
+export interface Invite {
+  id: string;
+  note: string;
+  maxUses: number;
+  uses: number;
+  expiresAt: Date | null;
+  revokedAt: Date | null;
+  createdAt: Date;
+  createdBy: string;
+}
+
+export function generateInviteCode(): string {
+  return randomBytes(16).toString('base64url');
+}
+
+/** Codes are high-entropy; a plain SHA-256 is enough for lookup and storage. */
+export function hashInviteCode(code: string): Uint8Array {
+  return createHash('sha256').update(code.trim()).digest();
+}
+
+export async function createInvite(
+  db: Database,
+  input: { createdBy: string; note?: string; maxUses?: number; expiresAt?: Date | null },
+): Promise<{ id: string; code: string }> {
+  const code = generateInviteCode();
+  const rows = await db<{ id: string }[]>`
+    insert into invites (code_hash, created_by, note, max_uses, expires_at)
+    values (
+      ${hashInviteCode(code)},
+      ${input.createdBy},
+      ${(input.note ?? '').slice(0, 200)},
+      ${Math.min(Math.max(input.maxUses ?? 1, 1), 1000)},
+      ${input.expiresAt ?? null}
+    )
+    returning id
+  `;
+  return { id: rows[0]!.id, code };
+}
+
+/** Atomically consume one use. A revoked, expired or exhausted invite returns false. */
+export async function consumeInvite(db: Database, codeHash: Uint8Array): Promise<boolean> {
+  const rows = await db<{ id: string }[]>`
+    update invites
+    set uses = uses + 1
+    where code_hash = ${codeHash}
+      and revoked_at is null
+      and (expires_at is null or expires_at > now())
+      and uses < max_uses
+    returning id
+  `;
+  return rows.length > 0;
+}
+
+export async function listInvites(db: Database): Promise<Invite[]> {
+  return db<Invite[]>`
+    select
+      i.id, i.note, i.max_uses as "maxUses", i.uses,
+      i.expires_at as "expiresAt", i.revoked_at as "revokedAt",
+      i.created_at as "createdAt", u.username::text as "createdBy"
+    from invites i
+    join users u on u.id = i.created_by
+    order by i.created_at desc
+    limit 200
+  `;
+}
+
+export async function revokeInvite(db: Database, id: string): Promise<boolean> {
+  const rows = await db<{ id: string }[]>`
+    update invites set revoked_at = now() where id = ${id} and revoked_at is null returning id
+  `;
+  return rows.length > 0;
+}

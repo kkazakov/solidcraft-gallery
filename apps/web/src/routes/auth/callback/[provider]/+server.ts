@@ -15,6 +15,9 @@ export async function GET(event) {
   try {
     target = await finishOAuth(event, provider as OAuthProviderId);
   } catch (callbackError) {
+    if (callbackError instanceof AppError && callbackError.message === 'invite_required') {
+      throw redirect(303, '/auth/login?error=invite');
+    }
     if (callbackError instanceof AppError) {
       console.error('oauth callback failed', { code: callbackError.code });
       throw error(400, 'Sign-in failed');

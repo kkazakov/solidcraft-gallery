@@ -1,7 +1,7 @@
 import { error, redirect } from '@sveltejs/kit';
 import { isValidSlug } from '@gallery/core';
 import { ensureDevUser, getDatabase } from '@gallery/db';
-import { signIn } from '../../../lib/server/auth';
+import { applyConfiguredAdmin, signIn } from '../../../lib/server/auth';
 
 /**
  * Development-only account creation. Never enabled in production; the check is
@@ -17,7 +17,7 @@ export async function GET(event) {
     throw error(400, 'username must be 3-64 lowercase letters, digits and hyphens');
   }
 
-  const user = await ensureDevUser(getDatabase(), username);
+  const user = await applyConfiguredAdmin(await ensureDevUser(getDatabase(), username));
   await signIn(event, user.id);
   throw redirect(303, '/dashboard');
 }
