@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   createDatabase,
+  createExternalProject,
   createLocalProject,
   findProjectById,
   findVersionById,
@@ -14,7 +15,7 @@ import {
   type Database,
 } from '@gallery/db';
 import { LocalGitBackend, type LocalRepo } from '@gallery/git';
-import { LocalStorage } from '@gallery/storage';
+import { LocalStorage, artifactKey, sha256Hex } from '@gallery/storage';
 import { loadConfig, type WorkerConfig } from '../src/config.js';
 import { createLogger } from '../src/logger.js';
 import { renderVersion } from '../src/render.js';
@@ -102,6 +103,49 @@ maybe('renderVersion (real CLI integration)', () => {
     await db.end({ timeout: 5 });
     if (root) await rm(root, { recursive: true, force: true });
   });
+
+  it('renders a version cached from an external source', async () => {
+    const designBytes = new Uint8Array(await readFile(fixture));
+    const sha = sha256Hex(designBytes);
+    const designKey = artifactKey(sha, 'design.solidcraft');
+    await storage.put(designKey, designBytes);
+
+    const project = await createExternalProject(db, {
+      ownerId: userId,
+      ownerUsername: username,
+      provider: 'github',
+      externalId: `test-${stamp}`,
+      url: `https://github.com/example/box-${stamp}`,
+      defaultBranch: 'main',
+      commitSha: 'f'.repeat(40),
+      slug: `external-${stamp}`,
+      title: 'External box',
+      designPath: 'designs/case.solidcraft',
+    });
+    const externalVersion = await insertVersion(db, {
+      projectId: project.projectId,
+      commitSha: 'f'.repeat(40),
+      message: 'External seed',
+      authorName: 'Tester',
+      authoredAt: new Date(),
+      designPath: 'designs/case.solidcraft',
+      designKey,
+      designSha256: new Uint8Array(Buffer.from(sha, 'hex')),
+      designBytes: designBytes.byteLength,
+      lean: true,
+    });
+
+    const result = await renderVersion(externalVersion, {
+      db,
+      storage,
+      config,
+      log: createLogger({ test: true }),
+    });
+    expect(result.ok).toBe(true);
+    const rendered = await findVersionById(db, externalVersion);
+    expect(rendered?.status).toBe('ready');
+    expect(rendered?.designKey).toBe(designKey);
+  }, 120_000);
 
   it('renders previews, metrics and derivatives, then marks the project ready', async () => {
     const result = await renderVersion(versionId, {

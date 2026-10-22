@@ -43,7 +43,7 @@ DATABASE_URL=postgres://gallery:gallery@localhost:5432/gallery pnpm --filter @ga
 | `packages/core` | Pure domain: manifest schema, slugs, visibility, errors, limits |
 | `packages/db` | SQL schema/migrations, query helpers, job queue and public search; the only place SQL lives |
 | `packages/design` | Reads `.solidcraft` containers and strips `cache/*` |
-| `packages/git` | Local git backend: real repos, commits and tags under `DATA_DIR/repos` |
+| `packages/git` | Local git backend plus the read-only GitHub metadata/raw client |
 | `packages/storage` | Content-addressed artifact store under `DATA_DIR/artifacts` |
 | `packages/render` | Builds the nsjail/direct CLI plans and runs them with no shell |
 | `infra` | Compose, Caddy, Postgres init |
@@ -99,7 +99,11 @@ if (!can(project, viewer, 'view')) throw new AppError('not_found', 'No such proj
   upgrade path, not the current code.
 - Local projects are real git repositories under `DATA_DIR/repos/<owner>/<slug>`; the web tier writes
   them and the worker reads them. Forgejo replaces this backend in production.
+- External GitHub designs are cached as lean bytes in artifact storage; `versions.design_key` points
+  at them. The worker and downloads must not need GitHub access.
 - `SANDBOX_MODE=direct` is a development path. Production must use `nsjail` once that path is wired.
+- External sync is owner-triggered and synchronous in the web tier today; there is no webhook or
+  `repo.sync` worker yet. GitHub URLs are the only accepted source host.
 - `jobs.attempts` increments on claim; `failJob` needs the job's `max_attempts`, not a constant.
 - Local ports: web `8080` via Caddy (`5173` dev), Forgejo `8081`, Postgres `5432`.
 - Behind a proxy, adapter-node defaults the protocol to `https`; set `PROTOCOL_HEADER=x-forwarded-proto`

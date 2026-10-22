@@ -28,6 +28,7 @@ export interface ProjectSummary {
   id: string;
   slug: string;
   title: string;
+  repoProvider: string;
   visibility: ProjectVisibility;
   status: ProjectStatus;
   updatedAt: Date;
@@ -42,6 +43,7 @@ export interface Version {
   authorName: string;
   authoredAt: Date;
   designPath: string;
+  designKey: string | null;
   designSha256: Uint8Array;
   designBytes: number;
   lean: boolean;
@@ -165,11 +167,12 @@ export async function findProjectById(db: Database, id: string): Promise<Project
 
 export async function listProjectsForOwner(db: Database, ownerId: string): Promise<ProjectSummary[]> {
   return db<ProjectSummary[]>`
-    select id, slug::text as slug, title, visibility::text as visibility,
-           status::text as status, updated_at as "updatedAt"
-    from projects
-    where owner_id = ${ownerId} and deleted_at is null
-    order by updated_at desc
+    select p.id, p.slug::text as slug, p.title, r.provider::text as "repoProvider",
+           p.visibility::text as visibility, p.status::text as status, p.updated_at as "updatedAt"
+    from projects p
+    join repos r on r.id = p.repo_id
+    where p.owner_id = ${ownerId} and p.deleted_at is null
+    order by p.updated_at desc
     limit 100
   `;
 }
@@ -203,6 +206,7 @@ export async function insertVersion(
     authorName: string;
     authoredAt: Date;
     designPath: string;
+    designKey?: string | null;
     designSha256: Uint8Array;
     designBytes: number;
     lean: boolean;
@@ -211,11 +215,11 @@ export async function insertVersion(
   const rows = await db<{ id: string }[]>`
     insert into versions (
       project_id, commit_sha, tag, message, author_name, authored_at,
-      design_path, design_sha256, design_bytes, lean, status
+      design_path, design_key, design_sha256, design_bytes, lean, status
     )
     values (
       ${input.projectId}, ${input.commitSha}, ${input.tag ?? null}, ${input.message},
-      ${input.authorName}, ${input.authoredAt}, ${input.designPath}, ${input.designSha256},
+      ${input.authorName}, ${input.authoredAt}, ${input.designPath}, ${input.designKey ?? null}, ${input.designSha256},
       ${input.designBytes}, ${input.lean}, 'pending'
     )
     on conflict (project_id, commit_sha) do nothing
@@ -234,7 +238,7 @@ export async function findVersionById(db: Database, id: string): Promise<Version
     select
       id, project_id as "projectId", commit_sha as "commitSha", tag, message,
       author_name as "authorName", authored_at as "authoredAt",
-      design_path as "designPath", design_sha256 as "designSha256",
+      design_path as "designPath", design_key as "designKey", design_sha256 as "designSha256",
       design_bytes as "designBytes", lean, status::text as status,
       error_code as "errorCode", error_detail as "errorDetail", metrics, warnings
     from versions where id = ${id}
@@ -247,7 +251,7 @@ export async function latestReadyVersion(db: Database, projectId: string): Promi
     select
       id, project_id as "projectId", commit_sha as "commitSha", tag, message,
       author_name as "authorName", authored_at as "authoredAt",
-      design_path as "designPath", design_sha256 as "designSha256",
+      design_path as "designPath", design_key as "designKey", design_sha256 as "designSha256",
       design_bytes as "designBytes", lean, status::text as status,
       error_code as "errorCode", error_detail as "errorDetail", metrics, warnings
     from versions
@@ -351,7 +355,7 @@ export async function listVersions(db: Database, projectId: string, limit = 50):
     select
       id, project_id as "projectId", commit_sha as "commitSha", tag, message,
       author_name as "authorName", authored_at as "authoredAt",
-      design_path as "designPath", design_sha256 as "designSha256",
+      design_path as "designPath", design_key as "designKey", design_sha256 as "designSha256",
       design_bytes as "designBytes", lean, status::text as status,
       error_code as "errorCode", error_detail as "errorDetail", metrics, warnings
     from versions
@@ -377,6 +381,98 @@ export async function setProjectVisibility(
   await db`
     update projects
     set visibility = ${visibility}, license = ${license}, updated_at = now()
+    where id = ${id}
+  `;
+}
+
+export interface Repo {
+  id: string;
+  ownerId: string;
+  provider: string;
+  externalId: string;
+  url: string;
+  defaultBranch: string;
+  isPrivate: boolean;
+  localPath: string | null;
+  lastCommitSha: string | null;
+  lastSyncedAt: Date | null;
+  status: string;
+  error: string | null;
+}
+
+export interface CreateExternalProjectInput {
+  ownerId: string;
+  ownerUsername: string;
+  provider: 'github' | 'gitlab' | 'gitea' | 'codeberg';
+  externalId: string;
+  url: string;
+  defaultBranch: string;
+  commitSha: string;
+  slug: string;
+  title: string;
+  description?: string;
+  license?: string | null;
+  tags?: string[];
+  designPath: string;
+}
+
+export async function createExternalProject(
+  db: Database,
+  input: CreateExternalProjectInput,
+): Promise<{ projectId: string; repoId: string }> {
+  return db.begin(async (tx) => {
+    const repos = await tx<{ id: string }[]>`
+      insert into repos (
+        owner_id, provider, external_id, url, default_branch, is_private,
+        last_commit_sha, last_synced_at
+      )
+      values (
+        ${input.ownerId}, ${input.provider}, ${input.externalId}, ${input.url},
+        ${input.defaultBranch}, false, ${input.commitSha}, now()
+      )
+      returning id
+    `;
+
+    const projects = await tx<{ id: string }[]>`
+      insert into projects (
+        repo_id, owner_id, slug, title, description, license, design_path,
+        visibility, status, tags
+      )
+      values (
+        ${repos[0]!.id}, ${input.ownerId}, ${input.slug}, ${input.title},
+        ${input.description ?? ''}, ${input.license ?? null}, ${input.designPath},
+        'private', 'pending', ${tx.array(input.tags ?? [])}
+      )
+      returning id
+    `;
+
+    return { projectId: projects[0]!.id, repoId: repos[0]!.id };
+  });
+}
+
+export async function findRepoById(db: Database, id: string): Promise<Repo | null> {
+  const rows = await db<Repo[]>`
+    select
+      id, owner_id as "ownerId", provider::text as provider, external_id as "externalId",
+      url, default_branch as "defaultBranch", is_private as "isPrivate",
+      local_path as "localPath", last_commit_sha as "lastCommitSha",
+      last_synced_at as "lastSyncedAt", status::text as status, error
+    from repos where id = ${id}
+  `;
+  return rows[0] ?? null;
+}
+
+export async function updateRepoHead(db: Database, id: string, commitSha: string): Promise<void> {
+  await db`
+    update repos
+    set last_commit_sha = ${commitSha}, last_synced_at = now(), status = 'active', error = null
+    where id = ${id}
+  `;
+}
+
+export async function setRepoError(db: Database, id: string, message: string): Promise<void> {
+  await db`
+    update repos set status = 'error', error = ${message.slice(0, 1000)}, last_synced_at = now()
     where id = ${id}
   `;
 }

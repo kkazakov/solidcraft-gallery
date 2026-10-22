@@ -150,6 +150,7 @@ create index repos_owner_idx on repos (owner_id, updated_at desc);
 
 comment on column repos.token_enc is 'AES-256-GCM; key id is prefixed to the ciphertext.';
 comment on column repos.is_private is 'Mirrors the provider; the site may be stricter, never looser.';
+-- versions.design_key points into content-addressed storage for external sources.
 
 -- ---------------------------------------------------------------- projects
 
@@ -217,6 +218,7 @@ create table versions (
   author_name   text not null default '',
   authored_at   timestamptz not null,
   design_path   text not null,
+  design_key    text,
   design_sha256 bytea not null,
   design_bytes  bigint not null check (design_bytes > 0),
   lean          boolean not null default false,

@@ -1,6 +1,6 @@
 # Implementation status
 
-**Updated:** 2026-10-22 · **Milestone:** M0 complete, M1 slice + M2 gallery · **Next:** Forgejo OAuth, external repos, nsjail
+**Updated:** 2026-10-22 · **Milestone:** M0 complete, M1 slice + gallery + GitHub sources · **Next:** webhooks, Forgejo OAuth, nsjail
 
 This file records what actually runs, not what is planned. The plan remains in
 [README.md](README.md) and [docs/14-roadmap.md](docs/14-roadmap.md).
@@ -12,12 +12,12 @@ This file records what actually runs, not what is planned. The plan remains in
 | pnpm workspace, TypeScript, ESLint, Prettier, Vitest | done | `pnpm lint`, `pnpm check`, `pnpm test` |
 | `@gallery/core` — manifest, slugs, visibility, errors, limits, session tokens | done | 33 unit tests |
 | `@gallery/design` — read ZIP/JSON, strip `cache/*`, real fixture | done | 11 unit tests |
-| `@gallery/db` — schema, migrations, queue, users/sessions, projects/versions, search | done | 16 integration tests on PostgreSQL 16 |
-| `@gallery/git` — local repository, commit, read at commit, tag | done | 5 tests against real git |
+| `@gallery/db` — schema, migrations, queue, users/sessions, projects/versions, search, external repos | done | 16 integration tests on PostgreSQL 16 |
+| `@gallery/git` — local repository, commit/tag, read-only GitHub client | done | 13 tests (real git + mock HTTP) |
 | `@gallery/storage` — content-addressed artifacts, atomic writes | done | 2 tests |
 | `@gallery/render` — nsjail plan, direct plan, no-shell runner | done | 12 tests |
-| `@gallery/web` — SSR shell, auth, dashboard, publish, public page, **gallery, search, sitemap, visibility** | done | end-to-end curl flow |
-| `@gallery/worker` — job loop, retries, render handler | done | real CLI render in 0.6–0.8 s |
+| `@gallery/web` — auth, dashboard, publish, **gallery/search**, public pages, **GitHub connect/sync** | done | end-to-end curl flow + 1 integration test |
+| `@gallery/worker` — job loop, retries, render handler (local and cached external designs) | done | 9 tests incl. two real CLI renders |
 | `craftpub` — `lean`, `validate`, `inspect` | done | fixtures and failure exits exercised |
 | Compose (Caddy, web, worker, Postgres, Forgejo, Mailpit) | config valid | web/worker images build |
 | CI — lint, check, test, build, migrate, DB tests | done | workflow; first push run |
@@ -38,16 +38,21 @@ Verified with a real `solidcraft-cli 0.19.0` and `fixtures/real/box.solidcraft`:
    work; `/sitemap.xml` lists it; `robots.txt` is served.**
 8. **The dashboard settings form changes visibility.** Private returns 404 for page, media and
    downloads while the owner still sees them; public restores anonymous access.
+9. **A public GitHub repository connects read-only.** `POST /api/v1/repos` validates the URL,
+   reads metadata/tree/raw files at the commit, caches the lean design in artifact storage, creates
+   the project/version and queues a render. The worker renders from `versions.design_key` without
+   any local clone. `POST /api/v1/projects/:id/sync` fetches a newer commit and queues it; the same
+   commit is a no-op.
 
 ## Not implemented (next)
 
-1. Forgejo OAuth login (dev sign-in exists), invites, API tokens.
-2. Forgejo repository creation/push; the local backend is the current hosted backend.
-3. Webhook verification, `repo.sync`, `version.ingest`, external GitHub/GitLab/Gitea repositories.
-4. nsjail wiring in the worker image; the direct renderer is development-only.
-5. Cursor pagination (search/home currently use `?page=N`), `pg_trgm` typo tuning, featured-content
-   admin UI.
-6. Pre-receive lean hook, quotas, moderation and reports.
+1. GitHub webhooks/polling (manual **Sync now** works), GitLab/Gitea sources, private external repos.
+2. Forgejo OAuth login (dev sign-in exists), invites, API tokens.
+3. Forgejo repository creation/push; the local backend is the current hosted backend.
+4. `repo.sync` / `version.ingest` queue handlers (external sync currently runs synchronously in web).
+5. nsjail wiring in the worker image; the direct renderer is development-only.
+6. Cursor pagination (search/home use `?page=N`), sync rate limits, featured-content admin UI.
+7. Pre-receive lean hook, quotas, moderation and reports.
 
 ## Quick start
 
@@ -80,4 +85,8 @@ design, wait for the preview, and use the visibility form.
 - The worker image has no `solidcraft-cli` binary yet; mounting or baking it is part of deployment.
 - Forgejo is pinned to major tag `9`; confirm the current stable tag before the first deployment.
 - Search is offset-paginated and has no synonym table; see the note in `docs/09-search.md`.
+- External sync has no webhook or polling yet and no per-user rate limit. GitHub supplies the only
+  source provider; GitLab/Gitea and private repositories return a clear unsupported error.
+- The GitHub API base is injectable for tests (`GITHUB_API_BASE`/`GITHUB_RAW_BASE`); production
+  uses github.com. The design is cached, so a deleted upstream repo leaves the site working.
 - The public GitHub repository is private while the scaffold is in flux.

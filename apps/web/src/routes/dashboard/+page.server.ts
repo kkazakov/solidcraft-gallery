@@ -2,6 +2,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { AppError } from '@gallery/core';
 import { getDatabase, listProjectsForOwner } from '@gallery/db';
 import { requireViewer } from '../../lib/server/auth.js';
+import { connectGitHubRepo } from '../../lib/server/external.js';
 import { createHostedProject } from '../../lib/server/projects.js';
 
 export async function load(event) {
@@ -11,6 +12,22 @@ export async function load(event) {
 }
 
 export const actions = {
+  connect: async (event) => {
+    const viewer = await requireViewer(event);
+    const form = await event.request.formData();
+    const url = String(form.get('url') ?? '').trim();
+
+    let connected: { projectId: string };
+    try {
+      connected = await connectGitHubRepo({ viewer, url });
+    } catch (error) {
+      if (error instanceof AppError) return fail(error.status, { connect: true, message: error.message });
+      return fail(500, { connect: true, message: 'Could not connect the repository' });
+    }
+
+    throw redirect(303, `/dashboard/projects/${connected.projectId}`);
+  },
+
   create: async (event) => {
     const viewer = await requireViewer(event);
     const form = await event.request.formData();

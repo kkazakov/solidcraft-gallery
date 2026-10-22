@@ -177,6 +177,11 @@ download a bundle (`.zip` of the repo) before deletion from the dashboard.
 Private external repositories and GitLab OAuth are **later**; an attempt returns `403` with a
 clear message.
 
+**Implementation status:** public GitHub connect, cached-lean-design ingestion and owner-triggered
+manual sync are implemented (`POST /api/v1/repos`, `POST /api/v1/projects/:id/sync`). Webhooks,
+polling, GitLab and Gitea remain. The connect step runs synchronously and then queues
+`version.render`; it does not yet enqueue `repo.sync`.
+
 ### Connecting
 
 ```text

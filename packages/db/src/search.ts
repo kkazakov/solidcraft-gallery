@@ -8,6 +8,7 @@ export interface SearchOptions {
   license?: string;
   sort?: SearchSort;
   featuredOnly?: boolean;
+  ownerId?: string;
   limit?: number;
   offset?: number;
 }
@@ -65,6 +66,7 @@ export async function searchPublicProjects(db: Database, options: SearchOptions 
   const limit = clampLimit(options.limit);
   const offset = clampOffset(options.offset);
   const featuredOnly = options.featuredOnly === true;
+  const ownerId = options.ownerId?.trim() || null;
   const sort: SearchSort = options.sort ?? (q ? 'relevance' : 'newest');
 
   const order =
@@ -108,6 +110,7 @@ export async function searchPublicProjects(db: Database, options: SearchOptions 
       and (${tag}::text is null or ${tag ?? ''} = any (p.tags))
       and (${license}::text is null or p.license = ${license ?? ''})
       and (${featuredOnly} = false or p.featured = true)
+      and (${ownerId}::text is null or p.owner_id::text = ${ownerId})
     order by ${order}
     limit ${limit} offset ${offset}
   `;
@@ -121,6 +124,7 @@ export async function searchPublicProjects(db: Database, options: SearchOptions 
       and (${tag}::text is null or ${tag ?? ''} = any (p.tags))
       and (${license}::text is null or p.license = ${license ?? ''})
       and (${featuredOnly} = false or p.featured = true)
+      and (${ownerId}::text is null or p.owner_id::text = ${ownerId})
   `;
 
   let total = counted[0]?.count ?? 0;
@@ -153,6 +157,7 @@ export async function searchPublicProjects(db: Database, options: SearchOptions 
       and (${tag}::text is null or ${tag ?? ''} = any (p.tags))
       and (${license}::text is null or p.license = ${license ?? ''})
       and (${featuredOnly} = false or p.featured = true)
+      and (${ownerId}::text is null or p.owner_id::text = ${ownerId})
     order by rank desc, p.published_at desc nulls last, p.id desc
     limit ${limit} offset ${offset}
   `;
@@ -208,4 +213,8 @@ export async function listSitemapProjects(db: Database, limit = 50_000): Promise
     order by p.published_at desc nulls last
     limit ${Math.min(Math.max(limit, 1), 50_000)}
   `;
+}
+
+export async function listPublicProjectsByOwner(db: Database, ownerId: string, limit = 48): Promise<SearchHit[]> {
+  return (await searchPublicProjects(db, { ownerId, sort: 'newest', limit })).items;
 }

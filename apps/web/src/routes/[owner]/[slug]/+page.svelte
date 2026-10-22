@@ -100,6 +100,11 @@
             {/if}
           </div>
           <p style="font-size: 12px; margin: 12px 0 0">Open the design with SolidCraft 0.18 or newer.</p>
+          {#if data.project.repoUrl.startsWith('https://')}
+            <p style="font-size: 12px; margin: 8px 0 0">
+              <a href={data.project.repoUrl} target="_blank" rel="noopener noreferrer">Source repository</a>
+            </p>
+          {/if}
         </article>
 
         {#if data.metrics}

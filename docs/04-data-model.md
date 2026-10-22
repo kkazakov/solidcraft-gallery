@@ -156,6 +156,7 @@ Indexes:
 | `author_name` | text | commit author |
 | `authored_at` | timestamptz | commit time |
 | `design_path` | text | path at that commit |
+| `design_key` | text nullable | content-addressed cache of the lean bytes (external sources) |
 | `design_sha256` | bytea | hash of the committed bytes |
 | `design_bytes` | bigint | |
 | `lean` | boolean | no `cache/*` entries |

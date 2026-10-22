@@ -34,7 +34,13 @@ export async function GET(event) {
 
   if (format === 'solidcraft') {
     try {
-      bytes = await git.readFile({ repo: localRepo(project), commit: version.commitSha, path: version.designPath });
+      if (version.designKey) {
+        bytes = await storage.get(version.designKey);
+      } else if (project.localPath) {
+        bytes = await git.readFile({ repo: localRepo(project), commit: version.commitSha, path: version.designPath });
+      } else {
+        throw error(404, 'Design file is not available');
+      }
     } catch {
       throw error(404, 'Design file is not available');
     }

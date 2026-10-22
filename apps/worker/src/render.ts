@@ -98,12 +98,16 @@ export async function renderVersion(versionId: string, ctx: RenderContext): Prom
   try {
     await markVersionRendering(ctx.db, versionId);
 
-    if (!project.localPath) {
-      throw new RenderFailure('renderer_unavailable', 'project has no local repository');
+    let designBytes: Uint8Array;
+    if (project.localPath) {
+      const source = designPathFor(project.localPath, version.designPath);
+      designBytes = new Uint8Array(await readFile(source));
+    } else if (version.designKey) {
+      // External sources cache the lean design in artifact storage.
+      designBytes = await ctx.storage.get(version.designKey);
+    } else {
+      throw new RenderFailure('design_unreadable', 'the version has no local repository or cached design');
     }
-
-    const source = designPathFor(project.localPath, version.designPath);
-    const designBytes = new Uint8Array(await readFile(source));
     const expected = Buffer.from(version.designSha256).toString('hex');
     const actual = sha256Hex(designBytes);
     if (actual !== expected) {

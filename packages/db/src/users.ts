@@ -66,3 +66,11 @@ export async function findUserById(db: Database, id: string): Promise<SessionUse
   `;
   return rows[0] ?? null;
 }
+
+export async function findUserByUsername(db: Database, username: string): Promise<SessionUser | null> {
+  const rows = await db<SessionUser[]>`
+    select id, username::text as username, role::text as role
+    from users where username = ${username} limit 1
+  `;
+  return rows[0] ?? null;
+}

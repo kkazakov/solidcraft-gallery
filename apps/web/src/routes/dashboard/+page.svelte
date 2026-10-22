@@ -45,7 +45,7 @@
         />
         <button class="button primary" type="submit">Create project</button>
       </form>
-      {#if form?.message}
+      {#if form?.message && !form.connect}
         <p style="color: var(--warn); margin: 12px 0 0; font-size: 13px">{form.message}</p>
       {/if}
     </article>
@@ -67,6 +67,7 @@
                 </div>
               </div>
               <div style="display: flex; gap: 8px; align-items: center">
+                <span class="badge">{project.repoProvider}</span>
                 <span class="badge">{project.visibility}</span>
                 <span class="badge">{project.status}</span>
               </div>
@@ -76,4 +77,26 @@
       {/if}
     </article>
   </div>
+
+  <article class="card" style="margin-top: 16px; max-width: 820px">
+    <h2>Connect a public GitHub repository</h2>
+    <p style="margin-bottom: 14px">
+      The repository needs a <code>.solidcraft</code> file at the commit it points to. Add a
+      <code>project.json</code> at the root to set the title, license and design path. The site caches the lean design and
+      never writes to GitHub.
+    </p>
+    <form method="POST" action="?/connect" style="display: flex; gap: 10px; flex-wrap: wrap">
+      <input
+        name="url"
+        type="url"
+        required
+        placeholder="https://github.com/jane/pi-case"
+        style="flex: 1; min-width: 260px; padding: 10px 12px; border-radius: 9px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); font: inherit"
+      />
+      <button class="button primary" type="submit">Connect</button>
+    </form>
+    {#if form?.connect}
+      <p style="color: var(--warn); margin: 12px 0 0; font-size: 13px">{form.message}</p>
+    {/if}
+  </article>
 </section>
