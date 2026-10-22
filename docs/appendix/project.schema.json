@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gallery.example/schemas/project.json",
+  "title": "SolidCraft Gallery project manifest",
+  "description": "Optional metadata file at the root of a project repository. Missing fields fall back to repository data; validation is enforced on ingest.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "title"],
+  "properties": {
+    "schema": {
+      "const": 1,
+      "description": "Manifest schema version."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "pattern": "^[^\\u0000-\\u001f]+$",
+      "description": "Human title shown on cards and the project page."
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 2000,
+      "description": "Plain text or Markdown summary."
+    },
+    "tags": {
+      "type": "array",
+      "maxItems": 10,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 32,
+        "pattern": "^[a-z0-9][a-z0-9-]*$",
+        "description": "Lowercase kebab-case tag."
+      }
+    },
+    "license": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9.+-]*$",
+      "description": "SPDX identifier, for example CC-BY-4.0 or MIT. Required for public visibility."
+    },
+    "design": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "pattern": "\\.solidcraft$",
+      "description": "Repository-relative path to the primary design. If absent, the only *.solidcraft file is used."
+    },
+    "cover": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "pattern": "\\.(png|jpe?g|webp)$",
+      "description": "Optional repository-relative image used when renders are unavailable."
+    },
+    "authors": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://",
+            "maxLength": 300
+          }
+        }
+      }
+    },
+    "links": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "website": { "$ref": "#/$defs/httpsUrl" },
+        "video": { "$ref": "#/$defs/httpsUrl" },
+        "docs": { "$ref": "#/$defs/httpsUrl" },
+        "printables": { "$ref": "#/$defs/httpsUrl" },
+        "thingiverse": { "$ref": "#/$defs/httpsUrl" }
+      }
+    },
+    "solidcraft": {
+      "type": "string",
+      "maxLength": 32,
+      "pattern": "^[0-9A-Za-z.<>=~^*+ -]+$",
+      "description": "Informational minimum SolidCraft version, for example \">=0.18\"."
+    }
+  },
+  "$defs": {
+    "httpsUrl": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://",
+      "maxLength": 300
+    }
+  },
+  "examples": [
+    {
+      "schema": 1,
+      "title": "Raspberry Pi 4 case",
+      "description": "Snap-fit enclosure with M2.5 standoffs.",
+      "tags": ["enclosure", "raspberry-pi", "snap-fit"],
+      "license": "CC-BY-4.0",
+      "design": "designs/case.solidcraft",
+      "authors": [{ "name": "Jane Doe", "url": "https://example.com/jane" }],
+      "links": { "website": "https://example.com/pi-case" }
+    }
+  ]
+}

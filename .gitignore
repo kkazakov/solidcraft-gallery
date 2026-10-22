@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# builds
+.svelte-kit/
+build/
+dist/
+*.tsbuildinfo
+
+# env and secrets
+.env
+.env.*
+!.env.example
+
+# local data
+artifacts/
+data/
+coverage/
+playwright-report/
+test-results/
+
+# editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
