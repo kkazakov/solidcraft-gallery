@@ -1,6 +1,6 @@
 # Implementation status
 
-**Updated:** 2026-10-22 · **Milestone:** M0 (scaffold) · **Next:** M1 (auth, hosted publish, ingest)
+**Updated:** 2026-10-22 · **Milestone:** M0 complete, M1 started · **Next:** hosted projects, publish, ingest
 
 This file records what actually runs, not what is planned. The plan remains in
 [README.md](README.md) and [docs/14-roadmap.md](docs/14-roadmap.md).
@@ -10,8 +10,8 @@ This file records what actually runs, not what is planned. The plan remains in
 | Piece | State | Verified by |
 |---|---|---|
 | pnpm workspace, TypeScript, ESLint, Prettier, Vitest | done | `pnpm lint`, `pnpm check`, `pnpm test` |
-| `@gallery/core` — manifest, slugs, visibility, errors, limits | done | 30 unit tests |
-| `@gallery/design` — read ZIP/JSON, strip `cache/*` | done | 9 unit tests |
+| `@gallery/core` — manifest, slugs, visibility, errors, limits | done | 33 unit tests |
+| `@gallery/design` — read ZIP/JSON, strip `cache/*` | done | 11 unit tests |
 | `@gallery/db` — schema, migration runner, `SKIP LOCKED` queue | done | migration applied twice to PostgreSQL 16; queue integration tests |
 | `@gallery/render` — sandbox argv, render plan | plan only | 6 unit tests; execution arrives in M1 |
 | `@gallery/web` — SSR shell, health/readiness, search placeholder | done | `pnpm build`; curl smoke tests |
@@ -19,11 +19,12 @@ This file records what actually runs, not what is planned. The plan remains in
 | `craftpub` — `lean`, `validate`, `inspect` | done | fixtures and failure exits exercised |
 | Compose (Caddy, web, worker, Postgres, Forgejo, Mailpit) | config valid | `docker compose config --quiet` |
 | CI — lint, check, test, build, migrate, DB tests | done | workflow written; first run on push |
+| Dev sign-in, hashed sessions, `/api/v1/me`, dashboard | done | cookie-jar curl: login → 200, logout → 401 |
 | `AGENTS.md` | done | reviewed against the repository |
 
 ## Not implemented (M1)
 
-1. Forgejo OAuth login, sessions, users, invites and API tokens.
+1. Forgejo OAuth login (dev sign-in exists), invites and API tokens.
 2. Hosted project creation, publish, lean strip, commit/tag push.
 3. Webhook verification and `repo.sync` / `version.ingest` / `version.render`.
 4. Actual `solidcraft-cli` invocation (the render plan exists; the worker handler refuses).

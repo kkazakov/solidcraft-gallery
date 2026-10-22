@@ -1,7 +1,7 @@
 <script lang="ts">
   import '../app.css';
 
-  let { children } = $props();
+  let { data, children } = $props();
 </script>
 
 <header class="site-header">
@@ -13,6 +13,11 @@
     <nav class="nav" aria-label="Main">
       <a href="/search">Search</a>
       <a href="/about">About</a>
+      {#if data.viewer}
+        <a href="/dashboard">Dashboard</a>
+      {:else}
+        <a href="/auth/login">Sign in</a>
+      {/if}
       <a href="https://github.com/kkazakov/solidcraft-gallery">GitHub</a>
     </nav>
   </div>

@@ -83,9 +83,9 @@ if (!can(project, viewer, 'view')) throw new AppError('not_found', 'No such proj
 
 ## 6. Gotchas
 
-- SvelteKit 3 has **no `svelte.config.js`**. Pass `adapter` and `preprocess` to `sveltekit({...})` in
-  `vite.config.ts`; `Handle` is imported from `@sveltejs/kit/hooks`; `tsconfig.json` extends
-  `"$app/tsconfig"`.
+- SvelteKit 3 has **no `svelte.config.js`** and **no `$lib` alias**. Pass `adapter` and `preprocess`
+  to `sveltekit({...})` in `vite.config.ts`; import `Handle` from `@sveltejs/kit/hooks`; use relative
+  imports for local server modules; `tsconfig.json` extends `"$app/tsconfig"`.
 - pnpm is strict: a root script importing a workspace package needs that package in the root
   `devDependencies` (that is why `@gallery/core`, `@gallery/design` and `fflate` are there).
 - A `.solidcraft` is a ZIP **or** pretty JSON; detect it by signature, never by extension.
@@ -93,4 +93,6 @@ if (!can(project, viewer, 'view')) throw new AppError('not_found', 'No such proj
 - `public_projects` is the only listing source; do not query `projects` directly for public pages.
 - `jobs.attempts` increments on claim; `failJob` needs the job's `max_attempts`, not a constant.
 - Local ports: web `8080` via Caddy (`5173` dev), Forgejo `8081`, Postgres `5432`.
+- Behind a proxy, adapter-node defaults the protocol to `https`; set `PROTOCOL_HEADER=x-forwarded-proto`
+  (compose does) or form POSTs fail SvelteKit's origin check.
 - Prettier cannot parse Dockerfiles/Caddyfile; they are in `.prettierignore` on purpose.
