@@ -3,19 +3,37 @@ import { AppError, can, canChangeVisibility, LIMITS } from '@gallery/core';
 import { findProjectById, getDatabase, latestReadyVersion, listVersions, type ProjectVisibility } from '@gallery/db';
 import { requireViewer } from '../../../../lib/server/auth.js';
 import { syncGitHubProject } from '../../../../lib/server/external.js';
-import { applyProjectVisibility, publishDesign } from '../../../../lib/server/projects.js';
+import { applyProjectVisibility, publishDesign, renameProject } from '../../../../lib/server/projects.js';
 
 export async function load(event) {
   const viewer = await requireViewer(event);
   const project = await findProjectById(getDatabase(), event.params.id);
   if (!project || !can(project, viewer, 'edit')) throw error(404, 'Not found');
   const versions = await listVersions(getDatabase(), project.id);
-  return { viewer, project, versions, saved: event.url.searchParams.get('saved') === '1' };
+  return { viewer, project, versions, saved: event.url.searchParams.get('saved') };
 }
 
 const VISIBILITIES = new Set<ProjectVisibility>(['public', 'unlisted', 'private']);
 
 export const actions = {
+  rename: async (event) => {
+    const viewer = await requireViewer(event);
+    const project = await findProjectById(getDatabase(), event.params.id);
+    if (!project || !can(project, viewer, 'edit')) throw error(404, 'Not found');
+
+    const form = await event.request.formData();
+    const title = String(form.get('title') ?? '').trim();
+    try {
+      await renameProject({ viewer, projectId: project.id, title });
+    } catch (renameError) {
+      if (renameError instanceof AppError)
+        return fail(renameError.status, { rename: true, message: renameError.message });
+      return fail(500, { rename: true, message: 'Could not rename the project' });
+    }
+
+    throw redirect(303, `${event.url.pathname}?saved=rename`);
+  },
+
   settings: async (event) => {
     const viewer = await requireViewer(event);
     const project = await findProjectById(getDatabase(), event.params.id);
@@ -41,7 +59,7 @@ export const actions = {
     if (!change.ok) return fail(400, { settings: true, message: change.reason });
 
     await applyProjectVisibility(project, visibility as ProjectVisibility, license || project.license);
-    throw redirect(303, `${event.url.pathname}?saved=1`);
+    throw redirect(303, `${event.url.pathname}?saved=settings`);
   },
 
   sync: async (event) => {

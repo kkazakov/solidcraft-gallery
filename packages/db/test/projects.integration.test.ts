@@ -11,6 +11,7 @@ import {
   listProjectsForOwner,
   markVersionReady,
   markVersionRendering,
+  updateProjectTitle,
   upsertArtifact,
 } from '../src/projects.js';
 import { ensureDevUser } from '../src/users.js';
@@ -61,6 +62,13 @@ maybe('projects and versions (integration)', () => {
     const projects = await listProjectsForOwner(db, ownerId);
     expect(projects.some((p) => p.id === projectId)).toBe(true);
     expect(await countProjectsForOwner(db, ownerId)).toBeGreaterThanOrEqual(1);
+  });
+
+  it('renames a project title without touching its slug', async () => {
+    await updateProjectTitle(db, projectId, 'Renamed case');
+    const renamed = await findProjectByOwnerSlug(db, username, slug);
+    expect(renamed?.title).toBe('Renamed case');
+    expect(renamed?.slug).toBe(slug);
   });
 
   it('stores a version, artifacts and marks it ready', async () => {

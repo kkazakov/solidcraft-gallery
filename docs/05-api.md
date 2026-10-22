@@ -255,6 +255,9 @@ Errors: `409` slug taken, `422` no design found, `403` repository private withou
 
 #### `PATCH /projects/:id`
 
+**Implementation status:** `title`, `license` and `visibility` are supported; `description`, `tags` and
+`slug` are not yet exposed. A title rename commits `project.json` for hosted projects.
+
 Owner only. `title`, `description`, `tags`, `license`, `visibility`, `slug`. For hosted projects the
 change is committed back to the repository (`project.json` and/or README) in the same operation;
 if the commit fails the DB change is rolled back. For external projects metadata is site-only in

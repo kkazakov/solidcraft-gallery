@@ -104,6 +104,32 @@
   </div>
 
   <article class="card" style="margin-top: 16px; max-width: 720px">
+    <h2>Project details</h2>
+    <p style="margin-bottom: 12px">
+      Changes the display title and the hosted <code>project.json</code>. The URL slug and repository name stay the
+      same.
+    </p>
+    <form method="POST" action="?/rename" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: end">
+      <label style="display: grid; gap: 4px; font-size: 13px; color: var(--muted); flex: 1; min-width: 240px">
+        Title
+        <input
+          name="title"
+          value={data.project.title}
+          required
+          maxlength="120"
+          style="padding: 9px 10px; border-radius: 9px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); font: inherit"
+        />
+      </label>
+      <button class="button primary" type="submit">Rename</button>
+    </form>
+    {#if data.saved === 'rename'}
+      <p style="color: var(--accent); margin: 10px 0 0; font-size: 13px">Saved</p>
+    {:else if form?.rename && form.message}
+      <p style="color: var(--warn); margin: 10px 0 0; font-size: 13px">{form.message}</p>
+    {/if}
+  </article>
+
+  <article class="card" style="margin-top: 16px; max-width: 720px">
     <h2>Visibility and license</h2>
     <p style="margin-bottom: 12px">
       Public requires a ready preview and an SPDX license. Unlisted is reachable by link but excluded from search and
@@ -133,7 +159,7 @@
       </label>
       <button class="button primary" type="submit">Save</button>
     </form>
-    {#if data.saved}
+    {#if data.saved === 'settings'}
       <p style="color: var(--accent); margin: 10px 0 0; font-size: 13px">Saved</p>
     {:else if form?.settings && form.message}
       <p style="color: var(--warn); margin: 10px 0 0; font-size: 13px">{form.message}</p>

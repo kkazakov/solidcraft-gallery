@@ -12,7 +12,7 @@ This file records what actually runs, not what is planned. The plan remains in
 | pnpm workspace, TypeScript, ESLint, Prettier, Vitest | done | `pnpm lint`, `pnpm check`, `pnpm test` |
 | `@gallery/core` — manifest, slugs, visibility, errors, limits, session tokens | done | 33 unit tests |
 | `@gallery/design` — read ZIP/JSON, strip `cache/*`, real fixture | done | 11 unit tests |
-| `@gallery/db` — schema, migrations, queue, users/identities/sessions, invites, projects/versions, search, repos | done | 21 integration tests on PostgreSQL 16 |
+| `@gallery/db` — schema, migrations, queue, users/identities/sessions, invites, projects/versions, search, repos | done | 22 integration tests on PostgreSQL 16 |
 | `@gallery/git` — local repository, read-only GitHub client, Forgejo contents API | done | 17 tests (real git + mock HTTP) |
 | `@gallery/storage` — content-addressed artifacts, atomic writes | done | 2 tests |
 | `@gallery/render` — nsjail plan, direct plan, no-shell runner | done | 12 tests |
@@ -84,6 +84,8 @@ A real Forgejo stack is running locally via Compose (not a mock):
   durable deployment path.
 - Verified self-registration: `selfuser` signed up on Forgejo, approved OAuth and got a gallery account
   without an invite (`role=user`).
+- Project titles can be renamed from the dashboard or `PATCH /api/v1/projects/:id`; the hosted
+  `project.json` is committed in the same operation. Slugs and repository names remain immutable.
 - Visibility saves now update the project row and `repos.is_private` in one transaction, roll the
   Forgejo repository back if the DB update fails, and redirect to a fresh page with `?saved=1`.
 - Verified end to end: real Forgejo OAuth consent/login created `gallery-admin`, a hosted project

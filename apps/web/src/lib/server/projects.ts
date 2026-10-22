@@ -12,6 +12,7 @@ import {
   insertVersion,
   listProjectSlugs,
   setProjectVisibilityAndRepo,
+  updateProjectTitle,
   type Project,
   type ProjectVisibility,
   type SessionUser,
@@ -260,4 +261,41 @@ export async function getViewableProject(owner: string, slug: string, viewer: Se
   const project = await findProjectByOwnerSlug(getDatabase(), owner, slug);
   if (!project || !can(project, viewer, 'view')) throw new AppError('not_found', 'No such project');
   return project;
+}
+
+/** Rename the site title and keep the hosted project.json in step. */
+export async function renameProject(input: { viewer: SessionUser; projectId: string; title: string }): Promise<void> {
+  const db = getDatabase();
+  const project = await findProjectById(db, input.projectId);
+  if (!project || !can(project, input.viewer, 'edit')) throw new AppError('not_found', 'No such project');
+
+  const title = input.title.trim();
+  if (title.length < 1 || title.length > LIMITS.titleChars) {
+    throw new AppError('validation_failed', `title must be 1-${LIMITS.titleChars} characters`);
+  }
+  if (title === project.title) return;
+
+  const updated: Project = { ...project, title };
+  const message = `Rename project to ${title}`;
+
+  if (project.repoProvider === 'forgejo') {
+    const { client, owner, repo } = await forgejoForProject(project);
+    await client.upsertFile({
+      owner,
+      repo,
+      path: 'project.json',
+      content: new TextEncoder().encode(projectManifest(updated)),
+      message,
+      branch: 'main',
+    });
+  } else if (project.repoProvider === 'local') {
+    const repo = localRepo(project);
+    await git.commitFiles({
+      repo,
+      files: { 'project.json': projectManifest(updated) },
+      message,
+    });
+  }
+
+  await updateProjectTitle(db, project.id, title);
 }

@@ -540,3 +540,7 @@ export async function setProjectVisibilityAndRepo(
     if (!rows[0]) throw new Error('project not found while changing visibility');
   });
 }
+
+export async function updateProjectTitle(db: Database, id: string, title: string): Promise<void> {
+  await db`update projects set title = ${title}, updated_at = now() where id = ${id}`;
+}
