@@ -130,6 +130,10 @@ duplicate rows when new projects appear between pages.
 `total_estimate` comes from `count(*) over ()` on the first page only, or an approximate count from
 `pg_class` for large sets. It is labelled “about N” in the UI.
 
+**Implementation note (beta):** the first implementation uses `limit`/`offset` with `?page=N`
+instead of the cursor above. The API shape is unchanged otherwise; switch to keyset pagination
+before the catalogue or crawl rate makes deep offsets expensive.
+
 ## Facets
 
 Computed with the same filters, minus the facet's own filter:

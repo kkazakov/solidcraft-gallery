@@ -70,4 +70,41 @@
       {/if}
     </article>
   </div>
+
+  <article class="card" style="margin-top: 16px; max-width: 720px">
+    <h2>Visibility and license</h2>
+    <p style="margin-bottom: 12px">
+      Public requires a ready preview and an SPDX license. Unlisted is reachable by link but excluded from search and
+      the sitemap.
+    </p>
+    <form method="POST" action="?/settings" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: end">
+      <label style="display: grid; gap: 4px; font-size: 13px; color: var(--muted)">
+        Visibility
+        <select
+          name="visibility"
+          style="padding: 9px 10px; border-radius: 9px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); font: inherit"
+        >
+          <option value="private" selected={data.project.visibility === 'private'}>Private</option>
+          <option value="unlisted" selected={data.project.visibility === 'unlisted'}>Unlisted</option>
+          <option value="public" selected={data.project.visibility === 'public'}>Public</option>
+        </select>
+      </label>
+      <label style="display: grid; gap: 4px; font-size: 13px; color: var(--muted); flex: 1; min-width: 180px">
+        License (SPDX)
+        <input
+          name="license"
+          value={data.project.license ?? ''}
+          placeholder="CC-BY-4.0"
+          maxlength="64"
+          style="padding: 9px 10px; border-radius: 9px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); font: inherit"
+        />
+      </label>
+      <button class="button primary" type="submit">Save</button>
+    </form>
+    {#if form?.ok}
+      <p style="color: var(--accent); margin: 10px 0 0; font-size: 13px">{form.message}</p>
+    {:else if form?.message}
+      <p style="color: var(--warn); margin: 10px 0 0; font-size: 13px">{form.message}</p>
+    {/if}
+  </article>
 </section>

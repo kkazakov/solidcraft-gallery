@@ -10,6 +10,9 @@
     name="description"
     content={data.project.description || `${data.project.title}, a SolidCraft design by ${data.project.ownerUsername}.`}
   />
+  {#if data.project.visibility !== 'public'}
+    <meta name="robots" content="noindex" />
+  {/if}
   {#if data.latest?.tag}
     <link rel="canonical" href={`/${data.project.ownerUsername}/${data.project.slug}`} />
   {/if}

@@ -41,7 +41,7 @@ DATABASE_URL=postgres://gallery:gallery@localhost:5432/gallery pnpm --filter @ga
 | `apps/web` | SvelteKit SSR pages and `/api/v1` routes; the only HTTP surface |
 | `apps/worker` | Postgres job loop; claims jobs with `FOR UPDATE SKIP LOCKED` |
 | `packages/core` | Pure domain: manifest schema, slugs, visibility, errors, limits |
-| `packages/db` | SQL schema/migrations, query helpers, job queue; the only place SQL lives |
+| `packages/db` | SQL schema/migrations, query helpers, job queue and public search; the only place SQL lives |
 | `packages/design` | Reads `.solidcraft` containers and strips `cache/*` |
 | `packages/git` | Local git backend: real repos, commits and tags under `DATA_DIR/repos` |
 | `packages/storage` | Content-addressed artifact store under `DATA_DIR/artifacts` |
@@ -93,6 +93,10 @@ if (!can(project, viewer, 'view')) throw new AppError('not_found', 'No such proj
 - A `.solidcraft` is a ZIP **or** pretty JSON; detect it by signature, never by extension.
 - `cache/*` is stripped before commit; the embedded 240×150 thumbnail is therefore absent.
 - `public_projects` is the only listing source; do not query `projects` directly for public pages.
+- Public search is `searchPublicProjects` in `packages/db/src/search.ts`: dual `simple`/`english`
+  FTS plus a trigram fallback. Keep private projects out by querying the view.
+- Beta pagination is `limit`/`offset` (`?page=N`); the cursor design in `docs/09-search.md` is the
+  upgrade path, not the current code.
 - Local projects are real git repositories under `DATA_DIR/repos/<owner>/<slug>`; the web tier writes
   them and the worker reads them. Forgejo replaces this backend in production.
 - `SANDBOX_MODE=direct` is a development path. Production must use `nsjail` once that path is wired.
