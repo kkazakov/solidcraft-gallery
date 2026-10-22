@@ -33,6 +33,8 @@
     "vitest": "^5.0.5",
     "@gallery/core": "workspace:*",
     "@gallery/design": "workspace:*",
-    "fflate": "^0.8.3"
+    "fflate": "^0.8.3",
+    "prettier-plugin-svelte": "^4.1.1",
+    "svelte": "^5.57.2"
   }
 }

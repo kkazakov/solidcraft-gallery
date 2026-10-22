@@ -1,0 +1,106 @@
+name: gallery
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - '8080:80'
+      - '8081:8081'
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      web:
+        condition: service_started
+      forgejo:
+        condition: service_started
+
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+    environment:
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-http://localhost:8080}
+      DATABASE_URL: postgres://gallery:gallery@postgres:5432/gallery
+      SESSION_SECRET: ${SESSION_SECRET:-dev-only-session-secret}
+      TOKEN_ENC_KEY: ${TOKEN_ENC_KEY:-dev-only-token-key}
+      SIGNED_URL_SECRET: ${SIGNED_URL_SECRET:-dev-only-signed-url-secret}
+      FORGEJO_URL: ${FORGEJO_URL:-http://localhost:8081}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      APP_VERSION: ${APP_VERSION:-dev}
+      NODE_ENV: production
+    expose:
+      - '3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: ..
+      dockerfile: apps/worker/Dockerfile
+    environment:
+      DATABASE_URL: postgres://gallery:gallery@postgres:5432/gallery
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-1}
+      WORKER_PAUSED: ${WORKER_PAUSED:-0}
+      SOLIDCRAFT_CLI: /usr/local/bin/solidcraft-cli
+      NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: gallery
+      POSTGRES_PASSWORD: gallery
+      POSTGRES_DB: gallery
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/10-forgejo.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U gallery -d gallery']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  forgejo:
+    image: codeberg.org/forgejo/forgejo:9
+    environment:
+      USER_UID: '1000'
+      USER_GID: '1000'
+      FORGEJO__database__DB_TYPE: postgres
+      FORGEJO__database__HOST: postgres:5432
+      FORGEJO__database__NAME: forgejo
+      FORGEJO__database__USER: forgejo
+      FORGEJO__database__PASSWD: forgejo
+      FORGEJO__server__ROOT_URL: ${FORGEJO_PUBLIC_URL:-http://localhost:8081/}
+      FORGEJO__server__HTTP_PORT: '3000'
+      FORGEJO__security__INSTALL_LOCK: 'true'
+      FORGEJO__service__DISABLE_REGISTRATION: 'true'
+      FORGEJO__openid__ENABLE_OPENID_SIGNIN: 'false'
+      FORGEJO__log__LEVEL: info
+    ports:
+      - '3001:3000'
+      - '2222:22'
+    volumes:
+      - forgejo_data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - '8025:8025'
+      - '1025:1025'
+
+volumes:
+  caddy_data:
+  caddy_config:
+  pgdata:
+  forgejo_data:

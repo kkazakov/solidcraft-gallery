@@ -1,0 +1,17 @@
+{
+  "name": "@gallery/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "start": "tsx src/main.ts",
+    "check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@gallery/core": "workspace:*",
+    "@gallery/db": "workspace:*",
+    "@gallery/render": "workspace:*"
+  }
+}

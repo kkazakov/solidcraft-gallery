@@ -7,3 +7,7 @@ coverage
 pnpm-lock.yaml
 docs
 README.md
+**/Dockerfile
+infra/caddy/Caddyfile
+AGENTS.md
+STATUS.md

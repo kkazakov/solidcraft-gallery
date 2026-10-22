@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createDatabase, type Database } from '../src/client.js';
 import { claimJob, completeJob, enqueueJob, failJob, recoverStaleJobs } from '../src/jobs.js';
 
@@ -6,8 +6,12 @@ const url = process.env.DATABASE_URL;
 const maybe = url ? describe : describe.skip;
 
 maybe('job queue (integration)', () => {
-  const db: Database = createDatabase(url!, { max: 2 });
+  let db: Database;
   const kind = `test.${process.pid}.${Date.now()}`;
+
+  beforeAll(() => {
+    db = createDatabase(url!, { max: 2 });
+  });
 
   afterAll(async () => {
     await db`delete from jobs where kind = ${kind}`;
