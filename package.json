@@ -1,0 +1,35 @@
+{
+  "name": "solidcraft-gallery",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev:web": "pnpm --filter @gallery/web dev",
+    "dev:worker": "pnpm --filter @gallery/worker dev",
+    "build": "pnpm --filter @gallery/web build",
+    "check": "pnpm -r check",
+    "test": "pnpm -r test",
+    "test:watch": "pnpm -r --parallel test -- --watch",
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
+    "db:migrate": "pnpm --filter @gallery/db migrate",
+    "craftpub": "tsx scripts/craftpub.ts",
+    "compose:up": "docker compose -f infra/compose.yaml up -d --build",
+    "compose:down": "docker compose -f infra/compose.yaml down",
+    "compose:config": "docker compose -f infra/compose.yaml config --quiet"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.0.0",
+    "eslint": "^10.13.0",
+    "prettier": "^3.9.10",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.0",
+    "vitest": "^5.0.5"
+  }
+}
