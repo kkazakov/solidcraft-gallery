@@ -38,9 +38,12 @@ services:
       INVITE_REQUIRED: ${INVITE_REQUIRED:-1}
       ADMIN_USERNAMES: ${ADMIN_USERNAMES:-}
       APP_VERSION: ${APP_VERSION:-dev}
+      DATA_DIR: /var/lib/gallery
       PROTOCOL_HEADER: x-forwarded-proto
       HOST_HEADER: host
       NODE_ENV: production
+    volumes:
+      - gallery_data:/var/lib/gallery
     expose:
       - '3000'
     depends_on:

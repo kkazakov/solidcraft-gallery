@@ -67,6 +67,23 @@ Verified with a real `solidcraft-cli 0.19.0` and `fixtures/real/box.solidcraft`:
     identity signs in without a code. `ADMIN_USERNAMES=invitee` promoted that new account to admin.
     A fresh `ADMIN_USERNAMES=adminboot` identity also bypassed the invite and was promoted on first login.
 
+## Local staging deployment
+
+A real Forgejo stack is running locally via Compose (not a mock):
+
+- Web: `http://localhost:8080`; Forgejo: `http://localhost:8081`.
+- Postgres: `localhost:5432/gallery`; worker uses nsjail and the mounted CLI.
+- Forgejo admin: `gallery-admin`; password in `/tmp/forgejo-admin-password.txt` (staging only).
+- Provisioning token: `/tmp/forgejo-admin-token.txt`; OAuth app credentials and gallery secrets:
+  `/tmp/gallery-staging.env` (mode 0600). The OAuth app redirect is
+  `http://localhost:8080/auth/callback/forgejo`.
+- The worker override `/tmp/gallery-staging-override.yaml` mounts the CLI from `/tmp`; this is not a
+  durable deployment path.
+- Verified end to end: real Forgejo OAuth consent/login created `gallery-admin`, a hosted project
+  provisioned a real private repo, publish wrote `project.json` + the 449-byte lean design, nsjail
+  rendered five artifacts, public visibility flipped the Forgejo repo to public, and the public page,
+  image and download returned 200.
+
 ## Not implemented (next)
 
 1. GitHub polling (webhooks + manual **Sync now** work), GitLab/Gitea sources, private external repos.

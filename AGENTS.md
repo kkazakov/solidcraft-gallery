@@ -108,6 +108,9 @@ if (!can(project, viewer, 'view')) throw new AppError('not_found', 'No such proj
 - Local projects are real git repositories under `DATA_DIR/repos/<owner>/<slug>`; the web tier writes
   them and the worker reads them. With `FORGEJO_ADMIN_TOKEN`, new hosted projects use Forgejo instead;
   both cache the lean design for rendering when needed.
+- Web and worker must mount the same `gallery_data` volume at `/var/lib/gallery`: Forgejo publishing
+  writes `versions.design_key` from the web container and the worker reads it. Missing the web volume
+  causes `ENOENT` render failures that look like storage bugs.
 - External GitHub designs are cached as lean bytes in artifact storage; `versions.design_key` points
   at them. The worker and downloads must not need GitHub access.
 - `SANDBOX_MODE=direct` is a development path. Production uses `nsjail`; the worker container needs

@@ -84,6 +84,7 @@ export async function createHostedProject(input: {
       url: remote.url,
       defaultBranch: remote.defaultBranch,
       commitSha: null,
+      isPrivate: true,
       slug,
       title,
       designPath,

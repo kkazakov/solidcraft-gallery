@@ -408,6 +408,7 @@ export interface CreateExternalProjectInput {
   url: string;
   defaultBranch: string;
   commitSha: string | null;
+  isPrivate?: boolean;
   slug: string;
   title: string;
   description?: string;
@@ -428,7 +429,7 @@ export async function createExternalProject(
       )
       values (
         ${input.ownerId}, ${input.provider}, ${input.externalId}, ${input.url},
-        ${input.defaultBranch}, false, ${input.commitSha}, now()
+        ${input.defaultBranch}, ${input.isPrivate ?? false}, ${input.commitSha}, now()
       )
       returning id
     `;

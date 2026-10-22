@@ -136,6 +136,9 @@ maybe('Forgejo hosted projects (integration)', () => {
       designPath: `designs/forge-${stamp}.solidcraft`,
     });
 
+    const createdRepo = await findRepoById(db, stored!.repoId);
+    expect(createdRepo?.isPrivate).toBe(true);
+
     const design = new Uint8Array(await readFile(fixture));
     const published = await publishDesign({
       viewer: viewer[0]!,
