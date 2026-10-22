@@ -1,6 +1,6 @@
 # Implementation status
 
-**Updated:** 2026-10-22 · **Milestone:** M0 complete; M1 slice, gallery, GitHub sources, OAuth, **hosted Forgejo** · **Next:** nsjail, tokens/invites
+**Updated:** 2026-10-22 · **Milestone:** M0 complete; M1 slice, gallery, GitHub sources, OAuth, hosted Forgejo, **nsjail sandbox** · **Next:** user-owned tokens, invites, deployment hardening
 
 This file records what actually runs, not what is planned. The plan remains in
 [README.md](README.md) and [docs/14-roadmap.md](docs/14-roadmap.md).
@@ -16,8 +16,9 @@ This file records what actually runs, not what is planned. The plan remains in
 | `@gallery/git` — local repository, read-only GitHub client, Forgejo contents API | done | 17 tests (real git + mock HTTP) |
 | `@gallery/storage` — content-addressed artifacts, atomic writes | done | 2 tests |
 | `@gallery/render` — nsjail plan, direct plan, no-shell runner | done | 12 tests |
+| nsjail worker — sandboxed CLI with no network, read-only root, rlimits | done | container render of 5 artifacts under nsjail |
 | `@gallery/web` — OAuth, dashboard, publish, gallery/search, GitHub connect/sync/webhook, Forgejo provisioning | done | end-to-end curl flow + 12 integration/unit tests |
-| `@gallery/worker` — job loop, retries, render handler (local and cached external designs) | done | 9 tests incl. two real CLI renders |
+| `@gallery/worker` — job loop, retries, nsjail render handler (local, Forgejo and cached external) | done | 9 tests + containerized nsjail render |
 | `craftpub` — `lean`, `validate`, `inspect` | done | fixtures and failure exits exercised |
 | Compose (Caddy, web, worker, Postgres, Forgejo, Mailpit) | config valid | web/worker images build |
 | CI — lint, check, test, build, migrate, DB tests | done | workflow; first push run |
@@ -56,6 +57,10 @@ Verified with a real `solidcraft-cli 0.19.0` and `fixtures/real/box.solidcraft`:
     and caches the lean design, the worker renders it, and setting visibility public calls Forgejo's
     repo API before the DB update. Verified against a mock Forgejo: 201 create, 202 publish, `ready`
     render, public page/image/449-byte download, `repos.is_private = false`.
+13. **The worker renders inside nsjail.** The image builds nsjail 3.4; the worker renders a real
+    external-source version with `SANDBOX_MODE=nsjail` under `SYS_ADMIN`/unconfined seccomp. The job
+    produced all five artifacts in 375 ms. Raw nsjail runs of `snapshot`, `eval`, STEP and STL all
+    succeeded with no network namespace and no `/proc`.
 
 ## Not implemented (next)
 
@@ -64,9 +69,10 @@ Verified with a real `solidcraft-cli 0.19.0` and `fixtures/real/box.solidcraft`:
    direct pushes; linking/unlinking identities.
 3. Invites, API tokens, published-project quotas.
 4. `repo.sync` / `version.ingest` queue handlers (external sync currently runs synchronously in web).
-5. nsjail wiring in the worker image; the direct renderer is development-only.
+5. A dedicated nsjail rootfs and per-jail seccomp profile; today the worker needs `SYS_ADMIN` and the
+   image root is read-only but shared.
 6. Cursor pagination (search/home use `?page=N`), sync rate limits, featured-content admin UI.
-7. Pre-receive lean hook, moderation and reports.
+7. Pre-receive lean hook, invites, API tokens, moderation and reports.
 
 ## Quick start
 
@@ -76,6 +82,10 @@ docker compose -f infra/compose.yaml up -d postgres
 DATABASE_URL=postgres://gallery:gallery@localhost:5432/gallery pnpm db:migrate
 DATABASE_URL=postgres://gallery:gallery@localhost:5432/gallery pnpm --filter @gallery/db test
 ```
+
+Compose note: the worker image builds nsjail; mount the CLI at
+`/usr/local/bin/solidcraft-cli` and keep `SANDBOX_MODE=nsjail`. For a quick local flow without nsjail,
+use `SANDBOX_MODE=direct ALLOW_UNSANDBOXED_RENDER=1` and `pnpm dev:worker`.
 
 Local end-to-end (needs a `solidcraft-cli` binary):
 
@@ -94,9 +104,11 @@ design, wait for the preview, and use the visibility form.
 
 - Fixtures include one real design (`fixtures/real/box.solidcraft`); the synthetic ones remain for
   malformed-input tests.
-- The direct renderer runs the CLI without nsjail. It is gated to non-production or an explicit flag,
-  and the compose file currently opts in for local use.
-- The worker image has no `solidcraft-cli` binary yet; mounting or baking it is part of deployment.
+- `SANDBOX_MODE=nsjail` is the compose default. The worker image contains nsjail 3.4 but not the
+  `solidcraft-cli` binary; mount the pinned CLI at `/usr/local/bin/solidcraft-cli`. The direct renderer
+  remains available only for development (`SANDBOX_MODE=direct`, explicit flag).
+- nsjail needs Docker `SYS_ADMIN` and `seccomp=unconfined`; the jailed process itself has no
+  capabilities, no network and a read-only root. A dedicated rootfs and seccomp profile are next.
 - Forgejo is pinned to major tag `9`; confirm the current stable tag before the first deployment.
 - Search is offset-paginated and has no synonym table; see the note in `docs/09-search.md`.
 - External sync runs synchronously in the web tier and has no polling or per-user rate limit.

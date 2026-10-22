@@ -69,26 +69,30 @@ file is hostile, the repository is hostile, and the network is hostile.
 
 ## Render sandbox
 
-The worker invokes `solidcraft-cli` through `nsjail` (or `bubblewrap`) with:
+The worker invokes `solidcraft-cli` through `nsjail 3.4` with:
 
 | Control | Setting |
 |---|---|
 | Network namespace | empty, no interfaces |
-| User | dedicated uid, no root, no capabilities |
-| Filesystem | read-only `/`, tmpfs `/work`, bind-mounted CLI, no host paths |
+| User | uid/gid 65534 inside the jail, no capabilities, `no_new_privs` |
+| Filesystem | read-only image root; design read-only at `/work/design.solidcraft`; only `/work/out` writable; tmpfs `/tmp`; no `/proc` |
 | Memory | 1 GiB address space |
 | CPU | 1 core, 60 s CPU and wall limits |
 | Processes | 64 |
-| File size | 32 MB output |
-| Environment | `PATH`, `HOME`, `TMPDIR` only |
-| Seccomp | default-deny profile allowing the CLI's syscalls |
+| File size | 32 MB |
+| Environment | `PATH`, `HOME`, `TMPDIR`, `LANG` only |
+| Seccomp | no per-jail profile yet; the worker container runs with Docker seccomp unconfined so nsjail can create namespaces |
 
-The process group is killed on timeout. Outputs are validated (PNG/STEP magic, dimensions, size)
+The process group is killed on timeout. Outputs are validated (PNG magic, non-empty derivatives)
 before storage. A render crash is contained to the job.
 
-Residual: a kernel bug or a sandbox misconfiguration. Mitigations: patched host, dedicated worker
-container, no database superuser in the worker, egress firewall, and an alert on unexpected child
-processes.
+nsjail needs `SYS_ADMIN` and an unconfined Docker seccomp profile to create user/mount/net
+namespaces; the jailed CLI itself keeps no capabilities. This is a deliberate trade-off while a
+dedicated rootfs and per-jail seccomp profile are built.
+
+Residual: a kernel bug or a sandbox misconfiguration, the shared read-only image root, and the
+relaxed Docker seccomp profile. Mitigations: patched host, dedicated worker host at scale, no
+database superuser in the worker, egress firewall, and an alert on unexpected child processes.
 
 ## Web security
 

@@ -39,13 +39,13 @@ DATABASE_URL=postgres://gallery:gallery@localhost:5432/gallery pnpm --filter @ga
 | Path | Purpose |
 |---|---|
 | `apps/web` | SvelteKit SSR pages, OAuth login/callback and `/api/v1` routes; the only HTTP surface |
-| `apps/worker` | Postgres job loop; claims jobs with `FOR UPDATE SKIP LOCKED` |
+| `apps/worker` | Postgres job loop and nsjail renderer; claims jobs with `FOR UPDATE SKIP LOCKED` |
 | `packages/core` | Pure domain: manifest schema, slugs, visibility, errors, limits |
 | `packages/db` | SQL schema/migrations, query helpers, job queue and public search; the only place SQL lives |
 | `packages/design` | Reads `.solidcraft` containers and strips `cache/*` |
 | `packages/git` | Local git backend, read-only GitHub client and the Forgejo contents API |
 | `packages/storage` | Content-addressed artifact store under `DATA_DIR/artifacts` |
-| `packages/render` | Builds the nsjail/direct CLI plans and runs them with no shell |
+| `packages/render` | Builds and runs the nsjail/direct CLI plans with no shell |
 | `infra` | Compose, Caddy, Postgres init |
 | `docs` | The implementation plan and the decision record |
 
@@ -63,6 +63,9 @@ and `design` may import `core`; no package imports an app.
 - Validate external input with Zod at the boundary and throw `AppError` for the API envelope.
 - `.solidcraft` bytes are untrusted. Never spawn the CLI directly; use `packages/render` so the
   design runs in nsjail with no network. No shell strings, no user paths in argv.
+- The worker image builds nsjail 3.4. `SANDBOX_MODE=direct` is development-only; production/compose
+  uses `nsjail`, which needs `SYS_ADMIN` + `seccomp=unconfined` on the container and a CLI mounted at
+  `/usr/local/bin/solidcraft-cli`.
 - SQL belongs in `packages/db`; migrations are append-only (`000N_name.sql`) and need a test.
 - Tests are `*.test.ts` next to the code. DB integration tests are `describe.skip` without
   `DATABASE_URL`.
@@ -104,7 +107,10 @@ if (!can(project, viewer, 'view')) throw new AppError('not_found', 'No such proj
   both cache the lean design for rendering when needed.
 - External GitHub designs are cached as lean bytes in artifact storage; `versions.design_key` points
   at them. The worker and downloads must not need GitHub access.
-- `SANDBOX_MODE=direct` is a development path. Production must use `nsjail` once that path is wired.
+- `SANDBOX_MODE=direct` is a development path. Production uses `nsjail`; the worker container needs
+  `SYS_ADMIN` and an unconfined seccomp profile, while the jailed process has no caps or network.
+- nsjail runs with `--chroot /` (read-only image root), `--disable_proc`, no network namespace changes,
+  and only `/work/out` writable. The CLI is mounted at its final absolute path.
 - External sync is synchronous in the web tier (manual or GitHub webhook); there is no `repo.sync`
   worker yet. GitHub URLs are the only accepted source host. Webhooks verify the raw-body HMAC and
   resolve the repository by numeric id, never by a payload URL.

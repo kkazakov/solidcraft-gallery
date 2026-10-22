@@ -17,7 +17,7 @@ export interface Command {
 }
 
 /** The jail root is built into the worker image; see infra/worker/Dockerfile. */
-export const SANDBOX_ROOT = '/srv/solidcraft';
+export const SANDBOX_ROOT = '/';
 
 /**
  * Build an nsjail invocation. Deliberately no shell: arguments are passed as
@@ -37,7 +37,9 @@ export function sandboxCommand(input: SandboxInput): Command {
     args: [
       '--mode',
       'o',
-      '--disable_clone_newnet',
+      // Keep the default network namespace: no interfaces, no DNS, no egress.
+      '--disable_proc',
+      '--disable_clone_newcgroup',
       '--user',
       '65534',
       '--group',
@@ -46,6 +48,16 @@ export function sandboxCommand(input: SandboxInput): Command {
       SANDBOX_ROOT,
       '--cwd',
       '/work',
+      '--tmpfsmount',
+      '/tmp',
+      '--env',
+      'HOME=/tmp',
+      '--env',
+      'TMPDIR=/tmp',
+      '--env',
+      'PATH=/usr/local/bin:/usr/bin:/bin',
+      '--env',
+      'LANG=C.UTF-8',
       '--time_limit',
       String(input.timeoutSeconds),
       '--rlimit_as',
@@ -54,6 +66,10 @@ export function sandboxCommand(input: SandboxInput): Command {
       String(input.timeoutSeconds),
       '--rlimit_nofile',
       '256',
+      '--rlimit_nproc',
+      '64',
+      '--rlimit_fsize',
+      '32',
       '--max_cpus',
       '1',
       '--bindmount_ro',

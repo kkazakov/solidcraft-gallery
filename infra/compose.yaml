@@ -55,10 +55,15 @@ services:
       WORKER_PAUSED: ${WORKER_PAUSED:-0}
       SOLIDCRAFT_CLI: /usr/local/bin/solidcraft-cli
       DATA_DIR: /var/lib/gallery
-      # Development only: the nsjail path is wired in the deployment milestone.
-      SANDBOX_MODE: ${SANDBOX_MODE:-direct}
-      ALLOW_UNSANDBOXED_RENDER: ${ALLOW_UNSANDBOXED_RENDER:-1}
+      SANDBOX_MODE: ${SANDBOX_MODE:-nsjail}
+      ALLOW_UNSANDBOXED_RENDER: ${ALLOW_UNSANDBOXED_RENDER:-0}
       NODE_ENV: production
+    # nsjail creates namespaces and mounts; the CLI inside the jail is still
+    # unprivileged and has no network. Mount the pinned CLI at SOLIDCRAFT_CLI.
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - seccomp:unconfined
     volumes:
       - gallery_data:/var/lib/gallery
     depends_on:

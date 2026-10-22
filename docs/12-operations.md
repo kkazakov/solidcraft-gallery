@@ -25,7 +25,9 @@ minio        :9000 internal (optional; local volume by default)
 Volumes: `pgdata`, `forgejo_data`, `artifacts`, `caddy_data`, `caddy_config`.
 Networks: `edge` (caddy, web, forgejo), `internal` (web, worker, postgres, forgejo, minio).
 
-The worker has no inbound ports. Forgejo is reachable publicly only for git over HTTPS
+The worker has no inbound ports. The worker container needs `SYS_ADMIN` and `seccomp=unconfined` so
+nsjail can create namespaces; mount the pinned CLI at `/usr/local/bin/solidcraft-cli`. Forgejo is
+reachable publicly only for git over HTTPS
 (`git.gallery.example`); its admin UI is restricted by Forgejo itself and optionally by Caddy IP
 rules.
 
@@ -56,6 +58,8 @@ All configuration is environment variables. Secrets are mounted as files in prod
 | `MAX_DESIGN_BYTES` | no | `26214400` | 25 MB |
 | `MAX_REPO_BYTES` | no | `1073741824` | 1 GB |
 | `RENDER_TIMEOUT_SECONDS` | no | `60` | sandbox wall clock |
+| `SANDBOX_MODE` | no | `nsjail` | `nsjail`; `direct` only for development |
+| `ALLOW_UNSANDBOXED_RENDER` | no | `0` | permits `direct` in production; never enable on the public instance |
 | `WORKER_CONCURRENCY` | no | `2` | parallel jobs per worker |
 | `WORKER_PAUSED` | no | `0` | kill switch |
 | `PUBLISH_DISABLED` | no | `0` | kill switch |

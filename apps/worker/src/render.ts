@@ -1,5 +1,5 @@
 import { constants } from 'node:fs';
-import { access, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve, sep } from 'node:path';
 import {
@@ -12,7 +12,7 @@ import {
   upsertArtifact,
   type Database,
 } from '@gallery/db';
-import { directRenderPlan, runCommand, runPlan, type Command } from '@gallery/render';
+import { directRenderPlan, renderPlan, runCommand, runPlan, type Command } from '@gallery/render';
 import { artifactKey, sha256Hex, type LocalStorage } from '@gallery/storage';
 import type { WorkerConfig } from './config.js';
 import type { Logger } from './logger.js';
@@ -64,8 +64,12 @@ function designPathFor(localPath: string, designPath: string): string {
 
 function planFor(config: WorkerConfig, designPath: string, outDir: string): { name: string; command: Command }[] {
   if (config.sandboxMode === 'nsjail') {
-    // The jail root, CLI mount and user are built in M1's deployment step.
-    throw new RenderFailure('renderer_unavailable', 'nsjail rendering is not wired on this worker yet');
+    return renderPlan({
+      cli: config.cli,
+      designPath,
+      outDir,
+      timeoutSeconds: config.timeoutSeconds,
+    });
   }
   if (process.env.NODE_ENV === 'production' && !config.allowUnsandboxed) {
     throw new RenderFailure('renderer_unavailable', 'unsandboxed rendering is disabled in production');
@@ -78,6 +82,14 @@ async function ensureCli(config: WorkerConfig): Promise<void> {
     await access(config.cli, constants.X_OK);
   } catch {
     throw new RenderFailure('renderer_unavailable', `solidcraft-cli is not executable at ${config.cli}`);
+  }
+}
+
+async function ensureSandbox(): Promise<void> {
+  try {
+    await access('/usr/local/bin/nsjail', constants.X_OK);
+  } catch {
+    throw new RenderFailure('renderer_unavailable', 'nsjail is not installed in this worker');
   }
 }
 
@@ -115,10 +127,12 @@ export async function renderVersion(versionId: string, ctx: RenderContext): Prom
     }
 
     await ensureCli(ctx.config);
+    if (ctx.config.sandboxMode === 'nsjail') await ensureSandbox();
     work = await mkdtemp(join(tmpdir(), `gallery-render-${versionId.slice(0, 8)}-`));
     const designFile = join(work, 'design.solidcraft');
     const outDir = join(work, 'out');
     await mkdir(outDir, { recursive: true });
+    await chmod(outDir, 0o777);
     await writeFile(designFile, designBytes);
 
     const plan = planFor(ctx.config, designFile, outDir);

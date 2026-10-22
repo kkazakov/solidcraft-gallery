@@ -10,10 +10,13 @@ const input = {
 };
 
 describe('sandboxCommand', () => {
-  it('disables networking and sets limits', () => {
+  it('keeps network isolation and sets limits', () => {
     const { command, args } = sandboxCommand({ ...input, args: ['snapshot'] });
     expect(command).toBe('nsjail');
-    expect(args).toContain('--disable_clone_newnet');
+    expect(args).not.toContain('--disable_clone_newnet');
+    expect(args).toContain('--disable_proc');
+    expect(args).toContain('--disable_clone_newcgroup');
+    expect(args).toContain('--tmpfsmount');
     expect(args).toContain('--time_limit');
     expect(args).toContain('60');
     expect(args).toContain('--rlimit_as');
