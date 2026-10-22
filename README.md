@@ -1,18 +1,28 @@
 # SolidCraft Gallery
 
-**Working name:** SolidCraft Gallery · **Status:** implementation plan
+**Working name:** SolidCraft Gallery · **Status:** working M1 + local staging
 
 A public, git-backed gallery for [SolidCraft](https://github.com/tangency-labs/solidcraft) designs:
 thumbnails and searchable project pages for the public, a private workspace for signed-in users,
 and git repositories as the source of truth — either hosted by the service or brought by the user.
 
-This folder contains the plan and specifications, not the application. It is written to be handed
-to a developer or a small team without further context.
+This repository contains both the working implementation and the plan/specifications it was built
+from. [STATUS.md](STATUS.md) is the current source of truth for what runs.
 
 > **Implementation status (22 Oct 2026):** M0 is complete; the M1 slice, public gallery and OAuth
 > work — Forgejo/GitHub sign-in with invite-gated beta, local/Forgejo/GitHub projects, publish/sync/webhooks, nsjail-sandboxed
 > `solidcraft-cli` rendering, project pages, search, sitemap, media, downloads and visibility.
 > See [STATUS.md](STATUS.md).
+
+## Screenshots
+
+Taken from the local staging stack: real Forgejo, real `solidcraft-cli`, nsjail worker.
+
+| Public gallery | Project page |
+|---|---|
+| ![Gallery home](docs/screenshots/home.png) | ![Project page](docs/screenshots/project.png) |
+| **Search** | **Git-backed source in Forgejo** |
+| ![Search results](docs/screenshots/search.png) | ![Forgejo repository](docs/screenshots/forgejo.png) |
 
 Despite the folder name, this is **not a SolidCraft plugin**. SolidCraft's plugin boundary is an
 in-document command executor with no storage, accounts, background sync or UI; a gallery needs all

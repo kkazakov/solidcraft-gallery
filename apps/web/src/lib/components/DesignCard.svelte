@@ -24,7 +24,6 @@
           alt={`Isometric render of ${project.title}`}
           width="1200"
           height="900"
-          loading="lazy"
           decoding="async"
         />
       {:else}

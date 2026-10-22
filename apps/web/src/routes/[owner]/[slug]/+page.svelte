@@ -59,22 +59,10 @@
         {#if data.images.top || data.images.front}
           <div class="image-row">
             {#if data.images.top}
-              <img
-                src={data.images.top}
-                alt={`Top view of ${data.project.title}`}
-                width="1200"
-                height="900"
-                loading="lazy"
-              />
+              <img src={data.images.top} alt={`Top view of ${data.project.title}`} width="1200" height="900" />
             {/if}
             {#if data.images.front}
-              <img
-                src={data.images.front}
-                alt={`Front view of ${data.project.title}`}
-                width="1200"
-                height="900"
-                loading="lazy"
-              />
+              <img src={data.images.front} alt={`Front view of ${data.project.title}`} width="1200" height="900" />
             {/if}
           </div>
         {/if}
