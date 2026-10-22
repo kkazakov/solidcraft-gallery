@@ -177,10 +177,12 @@ download a bundle (`.zip` of the repo) before deletion from the dashboard.
 Private external repositories and GitLab OAuth are **later**; an attempt returns `403` with a
 clear message.
 
-**Implementation status:** public GitHub connect, cached-lean-design ingestion and owner-triggered
-manual sync are implemented (`POST /api/v1/repos`, `POST /api/v1/projects/:id/sync`). Webhooks,
-polling, GitLab and Gitea remain. The connect step runs synchronously and then queues
-`version.render`; it does not yet enqueue `repo.sync`.
+**Implementation status:** public GitHub connect, cached-lean-design ingestion, owner-triggered
+manual sync and signed `push` webhooks are implemented (`POST /api/v1/repos`,
+`POST /api/v1/projects/:id/sync`, `POST /webhooks/github`). Polling, GitLab and Gitea remain. Both
+connect and webhook sync run synchronously and then queue `version.render`; they do not yet enqueue
+`repo.sync`. Webhooks are verified with `X-Hub-Signature-256`, resolve the repository by numeric id,
+and only follow the default branch.
 
 ### Connecting
 

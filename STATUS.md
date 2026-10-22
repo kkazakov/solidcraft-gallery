@@ -16,7 +16,7 @@ This file records what actually runs, not what is planned. The plan remains in
 | `@gallery/git` — local repository, commit/tag, read-only GitHub client | done | 13 tests (real git + mock HTTP) |
 | `@gallery/storage` — content-addressed artifacts, atomic writes | done | 2 tests |
 | `@gallery/render` — nsjail plan, direct plan, no-shell runner | done | 12 tests |
-| `@gallery/web` — **Forgejo/GitHub OAuth**, dashboard, publish, gallery/search, public pages, GitHub connect/sync | done | end-to-end curl flow + OAuth + external tests |
+| `@gallery/web` — **Forgejo/GitHub OAuth**, dashboard, publish, gallery/search, public pages, GitHub connect/sync/webhook | done | end-to-end curl flow + OAuth/external/webhook tests |
 | `@gallery/worker` — job loop, retries, render handler (local and cached external designs) | done | 9 tests incl. two real CLI renders |
 | `craftpub` — `lean`, `validate`, `inspect` | done | fixtures and failure exits exercised |
 | Compose (Caddy, web, worker, Postgres, Forgejo, Mailpit) | config valid | web/worker images build |
@@ -47,10 +47,14 @@ Verified with a real `solidcraft-cli 0.19.0` and `fixtures/real/box.solidcraft`:
     cookie and redirects to the provider; `/auth/callback/forgejo` verifies state and PKCE, exchanges
     the code, reads the profile, upserts the user + identity and creates a session. Repeated sign-in
     reuses the same account; tampered state, open redirects and unconfigured providers fail closed.
+11. **A signed GitHub push webhook syncs and renders.** `POST /webhooks/github` verifies the HMAC over
+    the raw body, resolves the repository by numeric id and only follows the default branch. A push
+    created version `c…`, queued a render and became `ready`; a bad signature returned 401, a replay
+    returned `changed:false`, and ping returned 202.
 
 ## Not implemented (next)
 
-1. GitHub webhooks/polling (manual **Sync now** works), GitLab/Gitea sources, private external repos.
+1. GitHub polling (webhooks + manual **Sync now** work), GitLab/Gitea sources, private external repos.
 2. Persist encrypted OAuth tokens; Forgejo repository creation/push and hosted webhooks (local git is
    still the hosted backend); linking/unlinking identities.
 3. Invites, API tokens, published-project quotas.
@@ -90,8 +94,9 @@ design, wait for the preview, and use the visibility form.
 - The worker image has no `solidcraft-cli` binary yet; mounting or baking it is part of deployment.
 - Forgejo is pinned to major tag `9`; confirm the current stable tag before the first deployment.
 - Search is offset-paginated and has no synonym table; see the note in `docs/09-search.md`.
-- External sync has no webhook or polling yet and no per-user rate limit. GitHub supplies the only
-  source provider; GitLab/Gitea and private repositories return a clear unsupported error.
+- External sync runs synchronously in the web tier and has no polling or per-user rate limit.
+  Webhook delivery is deduplicated by the last synced commit, not a delivery table. GitHub supplies
+  the only source provider; GitLab/Gitea and private repositories return a clear unsupported error.
 - OAuth tokens are discarded after profile lookup; hosted repository provisioning still uses the
   local backend. Forgejo OAuth needs an app registered with the exact
   `${PUBLIC_ORIGIN}/auth/callback/forgejo` redirect. The browser and server may need different

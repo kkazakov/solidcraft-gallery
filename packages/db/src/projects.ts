@@ -476,3 +476,35 @@ export async function setRepoError(db: Database, id: string, message: string): P
     where id = ${id}
   `;
 }
+
+export async function findRepoByExternalId(db: Database, provider: string, externalId: string): Promise<Repo | null> {
+  const rows = await db<Repo[]>`
+    select
+      id, owner_id as "ownerId", provider::text as provider, external_id as "externalId",
+      url, default_branch as "defaultBranch", is_private as "isPrivate",
+      local_path as "localPath", last_commit_sha as "lastCommitSha",
+      last_synced_at as "lastSyncedAt", status::text as status, error
+    from repos
+    where provider = ${provider} and external_id = ${externalId}
+    limit 1
+  `;
+  return rows[0] ?? null;
+}
+
+export async function findProjectByRepoId(db: Database, repoId: string): Promise<Project | null> {
+  const rows = await db<Project[]>`
+    select
+      p.id, p.owner_id as "ownerId", u.username::text as "ownerUsername",
+      p.repo_id as "repoId", r.provider::text as "repoProvider", r.url as "repoUrl",
+      r.is_private as "repoPrivate", r.local_path as "localPath",
+      p.slug::text as slug, p.title, p.description, p.license,
+      p.visibility::text as visibility, p.status::text as status,
+      p.design_path as "designPath", p.tags, p.published_at as "publishedAt"
+    from projects p
+    join repos r on r.id = p.repo_id
+    join users u on u.id = p.owner_id
+    where p.repo_id = ${repoId} and p.deleted_at is null
+    limit 1
+  `;
+  return rows[0] ?? null;
+}

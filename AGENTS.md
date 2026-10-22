@@ -104,8 +104,9 @@ if (!can(project, viewer, 'view')) throw new AppError('not_found', 'No such proj
 - External GitHub designs are cached as lean bytes in artifact storage; `versions.design_key` points
   at them. The worker and downloads must not need GitHub access.
 - `SANDBOX_MODE=direct` is a development path. Production must use `nsjail` once that path is wired.
-- External sync is owner-triggered and synchronous in the web tier today; there is no webhook or
-  `repo.sync` worker yet. GitHub URLs are the only accepted source host.
+- External sync is synchronous in the web tier (manual or GitHub webhook); there is no `repo.sync`
+  worker yet. GitHub URLs are the only accepted source host. Webhooks verify the raw-body HMAC and
+  resolve the repository by numeric id, never by a payload URL.
 - `jobs.attempts` increments on claim; `failJob` needs the job's `max_attempts`, not a constant.
 - Local ports: web `8080` via Caddy (`5173` dev), Forgejo `8081`, Postgres `5432`.
 - Behind a proxy, adapter-node defaults the protocol to `https`; set `PROTOCOL_HEADER=x-forwarded-proto`

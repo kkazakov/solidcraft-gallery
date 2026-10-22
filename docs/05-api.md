@@ -297,9 +297,9 @@ Owner-only. Re-enqueues the latest failed version (`409` if it is not failed).
 
 - `POST /repos` `{url, token?}` — connect an external repository; validates access, stores the
 
-**Implementation status:** connect is `POST /api/v1/repos` and owner sync is
-`POST /api/v1/projects/:id/sync`. Webhook-secret rotation, `/repos/:id/sync` and disconnect are not
-implemented yet.
+**Implementation status:** connect is `POST /api/v1/repos`, owner sync is
+`POST /api/v1/projects/:id/sync`, and GitHub push webhooks arrive at `POST /webhooks/github`.
+Webhook-secret rotation, `/repos/:id/sync` and disconnect are not implemented yet.
   token encrypted, sets a webhook secret. Returns the repo and detected project.
 - `POST /repos/:id/sync` — enqueue `repo.sync` for HEAD; rate limit 10/hour.
 - `POST /repos/:id/webhook` — regenerate the webhook secret (owner only).
