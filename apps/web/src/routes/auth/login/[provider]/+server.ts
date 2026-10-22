@@ -1,9 +1,14 @@
 import { error } from '@sveltejs/kit';
+import { providerConfig, startOAuth, type OAuthProviderId } from '../../../../lib/server/oauth.js';
 
-const CONFIGURED = new Set(['forgejo', 'github']);
+const PROVIDERS = new Set<OAuthProviderId>(['forgejo', 'github']);
 
-/** Placeholder until the OAuth exchange lands; a clear 501 beats a broken redirect. */
-export function GET({ params }: { params: { provider: string } }) {
-  if (!CONFIGURED.has(params.provider)) throw error(404, 'Unknown provider');
-  throw error(501, `${params.provider} sign-in is not configured yet`);
+export function GET(event) {
+  const provider = event.params.provider;
+  if (!PROVIDERS.has(provider as OAuthProviderId)) throw error(404, 'Unknown provider');
+  if (!providerConfig(provider)) throw error(501, `${provider} sign-in is not configured on this instance`);
+
+  const target = startOAuth(event, provider as OAuthProviderId, event.url.searchParams.get('redirect'));
+  // SvelteKit's redirect() rejects external locations; the provider URL is external by design.
+  return new Response(null, { status: 303, headers: { location: target } });
 }

@@ -61,6 +61,15 @@ password), or an SSH key. Forgejo implements it; the site never sees or proxies 
 their repository uses the same token mechanism they would with GitHub. The site's OAuth token is a
 separate credential, stored encrypted and used only by the server.
 
+## Implementation status
+
+Forgejo and GitHub OAuth sign-in are implemented with a signed, HttpOnly transaction cookie,
+mandatory `state` and PKCE S256 (`/auth/login/:provider`, `/auth/callback/:provider`). The callback
+upserts `users` + `identities`, creates a normal session and only accepts relative redirect targets.
+Access/refresh tokens are **not persisted yet** (token encryption lands with hosted repository
+provisioning); the Forgejo `repo` scope is requested so that step can reuse the grant. Linking an
+additional provider, unlinking and account deletion remain later work.
+
 ## Sessions
 
 | Property | Value |

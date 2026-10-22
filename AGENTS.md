@@ -38,7 +38,7 @@ DATABASE_URL=postgres://gallery:gallery@localhost:5432/gallery pnpm --filter @ga
 
 | Path | Purpose |
 |---|---|
-| `apps/web` | SvelteKit SSR pages and `/api/v1` routes; the only HTTP surface |
+| `apps/web` | SvelteKit SSR pages, OAuth login/callback and `/api/v1` routes; the only HTTP surface |
 | `apps/worker` | Postgres job loop; claims jobs with `FOR UPDATE SKIP LOCKED` |
 | `packages/core` | Pure domain: manifest schema, slugs, visibility, errors, limits |
 | `packages/db` | SQL schema/migrations, query helpers, job queue and public search; the only place SQL lives |
@@ -56,6 +56,8 @@ and `design` may import `core`; no package imports an app.
 
 - Server-only code lives in `src/lib/server` or `+page.server.ts`. Never import `@gallery/db` into a
   `.svelte` file.
+- OAuth is `src/lib/server/oauth.ts`: PKCE S256 plus a signed HttpOnly transaction cookie. Never trust
+  a provider redirect target; `safeRedirect` is mandatory. Access tokens are not persisted yet.
 - Every project read/write goes through `can()` in `@gallery/core`; invisible resources are `404`,
   never `403`.
 - Validate external input with Zod at the boundary and throw `AppError` for the API envelope.
@@ -108,4 +110,8 @@ if (!can(project, viewer, 'view')) throw new AppError('not_found', 'No such proj
 - Local ports: web `8080` via Caddy (`5173` dev), Forgejo `8081`, Postgres `5432`.
 - Behind a proxy, adapter-node defaults the protocol to `https`; set `PROTOCOL_HEADER=x-forwarded-proto`
   (compose does) or form POSTs fail SvelteKit's origin check.
+- SvelteKit 3's `redirect()` refuses external URLs. The OAuth start route returns a raw `303` with a
+  `location` header; callback redirects stay relative.
+- Forgejo needs two URLs: browser-facing `FORGEJO_PUBLIC_URL` (authorize) and server-to-server
+  `FORGEJO_INTERNAL_URL` (token/profile; `http://forgejo:3000` in compose).
 - Prettier cannot parse Dockerfiles/Caddyfile; they are in `.prettierignore` on purpose.

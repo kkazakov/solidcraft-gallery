@@ -41,7 +41,8 @@ All configuration is environment variables. Secrets are mounted as files in prod
 | `SESSION_SECRET` | yes | — | 32+ bytes; rotates sessions on change |
 | `TOKEN_ENC_KEY` | yes | — | base64 32 bytes; AES-256-GCM for provider tokens |
 | `SIGNED_URL_SECRET` | yes | — | HMAC for private media |
-| `FORGEJO_URL` | yes | — | `https://git.gallery.example` |
+| `FORGEJO_PUBLIC_URL` | yes | — | browser-facing `https://git.gallery.example` |
+| `FORGEJO_INTERNAL_URL` | no | public URL | server-to-server URL, e.g. `http://forgejo:3000` |
 | `FORGEJO_CLIENT_ID` / `_SECRET` | yes | — | OAuth2 app |
 | `FORGEJO_ADMIN_TOKEN` | no | — | provisioning fallback; scoped, rotatable |
 | `GITHUB_CLIENT_ID` / `_SECRET` | yes | — | external repos |

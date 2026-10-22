@@ -1,6 +1,6 @@
 # Implementation status
 
-**Updated:** 2026-10-22 · **Milestone:** M0 complete, M1 slice + gallery + GitHub sources · **Next:** webhooks, Forgejo OAuth, nsjail
+**Updated:** 2026-10-22 · **Milestone:** M0 complete, M1 slice + gallery + GitHub sources + OAuth · **Next:** webhooks, hosted Forgejo repos, nsjail
 
 This file records what actually runs, not what is planned. The plan remains in
 [README.md](README.md) and [docs/14-roadmap.md](docs/14-roadmap.md).
@@ -12,11 +12,11 @@ This file records what actually runs, not what is planned. The plan remains in
 | pnpm workspace, TypeScript, ESLint, Prettier, Vitest | done | `pnpm lint`, `pnpm check`, `pnpm test` |
 | `@gallery/core` — manifest, slugs, visibility, errors, limits, session tokens | done | 33 unit tests |
 | `@gallery/design` — read ZIP/JSON, strip `cache/*`, real fixture | done | 11 unit tests |
-| `@gallery/db` — schema, migrations, queue, users/sessions, projects/versions, search, external repos | done | 16 integration tests on PostgreSQL 16 |
+| `@gallery/db` — schema, migrations, queue, users/identities/sessions, projects/versions, search, external repos | done | 19 integration tests on PostgreSQL 16 |
 | `@gallery/git` — local repository, commit/tag, read-only GitHub client | done | 13 tests (real git + mock HTTP) |
 | `@gallery/storage` — content-addressed artifacts, atomic writes | done | 2 tests |
 | `@gallery/render` — nsjail plan, direct plan, no-shell runner | done | 12 tests |
-| `@gallery/web` — auth, dashboard, publish, **gallery/search**, public pages, **GitHub connect/sync** | done | end-to-end curl flow + 1 integration test |
+| `@gallery/web` — **Forgejo/GitHub OAuth**, dashboard, publish, gallery/search, public pages, GitHub connect/sync | done | end-to-end curl flow + OAuth + external tests |
 | `@gallery/worker` — job loop, retries, render handler (local and cached external designs) | done | 9 tests incl. two real CLI renders |
 | `craftpub` — `lean`, `validate`, `inspect` | done | fixtures and failure exits exercised |
 | Compose (Caddy, web, worker, Postgres, Forgejo, Mailpit) | config valid | web/worker images build |
@@ -43,16 +43,21 @@ Verified with a real `solidcraft-cli 0.19.0` and `fixtures/real/box.solidcraft`:
    the project/version and queues a render. The worker renders from `versions.design_key` without
    any local clone. `POST /api/v1/projects/:id/sync` fetches a newer commit and queues it; the same
    commit is a no-op.
+10. **OAuth sign-in works end to end.** `/auth/login/forgejo` sets a signed PKCE/state transaction
+    cookie and redirects to the provider; `/auth/callback/forgejo` verifies state and PKCE, exchanges
+    the code, reads the profile, upserts the user + identity and creates a session. Repeated sign-in
+    reuses the same account; tampered state, open redirects and unconfigured providers fail closed.
 
 ## Not implemented (next)
 
 1. GitHub webhooks/polling (manual **Sync now** works), GitLab/Gitea sources, private external repos.
-2. Forgejo OAuth login (dev sign-in exists), invites, API tokens.
-3. Forgejo repository creation/push; the local backend is the current hosted backend.
+2. Persist encrypted OAuth tokens; Forgejo repository creation/push and hosted webhooks (local git is
+   still the hosted backend); linking/unlinking identities.
+3. Invites, API tokens, published-project quotas.
 4. `repo.sync` / `version.ingest` queue handlers (external sync currently runs synchronously in web).
 5. nsjail wiring in the worker image; the direct renderer is development-only.
 6. Cursor pagination (search/home use `?page=N`), sync rate limits, featured-content admin UI.
-7. Pre-receive lean hook, quotas, moderation and reports.
+7. Pre-receive lean hook, moderation and reports.
 
 ## Quick start
 
@@ -87,6 +92,10 @@ design, wait for the preview, and use the visibility form.
 - Search is offset-paginated and has no synonym table; see the note in `docs/09-search.md`.
 - External sync has no webhook or polling yet and no per-user rate limit. GitHub supplies the only
   source provider; GitLab/Gitea and private repositories return a clear unsupported error.
+- OAuth tokens are discarded after profile lookup; hosted repository provisioning still uses the
+  local backend. Forgejo OAuth needs an app registered with the exact
+  `${PUBLIC_ORIGIN}/auth/callback/forgejo` redirect. The browser and server may need different
+  Forgejo URLs (`FORGEJO_PUBLIC_URL` vs `FORGEJO_INTERNAL_URL`).
 - The GitHub API base is injectable for tests (`GITHUB_API_BASE`/`GITHUB_RAW_BASE`); production
   uses github.com. The design is cached, so a deleted upstream repo leaves the site working.
 - The public GitHub repository is private while the scaffold is in flux.

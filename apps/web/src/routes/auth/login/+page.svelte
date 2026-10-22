@@ -14,12 +14,21 @@
   </p>
 
   <div style="display: grid; gap: 10px">
-    <a class="button" href="/auth/login/forgejo">Continue with Forgejo</a>
-    <a class="button" href="/auth/login/github">Continue with GitHub</a>
+    {#each data.providers as provider (provider.id)}
+      {#if provider.configured}
+        <a class="button" href={`/auth/login/${provider.id}?redirect=${encodeURIComponent(data.redirect)}`}>
+          Continue with {provider.label}
+        </a>
+      {:else}
+        <span class="button" style="opacity: 0.55; cursor: not-allowed">
+          Continue with {provider.label} (not configured)
+        </span>
+      {/if}
+    {/each}
   </div>
 
   <p style="color: var(--muted); font-size: 13px; margin-top: 16px">
-    Provider sign-in is being wired in M1. If it is not configured on this instance, use the development sign-in below.
+    Provider sign-in uses OAuth with PKCE. The development sign-in is available only outside production.
   </p>
 
   {#if data.devLogin}
