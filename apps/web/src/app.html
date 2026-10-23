@@ -86,5 +86,29 @@
         init();
       })();
     </script>
+    <!-- The footer renders the build time in UTC; show it in the visitor's zone instead. -->
+    <script>
+      (() => {
+        const time = document.querySelector('time[data-site-updated]');
+        if (!time) return;
+        const instant = new Date(time.getAttribute('datetime') || '');
+        if (Number.isNaN(instant.getTime())) return;
+        try {
+          const parts = new Intl.DateTimeFormat('en-GB', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hourCycle: 'h23',
+            timeZoneName: 'short',
+          }).formatToParts(instant);
+          const part = (type) => parts.find((candidate) => candidate.type === type)?.value || '';
+          time.textContent = `${part('hour')}:${part('minute')} ${part('timeZoneName')}, ${part('day')} ${part('month')} ${part('year')}`;
+        } catch {
+          // Keep the server-rendered UTC value.
+        }
+      })();
+    </script>
   </body>
 </html>

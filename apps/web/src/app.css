@@ -1422,6 +1422,16 @@ select:disabled {
   gap: 14px;
 }
 
+.footer-updated {
+  justify-content: flex-end;
+  margin-top: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.footer-updated time {
+  white-space: nowrap;
+}
+
 .site-footer a {
   color: var(--muted);
   text-decoration: none;
