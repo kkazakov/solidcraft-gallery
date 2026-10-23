@@ -189,7 +189,11 @@ export const de: Dictionary = {
   'login.heading': 'Anmelden',
   'login.intro': 'Nutzen Sie Ihr Forgejo-Konto, um Designs zu veröffentlichen und Ihre Projekte zu verwalten.',
   'login.inviteOnly':
-    'Diese Instanz ist nur mit Einladung zugänglich. Bitten Sie einen Administrator um einen Einladungslink.',
+    'Diese Beta ist nur auf Einladung zugänglich. Geben Sie unten Ihren Code ein oder öffnen Sie den erhaltenen Link.',
+  'login.inviteLabel': 'Einladungscode',
+  'login.inviteRequiredHint': '(für neue Konten erforderlich)',
+  'login.inviteOptionalHint': '(optional)',
+  'login.invitePlaceholder': 'Beta-Einladung einfügen',
   'login.continueWith': 'Weiter mit {provider}',
   'login.notConfigured': 'Anmeldung mit {provider} ist nicht konfiguriert',
   'login.oauthNote': 'Die Anmeldung nutzt OAuth mit PKCE. Sie bleiben in diesem Browser angemeldet.',

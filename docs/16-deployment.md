@@ -200,6 +200,10 @@ the invitee opens (`${PUBLIC_ORIGIN}/auth/login?invite=<code>`); `./scripts/new-
 `./scripts/new-invite.sh revoke <id>` map to the CLI. The raw code is printed once — the gallery
 stores only its SHA-256 hash.
 
+The invitee can either open that link or enter the code in the **Invite code** field on the sign-in
+page; both forward the code into the Forgejo OAuth start URL, and the account is created when the
+provider round trip completes. The field is a plain `GET` form, so it works without JavaScript.
+
 ## HTTPS cutover
 
 ### Direct Caddy certificates

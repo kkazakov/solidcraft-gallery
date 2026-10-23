@@ -16,8 +16,9 @@ GitHub account ───OAuth───┘         └──► api_tokens (CLI)
 - The identity table still supports Forgejo and GitHub rows; only Forgejo is offered at sign-in.
   `identities` is unique on `(provider, subject)`.
 - The first sign-in creates the user. When `INVITE_REQUIRED=1`, an invite is required unless the
-  account is allowlisted. The sign-in page no longer shows a code field; invite links carry the
-  code as `?invite=` into the provider start URL.
+  account is allowlisted. The sign-in page shows an invite code field under a `GET` form, so the
+  code is applied without JavaScript; invite links also carry it as `?invite=` into the provider
+  start URL.
 - Username: the provider handle, normalized to `[a-z0-9-]`, 3–32 chars; collisions get `-2`, `-3`.
   Usernames are permanent in v1 (URLs depend on them).
 - Email is stored if the provider returns one; it is never shown publicly and is not a login key.
@@ -174,8 +175,10 @@ shown once by `pnpm invites create`; OAuth carries only its hash in the signed t
 Self-registration is a Forgejo setting: with `FORGEJO_DISABLE_REGISTRATION=false`, the gallery login
 links to `${FORGEJO_PUBLIC_URL}/user/sign_up`. The gallery invite gate is independent; set
 `INVITE_REQUIRED=0` to let any Forgejo account in. Existing identities and provider usernames in
-`ADMIN_USERNAMES` sign in without a code. Invite links are passed as `?invite=` on the login URL and
-forwarded into the OAuth start URL; there is no visible invite input.
+`ADMIN_USERNAMES` sign in without a code. The login page shows an invite code field whenever
+`INVITE_REQUIRED=1` (or a code is already in the URL); submitting it forwards the code into the OAuth
+start URL as `?invite=`, and invite links fill the same field. The field is a plain `GET` form, so it
+works with `csr = false`; there is still no separate "redeem" endpoint.
 `ADMIN_USERNAMES` is applied on every sign-in (including dev sign-in) and is the bootstrap path;
 there is no web admin UI or audit entry yet.
 

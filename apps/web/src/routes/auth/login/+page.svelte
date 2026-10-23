@@ -4,11 +4,9 @@
   let { data } = $props();
   const { t } = getI18n();
 
-  function providerHref(id: string): string {
-    const params = new URLSearchParams({ redirect: data.redirect });
-    if (data.invite) params.set('invite', data.invite);
-    return `/auth/login/${id}?${params.toString()}`;
-  }
+  // Enter in the invite field submits to the default provider's start URL.
+  const defaultProvider = $derived(data.providers.find((provider) => provider.configured));
+  const formAction = $derived(defaultProvider ? `/auth/login/${defaultProvider.id}` : '/auth/login');
 </script>
 
 <svelte:head>
@@ -23,19 +21,42 @@
     <p class="notice">{t('login.inviteOnly')}</p>
   {/if}
 
-  <div class="auth-providers">
-    {#each data.providers as provider (provider.id)}
-      {#if provider.configured}
-        <a class="button block" href={providerHref(provider.id)}>
-          {t('login.continueWith', { provider: provider.label })}
-        </a>
-      {:else}
-        <span class="button block disabled" aria-disabled="true">
-          {t('login.notConfigured', { provider: provider.label })}
+  <form method="GET" action={formAction} class="form-stack">
+    <input type="hidden" name="redirect" value={data.redirect} />
+
+    {#if data.inviteRequired || data.invite}
+      <label class="field" for="invite">
+        <span>
+          {t('login.inviteLabel')}
+          <span class="field-hint">
+            {data.inviteRequired ? t('login.inviteRequiredHint') : t('login.inviteOptionalHint')}
+          </span>
         </span>
-      {/if}
-    {/each}
-  </div>
+        <input
+          id="invite"
+          name="invite"
+          value={data.invite}
+          autocomplete="off"
+          spellcheck="false"
+          placeholder={t('login.invitePlaceholder')}
+        />
+      </label>
+    {/if}
+
+    <div class="auth-providers">
+      {#each data.providers as provider (provider.id)}
+        {#if provider.configured}
+          <button class="button block" type="submit" formaction={`/auth/login/${provider.id}`}>
+            {t('login.continueWith', { provider: provider.label })}
+          </button>
+        {:else}
+          <span class="button block disabled" aria-disabled="true">
+            {t('login.notConfigured', { provider: provider.label })}
+          </span>
+        {/if}
+      {/each}
+    </div>
+  </form>
 
   <p class="auth-note">{t('login.oauthNote')}</p>
 
