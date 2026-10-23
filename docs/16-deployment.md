@@ -195,16 +195,20 @@ docker compose -f compose.yaml --env-file .env exec -T web \
   pnpm invites create --by gallery-admin --note "beta" --uses 5 --days 30
 ```
 
-From a workstation checkout, `./scripts/new-invite.sh` wraps the same call and prints the login link
-the invitee opens (`${PUBLIC_ORIGIN}/auth/login?invite=<code>`); `./scripts/new-invite.sh list` and
-`./scripts/new-invite.sh revoke <id>` map to the CLI. The raw code is printed once — the gallery
+From a workstation checkout, `./scripts/new-invite.sh` wraps the same call and prints the registration
+link the invitee opens (`${PUBLIC_ORIGIN}/auth/register?invite=<code>`); `./scripts/new-invite.sh list`
+and `./scripts/new-invite.sh revoke <id>` map to the CLI. The raw code is printed once — the gallery
 stores only its SHA-256 hash.
 
-The invitee opens `https://solidcraft.drun.net/auth/register?invite=<code>` (also linked from the sign-in
-page as **Have an invite? Create your account**) and chooses a Forgejo username, an optional email and a
-password. The gallery creates the Forgejo account with `FORGEJO_ADMIN_TOKEN`, consumes the invite, links
-the `forgejo` identity in the same transaction and sends the user to `/auth/login?registered=1` to sign
-in. Forgejo sign-up itself stays closed; the invite is the only way in.
+The invitee opens that link (also linked from the sign-in page as **Create your account with an
+invite**) and chooses a Forgejo username, an optional email and a password. The gallery creates the
+Forgejo account with `FORGEJO_ADMIN_TOKEN`, consumes the invite, links the `forgejo` identity in the
+same transaction and sends the user to `/auth/login?registered=1` to sign in. Forgejo sign-up itself
+stays closed; the invite is the only way in.
+
+The **Invite code** field on the sign-in page is for the other case: a person who already has a
+Forgejo account (created earlier, or provisioned by hand) but no gallery identity. It cannot create a
+provider account, so new people must use the registration page.
 
 Manual provisioning is the fallback — for example when the invite holder should not choose the password:
 

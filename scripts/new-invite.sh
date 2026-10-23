@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Create a beta invite on the deployed gallery and print a ready-to-share login link.
+# Create a beta invite on the deployed gallery and print a ready-to-share registration link.
 #
 #   ./scripts/new-invite.sh                                  # 1 use, 14 days
 #   ./scripts/new-invite.sh --note "beta wave 1" --uses 5 --days 30
@@ -7,7 +7,7 @@
 #   ./scripts/new-invite.sh revoke <invite-id>
 #
 # `pnpm invites create` prints only the code; the link the invitee actually
-# opens is `${PUBLIC_ORIGIN}/auth/login?invite=<code>`. This wrapper runs the
+# opens is `${PUBLIC_ORIGIN}/auth/register?invite=<code>`. This wrapper runs the
 # CLI inside the deployed web container over SSH (the database is loopback-only
 # on the host) and builds that link.
 #
@@ -30,7 +30,7 @@ Usage: ./scripts/new-invite.sh [create] [--by USER] [--note TEXT] [--uses N] [--
        ./scripts/new-invite.sh revoke <invite-id>
        ./scripts/new-invite.sh --help
 
-  create   (default) create an invite and print its login link. The raw code is
+  create   (default) create an invite and print its registration link. The raw code is
            printed once; the gallery stores only its SHA-256 hash.
   list     list invites with state, uses and note.
   revoke   revoke an invite by id; accounts that already used it stay.
@@ -105,7 +105,7 @@ case "$action" in
     }
 
     printf 'invite  %s\n' "${invite_id:-unknown}"
-    printf 'link    %s/auth/login?invite=%s\n' "${PUBLIC_ORIGIN%/}" "$code"
+    printf 'link    %s/auth/register?invite=%s\n' "${PUBLIC_ORIGIN%/}" "$code"
     printf 'the code is shown once; send the link before closing this terminal\n'
     ;;
   list)

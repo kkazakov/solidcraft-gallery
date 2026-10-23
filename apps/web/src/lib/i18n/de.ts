@@ -189,13 +189,12 @@ export const de: Dictionary = {
   'login.heading': 'Anmelden',
   'login.intro': 'Nutzen Sie Ihr Forgejo-Konto, um Designs zu veröffentlichen und Ihre Projekte zu verwalten.',
   'login.inviteOnly':
-    'Diese Beta ist nur auf Einladung zugänglich. Geben Sie unten Ihren Code ein oder öffnen Sie den erhaltenen Link.',
+    'Dieser Code wurde nicht akzeptiert. Prüfen Sie ihn oder erstellen Sie ein Konto mit einer neuen Einladung.',
   'login.inviteLabel': 'Einladungscode',
-  'login.inviteRequiredHint': '(für neue Konten erforderlich)',
+  'login.inviteRequiredHint': '(für ein bestehendes Forgejo-Konto)',
   'login.inviteOptionalHint': '(optional)',
   'login.invitePlaceholder': 'Beta-Einladung einfügen',
-  'login.operatorAccounts':
-    'Für die Beta brauchen Sie ein vom Betreiber angelegtes Konto und einen Einladungscode. Fragen Sie einen Administrator, wenn eines fehlt.',
+  'login.betaInviteOnly': 'Diese Beta ist nur auf Einladung zugänglich.',
   'login.continueWith': 'Weiter mit {provider}',
   'login.notConfigured': 'Anmeldung mit {provider} ist nicht konfiguriert',
   'login.oauthNote': 'Die Anmeldung nutzt OAuth mit PKCE. Sie bleiben in diesem Browser angemeldet.',
@@ -208,7 +207,7 @@ export const de: Dictionary = {
   'login.username': 'Benutzername',
   'login.signIn': 'Anmelden',
   'login.registered': 'Konto erstellt. Melden Sie sich mit Ihrem neuen Forgejo-Konto an.',
-  'login.createWithInvite': 'Sie haben eine Einladung? Konto erstellen',
+  'login.createWithInvite': 'Konto mit einer Einladung erstellen',
 
   'register.title': 'Beta-Konto erstellen — SolidCraft Gallery',
   'register.heading': 'Beta-Konto erstellen',
