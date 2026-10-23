@@ -5,6 +5,10 @@ services:
     build:
       context: ..
       dockerfile: apps/web/Dockerfile
+      args:
+        # SvelteKit bakes paths.origin into the build; it is what CSRF
+        # compares form Origin headers against behind the TLS proxy.
+        PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:?PUBLIC_ORIGIN is required}
 
   worker:
     build:

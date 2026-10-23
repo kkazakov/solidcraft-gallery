@@ -18,6 +18,7 @@ export const en = {
   'common.privacy': 'Privacy',
   'common.github': 'GitHub',
   'common.footerNote': 'Built in the open. Designs remain the property of their authors.',
+  'common.updated': 'Updated:',
   'common.breadcrumb': 'Breadcrumb',
   'common.pagination': 'Pagination',
   'common.designDetails': 'Design details',

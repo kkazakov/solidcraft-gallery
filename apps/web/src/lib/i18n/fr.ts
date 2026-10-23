@@ -17,6 +17,7 @@ export const fr: Dictionary = {
   'common.privacy': 'Confidentialité',
   'common.github': 'GitHub',
   'common.footerNote': 'Construit en plein jour. Les designs restent la propriété de leurs auteurs.',
+  'common.updated': 'Mis à jour :',
   'common.breadcrumb': "Fil d'Ariane",
   'common.pagination': 'Pagination',
   'common.designDetails': 'Détails du design',

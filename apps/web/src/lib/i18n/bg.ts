@@ -17,6 +17,7 @@ export const bg: Dictionary = {
   'common.privacy': 'Поверителност',
   'common.github': 'GitHub',
   'common.footerNote': 'Създадено открито. Дизайните остават собственост на техните автори.',
+  'common.updated': 'Обновено:',
   'common.breadcrumb': 'Навигационна пътека',
   'common.pagination': 'Страниране',
   'common.designDetails': 'Данни за дизайна',

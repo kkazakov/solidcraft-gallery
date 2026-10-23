@@ -59,9 +59,12 @@ back button works.
 | Featured | 3 projects, admin-selected, with large cards |
 | Recent | 12 newest public projects |
 | Popular tags | Top 20 tags with counts |
-| Footer | About, terms, privacy, source, status |
+| Footer | About, terms, privacy, source, and the build time (“Updated: 11:55 CEST, 23 Oct 2026”) |
 
 Empty instance: a single card explaining how to publish the first design.
+
+The footer’s “Updated” time is the bundle build time, inlined by `apps/web/vite.config.ts`. Server
+rendering prints it in UTC; the inline script in `app.html` rewrites it to the visitor’s zone.
 
 ### Search `/search`
 

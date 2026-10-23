@@ -17,6 +17,7 @@ export const de: Dictionary = {
   'common.privacy': 'Datenschutz',
   'common.github': 'GitHub',
   'common.footerNote': 'Offen gebaut. Designs bleiben Eigentum ihrer Autoren.',
+  'common.updated': 'Aktualisiert:',
   'common.breadcrumb': 'Brotkrume',
   'common.pagination': 'Seitennummerierung',
   'common.designDetails': 'Design-Details',

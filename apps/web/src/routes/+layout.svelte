@@ -76,4 +76,10 @@
       <a href="https://github.com/tangency-labs/solidcraft">SolidCraft</a>
     </nav>
   </div>
+  <div class="shell footer-updated">
+    <span>
+      {t('common.updated')}
+      <time datetime={data.siteUpdated.iso} data-site-updated>{data.siteUpdated.label}</time>
+    </span>
+  </div>
 </footer>
