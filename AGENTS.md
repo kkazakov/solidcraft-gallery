@@ -8,7 +8,8 @@ TypeScript 6, PostgreSQL 16, Forgejo, Vitest. You are implementing and reviewing
 read `docs/00-decisions.md` before changing a contract. Refer to this project as “SolidCraft Gallery”.
 
 This repository contains the working implementation; [STATUS.md](STATUS.md) is the current source of
-truth for what runs. The GitHub repository is public.
+truth for what runs. The GitHub repository is public. Epics and tasks are tracked on the
+[SolidCraft Gallery board](https://github.com/users/kkazakov/projects/3).
 
 ## 2. Commands
 
@@ -30,6 +31,13 @@ pnpm craftpub lean fixtures/box.cached.solidcraft --out /tmp/lean.solidcraft
 pnpm invites create --by <admin> --note <text> --uses <n> --days <n>
 docker compose -f infra/compose.yaml up -d --build
 docker compose -f infra/compose.yaml config --quiet
+
+# GitHub project board: "SolidCraft Gallery" (user project 3)
+gh auth refresh -s project,read:project    # one-time; gh project needs this scope
+gh project item-list 3 --owner kkazakov --format json
+gh project item-add 3 --owner kkazakov --url <issue-or-pr-url>
+gh project item-edit 3 --owner kkazakov --url <issue-or-pr-url> --field Status --value "In progress"
+gh project item-create 3 --owner kkazakov --title "<task>" --body "<epic and acceptance criteria>"
 ```
 
 Local database for integration tests:
@@ -68,6 +76,34 @@ and `design` may import `core`; no package imports an app.
 - **Never open or merge a pull request into `main` unless the user explicitly asks for it.** No
   automatic merges, no "merge when green".
 - This policy applies to every change, including documentation and this file.
+
+### GitHub project (epics and tasks)
+
+- The board is the **SolidCraft Gallery** project,
+  [user project `3`](https://github.com/users/kkazakov/projects/3): `Backlog` → `Ready` →
+  `In progress` → `In review` → `Done`. It is the source of truth for planned and in-flight work;
+  `STATUS.md` remains the source of truth for what runs.
+- Epics are issues labelled `epic` (create the label if it is missing); tasks are sub-issues. Both
+  are board items. Every epic and task exists on the board before its code is written — no shadow
+  TODO lists in chat, docs or commit messages.
+- Move a task to `In progress`, assign it, and branch from `main` before starting.
+- Plan explicit **test tasks** with every epic and task — unit, DB integration, route/API, e2e or
+  manual as applicable. They are board items too, and they are created before the implementation,
+  not after it.
+- After every successful task, update the board **in the same turn**: set the item to `Done` and add
+  a comment with the branch, commit SHA, and the exact verification commands and results. Do not
+  report the task as complete while the board still shows it open.
+- Blocked or partial work stays in `In progress` / `In review` with a comment on what remains. Move
+  an item to `Done` only when all of its test tasks are `Done`.
+
+### Definition of done
+
+1. The issue's acceptance criteria are met.
+2. Test tasks exist and pass: `pnpm test`, plus `pnpm --filter <workspace> test` for the touched
+   package and `DATABASE_URL=… pnpm --filter @gallery/db test` when SQL changed.
+3. `pnpm check` and `pnpm lint` pass.
+4. Visual changes refreshed `docs/screenshots/` and their README embeds.
+5. The branch is pushed and the board item is `Done` with the verification comment.
 
 ### Code
 
@@ -114,6 +150,10 @@ if (!can(project, viewer, 'view')) throw new AppError('not_found', 'No such proj
 - NEVER push to an external repository; the site is read-only for bring-your-own git.
 - NEVER change a decision in `docs/00-decisions.md`; add a superseding decision instead.
 - DO NOT change the schema without a migration, a test, and a corresponding doc update.
+- NEVER mark a board item `Done` while any of its test tasks is open, a test fails, or `pnpm check`
+  fails.
+- NEVER report a successful task without updating project `3`; a task is only complete when the board
+  says `Done`.
 - REQUIRE HUMAN CONFIRMATION for: rotating secrets, changing the GitHub repository visibility,
   deleting data, major dependency upgrades, and editing `.github/workflows`.
 
@@ -132,6 +172,14 @@ if (!can(project, viewer, 'view')) throw new AppError('not_found', 'No such proj
 - The GitHub repository is public. Staging credentials live only in `/tmp/gallery-staging.env` and
   `/tmp/forgejo-admin-*`; never copy them into the repo or screenshots. The Compose defaults keep
   registration closed and invites required.
+- The board is user-owned project `3` and private; it is not attached to the repository. `gh project`
+  needs the `project` scope (`gh auth refresh -s project,read:project`); with only `repo` it fails
+  with "missing required scopes [read:project]".
+- Moving a card means updating its `Status` field; there is no move API. Use
+  `gh project item-edit 3 --owner kkazakov --url <issue-url> --field Status --value "In progress"`.
+  Status names are case-sensitive — `In progress` and `In review`, not `In Progress`.
+- `gh project item-add` accepts issue/PR URLs only; use `item-create` for a draft task. Drafts have
+  no issue, so put the epic and acceptance criteria in the body and edit them by `--id`.
 - SvelteKit 3 has **no `svelte.config.js`** and **no `$lib` alias**. Pass `adapter` and `preprocess`
   to `sveltekit({...})` in `vite.config.ts`; import `Handle` from `@sveltejs/kit/hooks`; use relative
   imports for local server modules; `tsconfig.json` extends `"$app/tsconfig"`.
