@@ -2,6 +2,10 @@
   import DesignCard from '../lib/components/DesignCard.svelte';
 
   let { data } = $props();
+
+  const publishHref = $derived(
+    data.viewer ? '/dashboard/projects/new' : '/auth/login?redirect=%2Fdashboard%2Fprojects%2Fnew',
+  );
 </script>
 
 <svelte:head>
@@ -33,7 +37,7 @@
   </form>
 
   <div class="actions">
-    <a class="button" href="/auth/login">Publish a design</a>
+    <a class="button" href={publishHref}>Publish a design</a>
     <a class="quiet-link" href="/about">How it works</a>
   </div>
 </section>
@@ -53,7 +57,7 @@
         The first projects are on their way. Sign in, create a hosted project, publish a
         <code>.solidcraft</code> file and set it public once its preview is ready.
       </p>
-      <p class="form-message"><a class="button primary" href="/auth/login">Start a project</a></p>
+      <p class="form-message"><a class="button primary" href={publishHref}>Start a project</a></p>
     </article>
   </section>
 {:else}

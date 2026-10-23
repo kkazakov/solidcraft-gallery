@@ -117,28 +117,35 @@ private information.
 
 ### Dashboard `/dashboard`
 
-- “Your projects” table/cards: title, status, visibility, latest version, updated, actions.
-- “Connected repositories”: provider icon, URL, last sync, error state, “Sync now”.
-- “Create” split button: upload a design / connect a repository.
-- Empty state: two cards with the two paths.
+One job: show the owner's projects and the way to add one.
+
+- “Your projects”: title, slug, visibility and status; each row opens the edit page.
+- A single **Create project** button in the page header; **Sign out** stays beside it.
+- Empty state repeats the create action. No inline create or connect forms.
 
 ### New project `/dashboard/projects/new`
 
-Two tabs:
+One form, one submit:
 
-1. **Upload** — drag a `.solidcraft` (≤ 25 MB), title, slug, visibility, license; the server strips
-   the cache, creates the repo and commits.
-2. **Connect repository** — paste an HTTPS URL; preview detected title/design/license; confirm.
-
-Errors are inline and specific (`design_too_large`, `license_required`, `repo_private`).
+- Title, description, `.solidcraft` file (≤ 25 MB), and version tag.
+- Visibility: private or public. Public shows the license picker.
+- License: GitHub's 13 common licenses; the picker is disabled while private. Required for public.
+- Slugs are derived from the title on the server; there is no slug input.
+- Submitting creates the repository, commits the design, queues the render and redirects to the edit
+  page. A public project stays hidden until its preview is ready.
+- A collapsed **Import a public GitHub repository** panel keeps the read-only external-repo path.
+- Errors name the field and stay on the page (`Title must be…`, `Choose a license…`).
 
 ### Project settings `/dashboard/projects/[id]`
 
-- Metadata form (title, description, tags, license, cover).
-- Visibility radio group with consequences spelled out.
-- Publish panel: file drop, optional tag, message, progress.
-- Versions list with status/error/retry.
-- Danger zone: delete (type slug), export repository.
+- **Project details**: title, description, visibility and license in one form. Unlisted remains
+  available for existing projects.
+- **Upload a new version**: file and version tag; the new version becomes active when its render is
+  ready.
+- **Versions**: status, date, error reason, an **active** marker, and **Set active** for any other
+  ready version. The public page and downloads follow the active version.
+- GitHub projects show the sync panel instead of the upload form.
+- Danger zone, covers and tags are not part of this slice.
 
 ### Admin
 

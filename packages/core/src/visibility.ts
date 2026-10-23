@@ -45,18 +45,22 @@ export function can(project: ProjectAccess, viewer: Viewer | null, action: Actio
 export interface VisibilityChangeInput {
   from: Visibility;
   to: Visibility;
-  hasReadyVersion: boolean;
+  hasVersion: boolean;
   license: string | null;
 }
 
 export type VisibilityChange = { ok: true } | { ok: false; reason: string };
 
-/** Rules from docs/03-repo-format.md: public needs a ready version and a license. */
+/**
+ * Rules from docs/03-repo-format.md: a public project needs a published version
+ * and a license. The version may still be rendering; the public listing and the
+ * project page stay hidden until it is ready.
+ */
 export function canChangeVisibility(input: VisibilityChangeInput): VisibilityChange {
   if (input.from === input.to) return { ok: true };
 
   if (input.to === 'public') {
-    if (!input.hasReadyVersion) return { ok: false, reason: 'a public project needs a ready version' };
+    if (!input.hasVersion) return { ok: false, reason: 'a public project needs a published version' };
     if (!input.license) return { ok: false, reason: 'a public project needs an SPDX license' };
   }
 

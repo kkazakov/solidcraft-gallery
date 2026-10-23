@@ -43,22 +43,22 @@ describe('can', () => {
 });
 
 describe('canChangeVisibility', () => {
-  it('requires a ready version and a license to go public', () => {
-    expect(canChangeVisibility({ from: 'private', to: 'public', hasReadyVersion: false, license: 'MIT' })).toEqual({
+  it('requires a published version and a license to go public', () => {
+    expect(canChangeVisibility({ from: 'private', to: 'public', hasVersion: false, license: 'MIT' })).toEqual({
       ok: false,
-      reason: 'a public project needs a ready version',
+      reason: 'a public project needs a published version',
     });
-    expect(canChangeVisibility({ from: 'private', to: 'public', hasReadyVersion: true, license: null })).toEqual({
+    expect(canChangeVisibility({ from: 'private', to: 'public', hasVersion: true, license: null })).toEqual({
       ok: false,
       reason: 'a public project needs an SPDX license',
     });
-    expect(canChangeVisibility({ from: 'private', to: 'public', hasReadyVersion: true, license: 'MIT' })).toEqual({
+    expect(canChangeVisibility({ from: 'private', to: 'public', hasVersion: true, license: 'MIT' })).toEqual({
       ok: true,
     });
   });
 
   it('allows narrowing without conditions', () => {
-    expect(canChangeVisibility({ from: 'public', to: 'unlisted', hasReadyVersion: false, license: null })).toEqual({
+    expect(canChangeVisibility({ from: 'public', to: 'unlisted', hasVersion: false, license: null })).toEqual({
       ok: true,
     });
   });

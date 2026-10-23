@@ -60,5 +60,31 @@
   </head>
   <body data-sveltekit-preload-data="hover">
     <div style="display: contents">%sveltekit.body%</div>
+    <!-- Progressive enhancement only; every form still works without JavaScript. -->
+    <script>
+      (() => {
+        function sync(form) {
+          const select = form.querySelector('[data-license-select]');
+          const visibility = form.querySelector('[data-visibility-select]');
+          if (!select || !visibility) return;
+          const disabled = visibility.value === 'private';
+          select.disabled = disabled;
+          const field = select.closest('[data-license-field]');
+          if (field) field.classList.toggle('is-disabled', disabled);
+        }
+
+        function init() {
+          document.querySelectorAll('form[data-visibility-form]').forEach(sync);
+        }
+
+        document.addEventListener('change', (event) => {
+          const target = event.target;
+          if (!(target instanceof Element)) return;
+          const form = target.closest('form[data-visibility-form]');
+          if (form) sync(form);
+        });
+        init();
+      })();
+    </script>
   </body>
 </html>

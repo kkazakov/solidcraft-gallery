@@ -11,7 +11,8 @@ import {
   listProjectsForOwner,
   markVersionReady,
   markVersionRendering,
-  updateProjectTitle,
+  setActiveVersion,
+  updateProjectDetails,
   upsertArtifact,
 } from '../src/projects.js';
 import { ensureDevUser } from '../src/users.js';
@@ -64,10 +65,11 @@ maybe('projects and versions (integration)', () => {
     expect(await countProjectsForOwner(db, ownerId)).toBeGreaterThanOrEqual(1);
   });
 
-  it('renames a project title without touching its slug', async () => {
-    await updateProjectTitle(db, projectId, 'Renamed case');
+  it('renames a project without touching its slug', async () => {
+    await updateProjectDetails(db, projectId, 'Renamed case', 'A case for a small board.');
     const renamed = await findProjectByOwnerSlug(db, username, slug);
     expect(renamed?.title).toBe('Renamed case');
+    expect(renamed?.description).toBe('A case for a small board.');
     expect(renamed?.slug).toBe(slug);
   });
 
@@ -120,5 +122,48 @@ maybe('projects and versions (integration)', () => {
     const artifacts = await listArtifacts(db, versionId);
     expect(artifacts).toHaveLength(1);
     expect(artifacts[0]!.kind).toBe('iso');
+  });
+
+  it('uses the active ready version instead of the newest one', async () => {
+    const first = await latestReadyVersion(db, projectId);
+    expect(first).not.toBeNull();
+
+    const sha = new Uint8Array(createHash('sha256').update('design v2').digest());
+    const second = await insertVersion(db, {
+      projectId,
+      commitSha: 'b'.repeat(40),
+      tag: 'v2.0.0',
+      message: 'Publish v2',
+      authorName: 'Tester',
+      authoredAt: new Date(Date.now() + 60_000),
+      designPath: `designs/${slug}.solidcraft`,
+      designSha256: sha,
+      designBytes: 4321,
+      lean: true,
+    });
+    await markVersionReady(db, second, { bodies: 1, volume_mm3: 25000 }, []);
+
+    // Newest wins until someone pins an older ready version.
+    expect((await latestReadyVersion(db, projectId))?.id).toBe(second);
+    expect(await setActiveVersion(db, projectId, first!.id)).toBe(true);
+    expect((await latestReadyVersion(db, projectId))?.id).toBe(first!.id);
+    expect((await findProjectByOwnerSlug(db, username, slug))?.activeVersionId).toBe(first!.id);
+
+    // A version that has not rendered cannot become active.
+    const pending = await insertVersion(db, {
+      projectId,
+      commitSha: 'c'.repeat(40),
+      tag: 'v3.0.0',
+      message: 'Publish v3',
+      authorName: 'Tester',
+      authoredAt: new Date(Date.now() + 120_000),
+      designPath: `designs/${slug}.solidcraft`,
+      designSha256: sha,
+      designBytes: 1234,
+      lean: true,
+    });
+    expect(await setActiveVersion(db, projectId, pending)).toBe(false);
+    expect(await setActiveVersion(db, projectId, second)).toBe(true);
+    expect((await latestReadyVersion(db, projectId))?.id).toBe(second);
   });
 });

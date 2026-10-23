@@ -8,6 +8,7 @@ import {
   markVersionFailed,
   markVersionReady,
   markVersionRendering,
+  setActiveVersion,
   setProjectReady,
   upsertArtifact,
   type Database,
@@ -245,6 +246,7 @@ export async function renderVersion(versionId: string, ctx: RenderContext): Prom
     };
 
     await markVersionReady(ctx.db, versionId, summary, []);
+    await setActiveVersion(ctx.db, project.id, versionId);
     await setProjectReady(ctx.db, project.id);
     ctx.log.info('render ready', { version_id: versionId, artifacts, bodies: bodyList.length });
     return { ok: true, artifacts };

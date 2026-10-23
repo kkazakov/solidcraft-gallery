@@ -238,8 +238,9 @@ Two modes, discriminated by `mode`.
 ```
 
 Creates a private Forgejo repository and a `private` project, and returns `201` with the clone URL
-and an empty-state publish URL. `public` is chosen after the first ready version and requires a
-license; that transition also makes the repository public.
+and an empty-state publish URL. `public` may be chosen with the first published version and
+requires a license; that transition also makes the repository public. The project is listed only
+after the active version is `ready`.
 
 **External** (`mode = "external"`):
 
@@ -255,17 +256,18 @@ Errors: `409` slug taken, `422` no design found, `403` repository private withou
 
 #### `PATCH /projects/:id`
 
-**Implementation status:** `title`, `license` and `visibility` are supported; `description`, `tags` and
-`slug` are not yet exposed. A title rename commits `project.json` for hosted projects.
+**Implementation status:** `title`, `description`, `license` and `visibility` are supported; `tags` and
+`slug` are not exposed. A title or description change commits `project.json` for hosted projects.
 
-Owner only. `title`, `description`, `tags`, `license`, `visibility`, `slug`. For hosted projects the
-change is committed back to the repository (`project.json` and/or README) in the same operation;
-if the commit fails the DB change is rolled back. For external projects metadata is site-only in
-the MVP (a note explains that git remains authoritative and a later sync may overwrite).
+Owner only. For hosted projects the metadata change is committed back to the repository in the same
+operation; if the commit fails the DB change is rolled back. For external projects metadata is
+site-only in the MVP (git remains authoritative and a later sync may overwrite it). Slugs are
+derived from the title at creation and are immutable.
 
 Visibility transitions:
 
-- `public` requires a ready version and a resolved license.
+- `public` requires a published version and a resolved license. The project stays out of listings
+  and its page stays hidden until the active version is `ready`.
 - `→ private` updates the hosted repository to private before the DB commit.
 - `→ unlisted` keeps the repository public and adds the site-only hide flag.
 

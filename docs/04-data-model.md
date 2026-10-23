@@ -111,7 +111,7 @@ Unique `(provider, external_id)` and `(owner_id, url)`. A user may connect the s
 |---|---|---|
 | `repo_id` | uuid FK unique | one project per repo in v1 |
 | `owner_id` | uuid FK | denormalized for listing |
-| `slug` | citext | unique per owner; derived from title, editable |
+| `slug` | citext | unique per owner; derived from the title and immutable |
 | `title` | text | 1–120 |
 | `description` | text | ≤ 2,000 |
 | `readme` | text | raw Markdown, capped 200 KB |
@@ -120,8 +120,9 @@ Unique `(provider, external_id)` and `(owner_id, url)`. A user may connect the s
 | `license` | text | SPDX; null until resolved |
 | `design_path` | text | primary design path in the repo |
 | `cover_key` | text | artifact storage key for the chosen cover |
-| `visibility` | enum `public\|unlisted\|private` | default `private` until first ready version |
+| `visibility` | enum `public\|unlisted\|private` | default `private` until the owner publishes |
 | `status` | enum `pending\|indexing\|ready\|error\|quarantined` | |
+| `active_version_id` | uuid FK nullable | ready version shown on the project page; null means newest ready |
 | `tags` | text[] | ≤ 10, validated |
 | `featured` | boolean | admin-controlled |
 | `downloads` | bigint | incremented asynchronously |
@@ -132,7 +133,8 @@ Unique `(provider, external_id)` and `(owner_id, url)`. A user may connect the s
 Constraints:
 
 - `unique (owner_id, slug)`
-- `visibility = 'public'` requires `license is not null`, `status = 'ready'`, `featured` irrelevant
+- `visibility = 'public'` requires `license is not null`; listings additionally require `status = 'ready'`
+- `active_version_id` must belong to the same project and be `ready`
 - `status = 'quarantined'` forces `visibility = 'private'` in the admin action, not a constraint
 - tags are normalized to lowercase before write
 
@@ -143,6 +145,7 @@ Indexes:
 - GIN on `search_vector`
 - `pg_trgm` on `title` for fuzzy autocomplete
 - `(owner_id, updated_at desc)` for the dashboard
+- `(active_version_id)` for the active-version lookup
 
 ### `versions`
 

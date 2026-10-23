@@ -156,6 +156,9 @@
           <li>
             <span class="mono">{version.tag ?? version.commitSha.slice(0, 7)}</span>
             <span class="badge">{version.status}</span>
+            {#if version.id === data.latest.id}
+              <span class="badge ok">live</span>
+            {/if}
             <time class="date" datetime={version.authoredAt.toISOString()}>{date.format(version.authoredAt)}</time>
           </li>
         {/each}

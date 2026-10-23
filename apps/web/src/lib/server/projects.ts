@@ -8,11 +8,13 @@ import {
   findProjectById,
   findProjectByOwnerSlug,
   findRepoById,
+  findVersionById,
   getDatabase,
   insertVersion,
   listProjectSlugs,
+  setActiveVersion,
   setProjectVisibilityAndRepo,
-  updateProjectTitle,
+  updateProjectDetails as updateProjectDetailsRow,
   type Project,
   type ProjectVisibility,
   type SessionUser,
@@ -44,12 +46,18 @@ export function uniqueProjectSlug(desired: string, taken: string[]): string {
 export async function createHostedProject(input: {
   viewer: SessionUser;
   title: string;
+  description?: string;
+  license?: string | null;
   slug?: string;
 }): Promise<{ id: string; slug: string; owner: string }> {
   const db = getDatabase();
   const title = input.title.trim();
   if (title.length < 1 || title.length > LIMITS.titleChars) {
     throw new AppError('validation_failed', `title must be 1-${LIMITS.titleChars} characters`);
+  }
+  const description = input.description?.trim() ?? '';
+  if (description.length > LIMITS.descriptionChars) {
+    throw new AppError('validation_failed', `description must be at most ${LIMITS.descriptionChars} characters`);
   }
 
   const count = await countProjectsForOwner(db, input.viewer.id);
@@ -87,6 +95,8 @@ export async function createHostedProject(input: {
       isPrivate: true,
       slug,
       title,
+      description,
+      license: input.license ?? null,
       designPath,
     });
     return { id: created.projectId, slug, owner: input.viewer.username };
@@ -98,6 +108,8 @@ export async function createHostedProject(input: {
     ownerUsername: input.viewer.username,
     slug,
     title,
+    description,
+    license: input.license ?? null,
     repoUrl: repo.url,
     localPath: repo.path,
   });
@@ -263,28 +275,15 @@ export async function getViewableProject(owner: string, slug: string, viewer: Se
   return project;
 }
 
-/** Rename the site title and keep the hosted project.json in step. */
-export async function renameProject(input: { viewer: SessionUser; projectId: string; title: string }): Promise<void> {
-  const db = getDatabase();
-  const project = await findProjectById(db, input.projectId);
-  if (!project || !can(project, input.viewer, 'edit')) throw new AppError('not_found', 'No such project');
-
-  const title = input.title.trim();
-  if (title.length < 1 || title.length > LIMITS.titleChars) {
-    throw new AppError('validation_failed', `title must be 1-${LIMITS.titleChars} characters`);
-  }
-  if (title === project.title) return;
-
-  const updated: Project = { ...project, title };
-  const message = `Rename project to ${title}`;
-
+/** Write project.json for hosted repositories; GitHub is read-only. */
+async function syncProjectManifest(project: Project, message: string): Promise<void> {
   if (project.repoProvider === 'forgejo') {
     const { client, owner, repo } = await forgejoForProject(project);
     await client.upsertFile({
       owner,
       repo,
       path: 'project.json',
-      content: new TextEncoder().encode(projectManifest(updated)),
+      content: new TextEncoder().encode(projectManifest(project)),
       message,
       branch: 'main',
     });
@@ -292,10 +291,79 @@ export async function renameProject(input: { viewer: SessionUser; projectId: str
     const repo = localRepo(project);
     await git.commitFiles({
       repo,
-      files: { 'project.json': projectManifest(updated) },
+      files: { 'project.json': projectManifest(project) },
       message,
     });
   }
+}
 
-  await updateProjectTitle(db, project.id, title);
+export async function updateProjectDetails(input: {
+  viewer: SessionUser;
+  projectId: string;
+  title: string;
+  description: string;
+}): Promise<void> {
+  const db = getDatabase();
+  const project = await findProjectById(db, input.projectId);
+  if (!project || !can(project, input.viewer, 'edit')) throw new AppError('not_found', 'No such project');
+
+  const title = input.title.trim();
+  const description = input.description.trim();
+  if (title.length < 1 || title.length > LIMITS.titleChars) {
+    throw new AppError('validation_failed', `title must be 1-${LIMITS.titleChars} characters`);
+  }
+  if (description.length > LIMITS.descriptionChars) {
+    throw new AppError('validation_failed', `description must be at most ${LIMITS.descriptionChars} characters`);
+  }
+  if (title === project.title && description === project.description) return;
+
+  await syncProjectManifest(
+    { ...project, title, description },
+    title === project.title ? 'Update project description' : `Rename project to ${title}`,
+  );
+  await updateProjectDetailsRow(db, project.id, title, description);
+}
+
+/**
+ * Change who can see the project. The caller has already validated the core
+ * visibility rules; this keeps the repository, the row and project.json aligned.
+ */
+export async function updateProjectPublication(input: {
+  viewer: SessionUser;
+  projectId: string;
+  visibility: ProjectVisibility;
+  license: string | null;
+}): Promise<Project> {
+  const db = getDatabase();
+  const project = await findProjectById(db, input.projectId);
+  if (!project || !can(project, input.viewer, 'edit')) throw new AppError('not_found', 'No such project');
+
+  const license = input.license?.trim() || null;
+  await applyProjectVisibility(project, input.visibility, license);
+  if (license !== project.license) {
+    try {
+      await syncProjectManifest({ ...project, visibility: input.visibility, license }, 'Update project license');
+    } catch (error) {
+      console.warn('could not update project.json with the new license', { projectId: project.id, error });
+    }
+  }
+  return (await findProjectById(db, project.id)) ?? { ...project, visibility: input.visibility, license };
+}
+
+/** Pin a ready version as the one shown on the public page. */
+export async function activateVersion(input: {
+  viewer: SessionUser;
+  projectId: string;
+  versionId: string;
+}): Promise<void> {
+  const db = getDatabase();
+  const project = await findProjectById(db, input.projectId);
+  if (!project || !can(project, input.viewer, 'edit')) throw new AppError('not_found', 'No such project');
+
+  const version = await findVersionById(db, input.versionId);
+  if (!version || version.projectId !== project.id) throw new AppError('not_found', 'No such version');
+  if (version.status !== 'ready') throw new AppError('validation_failed', 'Only a ready version can be active');
+
+  const updated = await setActiveVersion(db, project.id, version.id);
+  if (!updated) throw new AppError('validation_failed', 'Could not activate that version');
 }

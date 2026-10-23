@@ -1,6 +1,6 @@
 # Implementation status
 
-**Updated:** 2026-10-22 · **Milestone:** M0 complete; M1 slice, gallery, GitHub sources, OAuth, hosted Forgejo, nsjail, **invites/admin** · **Next:** user-owned tokens, deployment hardening
+**Updated:** 2026-10-23 · **Milestone:** M0 complete; M1 slice, gallery, GitHub sources, OAuth, hosted Forgejo, nsjail, **invites/admin** · **Next:** user-owned tokens, deployment hardening
 
 This file records what actually runs, not what is planned. The plan remains in
 [README.md](README.md) and [docs/14-roadmap.md](docs/14-roadmap.md).
@@ -12,12 +12,12 @@ This file records what actually runs, not what is planned. The plan remains in
 | pnpm workspace, TypeScript, ESLint, Prettier, Vitest | done | `pnpm lint`, `pnpm check`, `pnpm test` |
 | `@gallery/core` — manifest, slugs, visibility, errors, limits, session tokens | done | 33 unit tests |
 | `@gallery/design` — read ZIP/JSON, strip `cache/*`, real fixture | done | 11 unit tests |
-| `@gallery/db` — schema, migrations, queue, users/identities/sessions, invites, projects/versions, search, repos | done | 22 integration tests on PostgreSQL 16 |
+| `@gallery/db` — schema, migrations, queue, users/identities/sessions, invites, projects/versions/active version, search, repos | done | 23 integration tests on PostgreSQL 16 |
 | `@gallery/git` — local repository, read-only GitHub client, Forgejo contents API | done | 17 tests (real git + mock HTTP) |
 | `@gallery/storage` — content-addressed artifacts, atomic writes | done | 2 tests |
 | `@gallery/render` — nsjail plan, direct plan, no-shell runner | done | 12 tests |
 | nsjail worker — sandboxed CLI with no network, read-only root, rlimits | done | container render of 5 artifacts under nsjail |
-| `@gallery/web` — OAuth, dashboard, publish, gallery/search, GitHub connect/sync/webhook, Forgejo provisioning | done | end-to-end curl flow + 12 integration/unit tests |
+| `@gallery/web` — OAuth, dashboard create/edit flow, publish, gallery/search, GitHub connect/sync/webhook, Forgejo provisioning | done | end-to-end curl/browser flow + 12 integration/unit tests |
 | `@gallery/worker` — job loop, retries, nsjail render handler (local, Forgejo and cached external) | done | 9 tests + containerized nsjail render |
 | `craftpub` — `lean`, `validate`, `inspect` | done | fixtures and failure exits exercised |
 | Compose (Caddy, web, worker, Postgres, Forgejo, Mailpit) | config valid | web/worker images build |
@@ -66,6 +66,10 @@ Verified with a real `solidcraft-cli 0.19.0` and `fixtures/real/box.solidcraft`:
     completes the login, increments the invite atomically and creates the account. An existing
     identity signs in without a code. `ADMIN_USERNAMES=invitee` promoted that new account to admin.
     A fresh `ADMIN_USERNAMES=adminboot` identity also bypassed the invite and was promoted on first login.
+15. **Create and edit share one publishing model.** The create page takes title, description, file,
+    version, visibility and a GitHub-common license, derives the slug, commits the design and queues
+    the render in one submit. The edit page repeats those fields, adds a new version, lists history
+    and can activate any ready version; the public page marks the active one as **live**.
 
 ## Local staging deployment
 
@@ -86,8 +90,13 @@ A real Forgejo stack is running locally via Compose (not a mock):
   without an invite (`role=user`).
 - The theme defaults to the operating system; a header icon cycles System → Light → Dark and stores
   the choice in `localStorage` before paint.
-- Project titles can be renamed from the dashboard or `PATCH /api/v1/projects/:id`; the hosted
-  `project.json` is committed in the same operation. Slugs and repository names remain immutable.
+- Project titles and descriptions can be edited from the dashboard or `PATCH /api/v1/projects/:id`;
+  the hosted `project.json` is committed in the same operation. Slugs are derived from the title at
+  creation and repository names remain immutable.
+- The create and edit pages publish the first/new version with the metadata. A ready version can be
+  pinned as active; the public page and downloads follow it. A public project may be created while
+  its first render is pending, but stays out of listings and 404s for visitors until that render is
+  ready.
 - Visibility saves now update the project row and `repos.is_private` in one transaction, roll the
   Forgejo repository back if the DB update fails, and redirect to a fresh page with `?saved=1`.
 - Verified end to end: real Forgejo OAuth consent/login created `gallery-admin`, a hosted project

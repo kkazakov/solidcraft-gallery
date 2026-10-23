@@ -8,47 +8,32 @@
 
 <section class="shell auth-page">
   <h1>Sign in</h1>
-  <p class="page-sub">One identity for the gallery. Hosted projects use Forgejo; external repositories use GitHub.</p>
+  <p class="page-sub">Use your Forgejo account to publish designs and manage your projects.</p>
 
   {#if data.error === 'invite'}
-    <p class="notice">That invite code is missing, expired or already used.</p>
+    <p class="notice">This instance is invite-only. Ask an administrator for access.</p>
   {/if}
 
-  <form method="GET" action="/auth/login" class="form-stack">
-    <input type="hidden" name="redirect" value={data.redirect} />
-    <label class="field" for="invite">
-      <span>Invite code {data.inviteRequired ? '(required for new accounts)' : '(optional)'}</span>
-      <input
-        id="invite"
-        name="invite"
-        value={data.invite}
-        autocomplete="off"
-        autocapitalize="off"
-        spellcheck="false"
-        placeholder="Paste your beta invite"
-      />
-    </label>
-    <div class="auth-providers">
-      {#each data.providers as provider (provider.id)}
-        {#if provider.configured}
-          <button class="button block" type="submit" formaction={`/auth/login/${provider.id}`}>
-            Continue with {provider.label}
-          </button>
-        {:else}
-          <span class="button block disabled" aria-disabled="true">
-            Continue with {provider.label} (not configured)
-          </span>
-        {/if}
-      {/each}
-    </div>
-  </form>
+  <div class="auth-providers">
+    {#each data.providers as provider (provider.id)}
+      {#if provider.configured}
+        <a
+          class="button block"
+          href={`/auth/login/${provider.id}?redirect=${encodeURIComponent(data.redirect)}`}
+        >
+          Continue with {provider.label}
+        </a>
+      {:else}
+        <span class="button block disabled" aria-disabled="true">{provider.label} sign-in is not configured</span>
+      {/if}
+    {/each}
+  </div>
 
-  <p class="auth-note">Provider sign-in uses OAuth with PKCE. Existing accounts do not need an invite again.</p>
+  <p class="auth-note">Sign-in uses OAuth with PKCE. You stay signed in on this browser.</p>
 
   {#if data.registrationUrl}
     <p class="auth-note">
       New here? <a href={data.registrationUrl}>Create a Forgejo account</a>, then return to this page.
-      {#if data.inviteRequired}An invite is still required while the beta gate is on.{/if}
     </p>
   {/if}
 

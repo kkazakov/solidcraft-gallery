@@ -169,6 +169,7 @@ create table projects (
   cover_key     text,
   visibility    project_visibility not null default 'private',
   status        project_status not null default 'pending',
+  active_version_id uuid,
   tags          text[] not null default '{}',
   featured      boolean not null default false,
   downloads     bigint not null default 0 check (downloads >= 0),
@@ -200,6 +201,7 @@ create index projects_featured_idx
   where visibility = 'public' and status = 'ready' and deleted_at is null;
 
 create index projects_tags_idx on projects using gin (tags);
+create index projects_active_version_idx on projects (active_version_id);
 create index projects_search_idx on projects using gin (search_vector);
 create index projects_title_trgm_idx on projects using gin (title gin_trgm_ops);
 create index projects_license_idx
@@ -242,6 +244,11 @@ create unique index versions_tag_idx
 create index versions_project_idx on versions (project_id, authored_at desc);
 create index versions_status_idx on versions (status);
 create index versions_release_idx on versions (project_id, is_release, authored_at desc);
+
+-- Added after versions exists (migration 0005).
+alter table projects
+  add constraint projects_active_version_fk
+  foreign key (active_version_id) references versions(id) on delete set null;
 
 -- ---------------------------------------------------------------- artifacts
 
