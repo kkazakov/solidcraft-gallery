@@ -6,6 +6,8 @@ RUN npm install -g pnpm@10.32.1
 WORKDIR /app
 COPY . .
 RUN pnpm install --frozen-lockfile
+ARG PUBLIC_ORIGIN
+ENV PUBLIC_ORIGIN=${PUBLIC_ORIGIN}
 RUN pnpm --filter @gallery/web build
 
 FROM node:22-bookworm-slim
