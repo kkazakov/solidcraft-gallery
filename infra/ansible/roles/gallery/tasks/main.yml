@@ -192,6 +192,12 @@
     path: '{{ deploy_dir }}/gallery-images.tar.gz'
     state: absent
 
+- name: Prune dangling images
+  ansible.builtin.command:
+    argv: [docker, image, prune, -f]
+  register: gallery_image_prune
+  changed_when: "'Total reclaimed space: 0B' not in gallery_image_prune.stdout"
+
 - name: Validate the Compose configuration
   ansible.builtin.command:
     argv: "{{ compose_prefix + ['config', '--quiet'] }}"
