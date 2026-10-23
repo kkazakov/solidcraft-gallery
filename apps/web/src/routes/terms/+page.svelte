@@ -3,7 +3,6 @@
 </svelte:head>
 
 <section class="shell prose">
-  <p class="eyebrow">Draft</p>
   <h1>Terms of service</h1>
   <p>
     This is a placeholder for the beta terms. It is not legal advice and it is not in force. The published terms will

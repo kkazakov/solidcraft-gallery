@@ -29,16 +29,22 @@
   <meta name="robots" content="noindex" />
 </svelte:head>
 
-<section class="shell" style="padding: 48px 0 24px">
-  <p class="eyebrow">Search</p>
-  <h1 style="letter-spacing: -0.03em; font-size: clamp(30px, 4vw, 44px); margin: 14px 0 20px">Find a design</h1>
+<section class="shell page-head">
+  <h1>Find a design</h1>
 
-  <form method="GET" action="/search" class="search-form">
+  <form method="GET" action="/search" class="search-form" role="search" aria-label="Search designs">
     {#if data.tag}
       <input type="hidden" name="tag" value={data.tag} />
     {/if}
     <label for="q" class="sr-only">Query</label>
-    <input id="q" name="q" value={data.q} placeholder="Enclosure, bracket, M3 standoff…" autocomplete="off" />
+    <input
+      id="q"
+      name="q"
+      value={data.q}
+      placeholder="Enclosure, bracket, M3 standoff…"
+      autocomplete="off"
+      spellcheck="false"
+    />
     <label for="license" class="sr-only">License</label>
     <select id="license" name="license">
       <option value="" selected={!data.license}>Any license</option>
@@ -73,30 +79,28 @@
   </div>
 </section>
 
-<section class="shell" style="padding-bottom: 72px">
+<section class="shell section">
   {#if data.dbDown}
-    <article class="card">
+    <article class="card empty-card">
       <h2>Search is unavailable</h2>
       <p>The database is not reachable right now.</p>
     </article>
   {:else if data.result.items.length === 0}
-    <article class="card" style="max-width: 680px">
+    <article class="card empty-card">
       <h2>No designs match</h2>
       <p>Try fewer filters or a different word.</p>
       {#if data.tags.length > 0}
-        <p style="margin-top: 14px">
-          Popular tags:
+        <div class="tag-row" style="margin-top: 12px">
           {#each data.tags.slice(0, 8) as entry (entry.tag)}
             <a class="badge" href={`/search?tag=${encodeURIComponent(entry.tag)}`}>{entry.tag}</a>
           {/each}
-        </p>
+        </div>
       {/if}
     </article>
   {:else}
     <p class="result-count">
       {data.result.fallback ? 'No exact matches; showing close titles. ' : ''}
-      {data.result.total} design{data.result.total === 1 ? '' : 's'}
-      {#if data.page > 1}· page {data.page}{/if}
+      {data.result.total} design{data.result.total === 1 ? '' : 's'}{#if data.page > 1}· page {data.page}{/if}
     </p>
     <div class="design-grid">
       {#each data.result.items as project (project.id)}
@@ -107,78 +111,13 @@
     {#if data.pages > 1}
       <nav class="pagination" aria-label="Pagination">
         {#if data.page > 1}
-          <a class="button" href={pageHref(data.page - 1)}>Previous</a>
+          <a class="button small" href={pageHref(data.page - 1)}>Previous</a>
         {/if}
         <span>Page {data.page} of {data.pages}</span>
         {#if data.page < data.pages}
-          <a class="button" href={pageHref(data.page + 1)}>Next</a>
+          <a class="button small" href={pageHref(data.page + 1)}>Next</a>
         {/if}
       </nav>
     {/if}
   {/if}
 </section>
-
-<style>
-  .search-form {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    max-width: 960px;
-  }
-
-  .search-form input,
-  .search-form select {
-    padding: 11px 12px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: var(--panel);
-    color: var(--text);
-    font: inherit;
-  }
-
-  .search-form input {
-    flex: 1;
-    min-width: 240px;
-  }
-
-  .filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-    margin-top: 16px;
-    min-height: 26px;
-  }
-
-  .filters .clear {
-    font-size: 13px;
-    color: var(--muted);
-  }
-
-  .result-count {
-    color: var(--muted);
-    font-size: 14px;
-    margin: 0 0 16px;
-  }
-
-  .design-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 18px;
-  }
-
-  .pagination {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    justify-content: center;
-    margin-top: 32px;
-    color: var(--muted);
-    font-size: 14px;
-  }
-
-  .sr-only {
-    position: absolute;
-    left: -9999px;
-  }
-</style>

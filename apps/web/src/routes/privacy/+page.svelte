@@ -3,7 +3,6 @@
 </svelte:head>
 
 <section class="shell prose">
-  <p class="eyebrow">Draft</p>
   <h1>Privacy policy</h1>
   <p>
     This is a placeholder for the beta privacy policy. The intended policy is data-minimal: OAuth identities, the email

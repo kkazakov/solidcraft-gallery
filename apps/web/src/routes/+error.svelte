@@ -7,7 +7,7 @@
 </svelte:head>
 
 <section class="shell error-page">
-  <p class="eyebrow">{page.status}</p>
+  <p class="status-code">Error {page.status}</p>
   <h1>{page.status === 404 ? 'Not found' : 'Something broke'}</h1>
   <p>
     {page.status === 404

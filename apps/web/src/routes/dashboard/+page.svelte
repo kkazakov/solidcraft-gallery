@@ -6,47 +6,38 @@
   <title>Dashboard — SolidCraft Gallery</title>
 </svelte:head>
 
-<section class="shell" style="padding: 48px 0 80px">
-  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+<section class="shell dashboard-page">
+  <div class="dashboard-head">
     <div>
-      <p class="eyebrow">Dashboard</p>
-      <h1 style="letter-spacing: -0.03em; margin: 14px 0 8px">Hello, {data.viewer.username}</h1>
-      <p style="color: var(--muted); margin: 0">
+      <h1>Hello, {data.viewer.username}</h1>
+      <p>
         Signed in as <span class="mono">{data.viewer.role}</span>. New projects are private until you publish a ready
         version and choose otherwise.
       </p>
     </div>
     <form method="POST" action="/auth/logout">
-      <button class="button" type="submit">Sign out</button>
+      <button class="button small" type="submit">Sign out</button>
     </form>
   </div>
 
-  <div class="grid" style="padding: 32px 0 8px; grid-template-columns: minmax(260px, 1fr) 2fr">
+  <div class="dashboard-grid">
     <article class="card">
       <h2>New hosted project</h2>
-      <p style="margin-bottom: 14px">Creates a private git repository on this instance.</p>
-      <form method="POST" action="?/create" style="display: grid; gap: 10px">
-        <label for="title" style="font-size: 13px; color: var(--muted)">Title</label>
-        <input
-          id="title"
-          name="title"
-          required
-          maxlength="120"
-          placeholder="Raspberry Pi 4 case"
-          style="padding: 10px 12px; border-radius: 9px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); font: inherit"
-        />
-        <label for="slug" style="font-size: 13px; color: var(--muted)">Slug (optional)</label>
-        <input
-          id="slug"
-          name="slug"
-          maxlength="64"
-          placeholder="pi-case"
-          style="padding: 10px 12px; border-radius: 9px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); font: inherit"
-        />
-        <button class="button primary" type="submit">Create project</button>
+      <p>Creates a private git repository on this instance.</p>
+      <form method="POST" action="?/create" class="form-stack">
+        <label class="field" for="title">
+          <span>Title</span>
+          <input id="title" name="title" required maxlength="120" placeholder="Raspberry Pi 4 case" />
+        </label>
+        <label class="field" for="slug">
+          <span>Slug (optional)</span>
+          <input id="slug" name="slug" maxlength="64" placeholder="pi-case" autocapitalize="off" spellcheck="false" />
+          <span class="field-hint">Used in the project URL. Defaults to the title.</span>
+        </label>
+        <button class="button primary block" type="submit">Create project</button>
       </form>
       {#if form?.message && !form.connect}
-        <p style="color: var(--warn); margin: 12px 0 0; font-size: 13px">{form.message}</p>
+        <p class="form-message error">{form.message}</p>
       {/if}
     </article>
 
@@ -55,21 +46,23 @@
       {#if data.projects.length === 0}
         <p>No projects yet. Create one on the left, then publish a `.solidcraft` file.</p>
       {:else}
-        <ul style="list-style: none; padding: 0; margin: 0; display: grid; gap: 10px">
+        <ul class="project-list">
           {#each data.projects as project (project.id)}
-            <li
-              style="display: flex; align-items: center; gap: 12px; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 10px"
-            >
-              <div>
-                <a href={`/dashboard/projects/${project.id}`} style="font-weight: 600">{project.title}</a>
-                <div class="mono" style="color: var(--muted); font-size: 12px; margin-top: 2px">
-                  {project.slug}
-                </div>
+            <li>
+              <div class="project-main">
+                <a class="project-title" href={`/dashboard/projects/${project.id}`}>{project.title}</a>
+                <span class="project-slug">{project.slug}</span>
               </div>
-              <div style="display: flex; gap: 8px; align-items: center">
+              <div class="project-badges">
                 <span class="badge">{project.repoProvider}</span>
                 <span class="badge">{project.visibility}</span>
-                <span class="badge">{project.status}</span>
+                <span
+                  class:ok={project.status === 'ready'}
+                  class:warn={project.status === 'error' || project.status === 'quarantined'}
+                  class="badge"
+                >
+                  {project.status}
+                </span>
               </div>
             </li>
           {/each}
@@ -78,25 +71,29 @@
     </article>
   </div>
 
-  <article class="card" style="margin-top: 16px; max-width: 820px">
+  <article class="card dashboard-connect">
     <h2>Connect a public GitHub repository</h2>
-    <p style="margin-bottom: 14px">
+    <p>
       The repository needs a <code>.solidcraft</code> file at the commit it points to. Add a
       <code>project.json</code> at the root to set the title, license and design path. The site caches the lean design and
       never writes to GitHub.
     </p>
-    <form method="POST" action="?/connect" style="display: flex; gap: 10px; flex-wrap: wrap">
-      <input
-        name="url"
-        type="url"
-        required
-        placeholder="https://github.com/jane/pi-case"
-        style="flex: 1; min-width: 260px; padding: 10px 12px; border-radius: 9px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); font: inherit"
-      />
+    <form method="POST" action="?/connect" class="form-row">
+      <label class="field">
+        <span class="sr-only">Repository URL</span>
+        <input
+          name="url"
+          type="url"
+          required
+          placeholder="https://github.com/jane/pi-case"
+          autocomplete="off"
+          spellcheck="false"
+        />
+      </label>
       <button class="button primary" type="submit">Connect</button>
     </form>
     {#if form?.connect}
-      <p style="color: var(--warn); margin: 12px 0 0; font-size: 13px">{form.message}</p>
+      <p class="form-message error">{form.message}</p>
     {/if}
   </article>
 </section>
