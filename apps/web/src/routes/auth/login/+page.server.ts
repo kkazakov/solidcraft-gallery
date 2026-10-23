@@ -26,6 +26,7 @@ export async function load(event: RequestEvent) {
     redirect: target,
     invite: event.url.searchParams.get('invite') ?? '',
     error: event.url.searchParams.get('error') ?? '',
+    registered: event.url.searchParams.get('registered') === '1',
     inviteRequired: inviteRequired(),
     registrationUrl,
     providers: [{ id: 'forgejo', label: 'Forgejo', configured: providerConfigured('forgejo') }],

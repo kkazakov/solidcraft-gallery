@@ -200,22 +200,22 @@ the invitee opens (`${PUBLIC_ORIGIN}/auth/login?invite=<code>`); `./scripts/new-
 `./scripts/new-invite.sh revoke <id>` map to the CLI. The raw code is printed once — the gallery
 stores only its SHA-256 hash.
 
-The invitee can either open that link or enter the code in the **Invite code** field on the sign-in
-page; both forward the code into the Forgejo OAuth start URL, and the account is created when the
-provider round trip completes. The field is a plain `GET` form, so it works without JavaScript.
+The invitee opens `https://solidcraft.drun.net/auth/register?invite=<code>` (also linked from the sign-in
+page as **Have an invite? Create your account**) and chooses a Forgejo username, an optional email and a
+password. The gallery creates the Forgejo account with `FORGEJO_ADMIN_TOKEN`, consumes the invite, links
+the `forgejo` identity in the same transaction and sends the user to `/auth/login?registered=1` to sign
+in. Forgejo sign-up itself stays closed; the invite is the only way in.
 
-Forgejo sign-up is closed on drun.net, so the operator creates the provider account first and sends
-it with the invite:
+Manual provisioning is the fallback — for example when the invite holder should not choose the password:
 
 ```sh
 docker compose -f compose.yaml --env-file .env exec -T forgejo \
-  forgejo admin user create --username <name> --email <email> --password <temp-password> \
-  --must-change-password
+  forgejo admin user create --username <name> --email <email> --password <temp-password>
 ```
 
-The user signs in at `https://forgejo.drun.net/` once to set a password, then opens the invite link
-(or pastes the code at `/auth/login`) and continues with Forgejo. The gallery account is created on
-that first round trip and the invite is consumed.
+Either way the gallery account appears on the first OAuth sign-in, and an invite already consumed during
+registration is not asked for again. Accounts created without an email get
+`${username}@${BETA_EMAIL_DOMAIN:-users.solidcraft.drun.net}`.
 
 ## HTTPS cutover
 

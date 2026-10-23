@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 import type { Database } from './client.js';
+import type { SessionUser } from './users.js';
 
 export interface Invite {
   id: string;
@@ -72,4 +73,71 @@ export async function revokeInvite(db: Database, id: string): Promise<boolean> {
     update invites set revoked_at = now() where id = ${id} and revoked_at is null returning id
   `;
   return rows.length > 0;
+}
+
+/** Read-only validity check; the use is not consumed. */
+export async function findUsableInvite(db: Database, codeHash: Uint8Array): Promise<boolean> {
+  const rows = await db`
+    select 1 from invites
+    where code_hash = ${codeHash}
+      and revoked_at is null
+      and (expires_at is null or expires_at > now())
+      and uses < max_uses
+    limit 1
+  `;
+  return rows.length > 0;
+}
+
+export interface InvitedAccountInput {
+  codeHash: Uint8Array;
+  provider: 'forgejo' | 'github';
+  subject: string;
+  username: string;
+  email?: string | null;
+  displayName?: string;
+  avatarUrl?: string | null;
+}
+
+/**
+ * Consume one invite use and create the gallery user plus its provider identity
+ * in one transaction. Returns null when the code is unknown, revoked, expired or
+ * already used up; the transaction rolls back so no partially used invite remains.
+ */
+export async function provisionInvitedUser(db: Database, input: InvitedAccountInput): Promise<SessionUser | null> {
+  return db.begin(async (tx) => {
+    const invites = await tx<{ id: string }[]>`
+      update invites
+      set uses = uses + 1
+      where code_hash = ${input.codeHash}
+        and revoked_at is null
+        and (expires_at is null or expires_at > now())
+        and uses < max_uses
+      returning id
+    `;
+    if (!invites[0]) return null;
+
+    let email = input.email?.trim().toLowerCase() || null;
+    if (email) {
+      const used = await tx`select 1 from users where email = ${email} limit 1`;
+      if (used[0]) email = null;
+    }
+
+    const users = await tx<SessionUser[]>`
+      insert into users (username, email, display_name, avatar_url)
+      values (
+        ${input.username},
+        ${email},
+        ${(input.displayName ?? input.username).slice(0, 80)},
+        ${input.avatarUrl?.slice(0, 500) ?? null}
+      )
+      returning id, username::text as username, role::text as role
+    `;
+
+    await tx`
+      insert into identities (user_id, provider, subject, username, scopes)
+      values (${users[0]!.id}, ${input.provider}, ${input.subject}, ${input.username}, '{}')
+    `;
+
+    return users[0]!;
+  });
 }

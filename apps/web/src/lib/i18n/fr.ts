@@ -203,6 +203,33 @@ export const fr: Dictionary = {
   'login.devBody.after': '.',
   'login.username': 'Nom d’utilisateur',
   'login.signIn': 'Se connecter',
+  'login.registered': 'Compte créé. Connectez-vous avec votre nouveau compte Forgejo.',
+  'login.createWithInvite': 'Vous avez une invitation ? Créez votre compte',
+
+  'register.title': 'Créez votre compte bêta — SolidCraft Gallery',
+  'register.heading': 'Créez votre compte bêta',
+  'register.intro':
+    'Votre invitation est valide. Choisissez le nom d’utilisateur et le mot de passe Forgejo avec lesquels vous vous connecterez ; nous créons le compte.',
+  'register.codeLabel': 'Code d’invitation',
+  'register.codeSubmit': 'Continuer',
+  'register.codeInvalid':
+    'Cette invitation est inconnue, expirée ou épuisée. Vérifiez le code ou demandez-en une nouvelle.',
+  'register.usernameLabel': 'Nom d’utilisateur',
+  'register.usernameHint': '3 à 32 caractères : lettres minuscules, chiffres et tirets.',
+  'register.emailLabel': 'E-mail (facultatif)',
+  'register.emailHint': 'Sert aux réinitialisations de mot de passe. Nous générons une adresse si vous laissez vide.',
+  'register.passwordLabel': 'Mot de passe',
+  'register.passwordHint': 'Au moins 8 caractères. Il servira à vous connecter à Forgejo.',
+  'register.submit': 'Créer le compte',
+  'register.signIn': 'Vous avez déjà un compte ? Connectez-vous',
+  'register.errorInvite': 'Cette invitation n’est plus utilisable. Demandez-en une nouvelle.',
+  'register.errorUsername': 'Ce nom d’utilisateur est déjà pris.',
+  'register.errorEmail': 'Cet e-mail est déjà utilisé.',
+  'register.errorInvalid': 'Vérifiez le nom d’utilisateur, l’e-mail et le mot de passe.',
+  'register.errorPassword': 'Le mot de passe doit contenir au moins 8 caractères.',
+  'register.errorUnavailable': 'La création de compte n’est pas configurée sur cette instance.',
+  'register.errorFailed': 'Le compte n’a pas pu être créé. Réessayez ou contactez l’opérateur.',
+  'register.closed': 'Cette instance ne demande pas d’invitation. Connectez-vous simplement.',
 
   'about.title': 'À propos — SolidCraft Gallery',
   'about.description':

@@ -297,3 +297,30 @@ not affect the gallery gate. The invite field is now the only thing an invitee c
 **Rejected.** Keeping Forgejo sign-up open (the operator asked to close it); removing the invite field
 (it is the only self-service step left); adding an invite-driven Forgejo sign-up (no such feature in
 Forgejo 9).
+
+---
+
+## D16 — Invite holders create their own Forgejo account from the gallery
+
+**Context.** D15 closed Forgejo sign-up, which left the operator hand-creating every provider account.
+An invite should be enough: the gallery already holds `FORGEJO_ADMIN_TOKEN` for hosted-repository
+provisioning, and the invite gate already decides who may join.
+
+**Decision.** Add `/auth/register?invite=<code>`. With a valid code the page collects a username, an
+optional email and a password; the web tier creates the Forgejo account through the admin API
+(`POST /api/v1/admin/users`, `must_change_password=false`, `send_notify=false`), then consumes one
+invite use and inserts the gallery user plus its `forgejo` identity (keyed on the Forgejo numeric id)
+in the same transaction. The invitee is redirected to `/auth/login?registered=1` and signs in with the
+new credentials; the OAuth callback finds the identity, so the code is not needed twice. Forgejo
+self-registration stays closed. Invalid, revoked, expired or exhausted codes are rejected before
+anything is created, and a failed gallery insert deletes the just-created provider account. A blank
+email becomes `${username}@${BETA_EMAIL_DOMAIN:-users.solidcraft.drun.net}`.
+
+**Consequences.** One invite yields exactly one provider account and one gallery account, and onboarding
+is self-service. Because the admin token can create arbitrary Forgejo users, the route validates the
+invite, checks uniqueness and rate-limits per address. Passwords are chosen by the invitee and stored
+only by Forgejo. Usernames are first-come within a code's remaining uses.
+
+**Rejected.** Keeping manual `forgejo admin user create` (the operator asked for self-service); enabling
+Forgejo's own sign-up (it has no invite gate); creating the gallery rows only on the OAuth round trip
+(the invite would already be spent).

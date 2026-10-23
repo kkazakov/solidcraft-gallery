@@ -137,10 +137,11 @@ The single-host stack is deployed with Ansible to `root@192.168.88.222` (see
   no-JS `GET` form) and `?invite=` links prefill it. Existing identities and allowlisted admins sign
   in without a code. Invites are created with `pnpm invites` / `scripts/new-invite.sh`; the raw code
   is shown once.
-- Forgejo sign-up is **closed** (`FORGEJO_DISABLE_REGISTRATION=true`); the operator creates every
-  provider account (`forgejo admin user create` or the admin UI) and pairs it with an invite. The
-  sign-in page hides the "Create a Forgejo account" link and says that an operator-created account is
-  required. Reopening sign-up is a one-variable change.
+- Forgejo sign-up is **closed** (`FORGEJO_DISABLE_REGISTRATION=true`). Invite holders create their
+  own provider account at `/auth/register?invite=<code>`: the gallery provisions it with
+  `FORGEJO_ADMIN_TOKEN`, consumes the invite and inserts the user + `forgejo` identity atomically,
+  then sends them to sign in. The operator can still create accounts by hand (`forgejo admin user
+  create`). Reopening sign-up is a one-variable change.
 - The user still signs in from their own browser; the server-side account and identity are already in
   place.
 - Caddy's own TLS path (`CADDY_AUTO_HTTPS=on` + `compose.tls.yaml`) remains available if the external
