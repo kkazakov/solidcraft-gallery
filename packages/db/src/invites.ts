@@ -55,17 +55,54 @@ export async function consumeInvite(db: Database, codeHash: Uint8Array): Promise
   return rows.length > 0;
 }
 
+export interface InvitePage {
+  items: Invite[];
+  total: number;
+}
+
+/** Offset pagination for the admin table; the CLI keeps the unpaged helper below. */
+export async function listInvitesPage(db: Database, options: { limit: number; offset: number }): Promise<InvitePage> {
+  const limit = Math.max(1, Math.min(Math.trunc(options.limit), 200));
+  const offset = Math.max(0, Math.trunc(options.offset));
+  const [items, counted] = await Promise.all([
+    db<Invite[]>`
+      select
+        i.id, i.note, i.max_uses as "maxUses", i.uses,
+        i.expires_at as "expiresAt", i.revoked_at as "revokedAt",
+        i.created_at as "createdAt", u.username::text as "createdBy"
+      from invites i
+      join users u on u.id = i.created_by
+      order by i.created_at desc, i.id desc
+      limit ${limit} offset ${offset}
+    `,
+    db<{ count: number }[]>`select count(*)::int as count from invites`,
+  ]);
+  return { items, total: counted[0]?.count ?? 0 };
+}
+
 export async function listInvites(db: Database): Promise<Invite[]> {
-  return db<Invite[]>`
-    select
-      i.id, i.note, i.max_uses as "maxUses", i.uses,
-      i.expires_at as "expiresAt", i.revoked_at as "revokedAt",
-      i.created_at as "createdAt", u.username::text as "createdBy"
-    from invites i
-    join users u on u.id = i.created_by
-    order by i.created_at desc
-    limit 200
+  return (await listInvitesPage(db, { limit: 200, offset: 0 })).items;
+}
+
+export interface DeletedInvite {
+  id: string;
+  note: string;
+  maxUses: number;
+  uses: number;
+}
+
+/**
+ * Remove a code entirely. Accounts that already accepted it are untouched;
+ * only the unused capacity and its note disappear. The admin UI exposes this
+ * as Delete, while the CLI's revoke keeps the row for an audit-friendly state.
+ */
+export async function deleteInvite(db: Database, id: string): Promise<DeletedInvite | null> {
+  const rows = await db<DeletedInvite[]>`
+    delete from invites
+    where id = ${id}
+    returning id, note, max_uses as "maxUses", uses
   `;
+  return rows[0] ?? null;
 }
 
 export async function revokeInvite(db: Database, id: string): Promise<boolean> {

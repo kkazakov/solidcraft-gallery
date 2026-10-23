@@ -35,6 +35,9 @@
       {#if data.forgejoUrl}
         <a href={data.forgejoUrl} target="_blank" rel="noopener noreferrer">{t('common.forgejo')}</a>
       {/if}
+      {#if data.viewer?.role === 'admin'}
+        <a href="/admin">{t('common.administration')}</a>
+      {/if}
       <a href="https://github.com/kkazakov/solidcraft-gallery">{t('common.github')}</a>
       <button
         id="theme-toggle"

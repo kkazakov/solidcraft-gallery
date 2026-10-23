@@ -181,15 +181,17 @@ someone who already has a Forgejo account but no gallery identity. New invite ho
 provider account from `/auth/register?invite=<code>`: the web tier calls the Forgejo admin API,
 consumes the invite and inserts the gallery user plus identity in one transaction. The login page
 hides the "Create a Forgejo account" link and links to that page.
-`ADMIN_USERNAMES` is applied on every sign-in (including dev sign-in) and is the bootstrap path;
-there is no web admin UI or audit entry yet.
+`ADMIN_USERNAMES` is applied on every sign-in (including dev sign-in) and is the bootstrap path.
+The admin area at `/admin` lists accounts and manages invite codes in the browser; audit entries for
+those actions are still not written.
 
 ## Invites (beta)
 
-- Admins create invites: single-use or up to N uses, optional note, expiry 14 days.
+- Admins create invites from `/admin/invites` or the CLI: single-use or up to N uses, optional note,
+  expiry in days. The raw code is shown once and never stored or listed.
 - The OAuth callback requires a valid code unless the provider username is allowlisted.
 - Invite codes are stored hashed; the raw code is shown once.
-- Revoking an invite does not remove users who already accepted it.
+- Deleting or revoking an invite does not remove users who already accepted it.
 - Invite acceptance is audited.
 
 Bootstrap: `ADMIN_USERNAMES` (comma-separated) promotes matching accounts on first login. The

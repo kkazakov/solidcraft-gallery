@@ -12,12 +12,13 @@ This file records what actually runs, not what is planned. The plan remains in
 | pnpm workspace, TypeScript, ESLint, Prettier, Vitest | done | `pnpm lint`, `pnpm check`, `pnpm test` |
 | `@gallery/core` — manifest, slugs, visibility, errors, limits, session tokens | done | 33 unit tests |
 | `@gallery/design` — read ZIP/JSON, strip `cache/*`, real fixture | done | 11 unit tests |
-| `@gallery/db` — schema, migrations, queue, users/identities/sessions, invites, projects/versions/active version, search, repos | done | 23 integration tests on PostgreSQL 16 |
+| `@gallery/db` — schema, migrations, queue, users/identities/sessions, invites, projects/versions/active version, search, repos | done | 26 integration tests on PostgreSQL 16 |
 | `@gallery/git` — local repository, read-only GitHub client, Forgejo contents API | done | 17 tests (real git + mock HTTP) |
 | `@gallery/storage` — content-addressed artifacts, atomic writes | done | 2 tests |
 | `@gallery/render` — nsjail plan, direct plan, no-shell runner | done | 12 tests |
 | nsjail worker — sandboxed CLI with no network, read-only root, rlimits | done | container render of 5 artifacts under nsjail |
-| `@gallery/web` — OAuth, dashboard create/edit flow, publish, gallery/search, GitHub connect/sync/webhook, Forgejo provisioning | done | end-to-end curl/browser flow + 26 integration/unit tests |
+| `@gallery/web` — OAuth, dashboard create/edit flow, publish, gallery/search, GitHub connect/sync/webhook, Forgejo provisioning | done | end-to-end curl/browser flow + 51 unit tests |
+| Admin dashboard — top-nav link, paginated users, paginated invite codes, create/delete | done | admin route checks + `@gallery/db` admin integration tests |
 | Localization — English, Bulgarian, French, German and Spanish, `Accept-Language` detection, dashboard preference in localStorage/cookie | done | 21 unit tests; curl checks for HTML `lang`, cookie precedence and `POST /language` |
 | `@gallery/worker` — job loop, retries, nsjail render handler (local, Forgejo and cached external) | done | 9 tests + containerized nsjail render |
 | `craftpub` — `lean`, `validate`, `inspect` | done | fixtures and failure exits exercised |
@@ -153,7 +154,7 @@ The single-host stack is deployed with Ansible to `root@192.168.88.222` (see
 1. GitHub polling (webhooks + manual **Sync now** work), GitLab/Gitea sources, private external repos.
 2. Persist encrypted OAuth tokens and use user-owned repositories; add a hosted-Forgejo webhook for
    direct pushes; linking/unlinking identities.
-3. API tokens, published-project quotas, a web invite-admin UI and audit entries.
+3. API tokens, published-project quotas and audit entries for admin actions.
 4. `repo.sync` / `version.ingest` queue handlers (external sync currently runs synchronously in web).
 5. A dedicated nsjail rootfs and per-jail seccomp profile; today the worker needs `SYS_ADMIN` and the
    image root is read-only but shared.
@@ -208,8 +209,11 @@ design, wait for the preview, and use the visibility form.
   `FORGEJO_INTERNAL_URL`).
 - The repo URL constraint now permits `http://` so the bundled local Forgejo can be stored; production
   must still use HTTPS. Existing Forgejo tags are not replaced on republish.
-- Invite administration is CLI-only (`pnpm invites`); setting `ADMIN_USERNAMES` and signing in once is
-  the bootstrap path. There is no audit table write for invite creation/acceptance yet.
+- Invite administration is available at `/admin/invites` and via the CLI (`pnpm invites`); setting
+  `ADMIN_USERNAMES` and signing in once is the bootstrap path. The admin UI creates and hard-deletes
+  codes, while the CLI's `revoke` keeps the row. There is no audit table write for invite
+  creation/acceptance yet, and the users page is read-only (role changes and suspension are not
+  exposed).
 - The GitHub API base is injectable for tests (`GITHUB_API_BASE`/`GITHUB_RAW_BASE`); production
   uses github.com. The design is cached, so a deleted upstream repo leaves the site working.
 - The public GitHub repository is private while the scaffold is in flux.

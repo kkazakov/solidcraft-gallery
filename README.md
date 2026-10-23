@@ -9,9 +9,10 @@ and git repositories as the source of truth — either hosted by the service or 
 This repository contains both the working implementation and the plan/specifications it was built
 from. [STATUS.md](STATUS.md) is the current source of truth for what runs.
 
-> **Implementation status (22 Oct 2026):** M0 is complete; the M1 slice, public gallery and OAuth
+> **Implementation status (23 Oct 2026):** M0 is complete; the M1 slice, public gallery and OAuth
 > work — Forgejo/GitHub sign-in with invite-gated beta, local/Forgejo/GitHub projects, publish/sync/webhooks, nsjail-sandboxed
-> `solidcraft-cli` rendering, project pages, search, sitemap, media, downloads and visibility.
+> `solidcraft-cli` rendering, project pages, search, sitemap, media, downloads, visibility and an
+> admin dashboard for users and beta invites.
 > See [STATUS.md](STATUS.md).
 
 ## Screenshots
@@ -25,6 +26,8 @@ Taken from the local staging stack: real Forgejo, real `solidcraft-cli`, nsjail 
 | ![Search results](docs/screenshots/search.png) | ![Forgejo repository](docs/screenshots/forgejo.png) |
 | **Gallery in dark mode** | **Project page in dark mode** |
 | ![Gallery home in dark mode](docs/screenshots/home-dark.png) | ![Project page in dark mode](docs/screenshots/project-dark.png) |
+| **Administration — users** | **Administration — invite codes** |
+| ![Admin users](docs/screenshots/admin-users.png) | ![Admin invite codes](docs/screenshots/admin-invites.png) |
 
 Despite the folder name, this is **not a SolidCraft plugin**. SolidCraft's plugin boundary is an
 in-document command executor with no storage, accounts, background sync or UI; a gallery needs all
@@ -38,7 +41,7 @@ four. The rationale is recorded in [docs/00 — Decisions](docs/00-decisions.md)
 |---|---|
 | **Public** (anonymous) | Browse, search, tag, view a design with rendered images and measurements, read its README, download `.solidcraft` / STEP / STL, open the source repository, open the design in SolidCraft. |
 | **Signed in** | Dashboard with your projects and connected repositories, create or import a project, publish a version, choose public / unlisted / private, manage tags and metadata, API tokens, account settings. |
-| **Admin** | Reports and takedowns, featured projects, quarantine, user and quota administration, audit log. |
+| **Admin** | Operator dashboard for accounts and beta invite codes: a paginated users list, paginated invite codes, and one-time code creation with uses and expiry. Reports, moderation and audit are planned. |
 
 Every project is a git repository containing one or more `.solidcraft` files exactly as the app
 saves them. The site indexes the repository and renders previews; it does not own a second copy of

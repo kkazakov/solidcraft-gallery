@@ -185,8 +185,9 @@ Sign-in only works over the final HTTPS origin. While `CADDY_AUTO_HTTPS=off` and
 HTTP, the browser will not keep the secure session cookie and the Forgejo redirect URI will not
 match. That is expected until the cutover below.
 
-After the first OAuth sign-in, the account matching `ADMIN_USERNAMES` is promoted to gallery admin
-and can create invites:
+After the first OAuth sign-in, the account matching `ADMIN_USERNAMES` is promoted to gallery admin.
+It can create invites in the browser at `${PUBLIC_ORIGIN}/admin/invites` (the **Administration** link
+after Forgejo in the header), or from the CLI:
 
 ```sh
 ssh root@192.168.88.222
@@ -195,10 +196,11 @@ docker compose -f compose.yaml --env-file .env exec -T web \
   pnpm invites create --by gallery-admin --note "beta" --uses 5 --days 30
 ```
 
-From a workstation checkout, `./scripts/new-invite.sh` wraps the same call and prints the registration
-link the invitee opens (`${PUBLIC_ORIGIN}/auth/register?invite=<code>`); `./scripts/new-invite.sh list`
-and `./scripts/new-invite.sh revoke <id>` map to the CLI. The raw code is printed once — the gallery
-stores only its SHA-256 hash.
+The admin page lists users and codes, creates a code with uses and expiry days, shows the raw code
+once, and deletes codes. From a workstation checkout, `./scripts/new-invite.sh` wraps the same CLI call
+and prints the registration link the invitee opens (`${PUBLIC_ORIGIN}/auth/register?invite=<code>`);
+`./scripts/new-invite.sh list` and `./scripts/new-invite.sh revoke <id>` map to the CLI. The raw code
+is shown once — the gallery stores only its SHA-256 hash.
 
 The invitee opens that link (also linked from the sign-in page as **Create your account with an
 invite**) and chooses a Forgejo username, an optional email and a password. The gallery creates the
