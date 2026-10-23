@@ -38,24 +38,10 @@
 
   <form method="GET" action={formAction} class="form-stack">
     <input type="hidden" name="redirect" value={data.redirect} />
-
-    {#if data.inviteRequired || data.invite}
-      <label class="field" for="invite">
-        <span>
-          {t('login.inviteLabel')}
-          <span class="field-hint">
-            {data.inviteRequired ? t('login.inviteRequiredHint') : t('login.inviteOptionalHint')}
-          </span>
-        </span>
-        <input
-          id="invite"
-          name="invite"
-          value={data.invite}
-          autocomplete="off"
-          spellcheck="false"
-          placeholder={t('login.invitePlaceholder')}
-        />
-      </label>
+    {#if data.invite}
+      <!-- Invite links opened by someone who already has a Forgejo account keep
+           working: the code rides along into the OAuth start. -->
+      <input type="hidden" name="invite" value={data.invite} />
     {/if}
 
     <div class="auth-providers">

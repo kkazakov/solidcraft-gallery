@@ -175,15 +175,12 @@ shown once by `pnpm invites create`; OAuth carries only its hash in the signed t
 Self-registration is a Forgejo setting: with `FORGEJO_DISABLE_REGISTRATION=false`, the gallery login
 links to `${FORGEJO_PUBLIC_URL}/user/sign_up`. The gallery invite gate is independent; set
 `INVITE_REQUIRED=0` to let any Forgejo account in. Existing identities and provider usernames in
-`ADMIN_USERNAMES` sign in without a code. The login page shows an invite code field whenever
-`INVITE_REQUIRED=1` (or a code is already in the URL); submitting it forwards the code into the OAuth
-start URL as `?invite=`, and invite links fill the same field. That field is only for people who
-already have a Forgejo account but no gallery identity — it cannot create a provider account. The
-field is a plain `GET` form, so it works with `csr = false`; there is still no separate "redeem"
-endpoint. On drun.net Forgejo sign-up is closed (`FORGEJO_DISABLE_REGISTRATION=true`), so a new
-invite holder creates the provider account from `/auth/register?invite=<code>` instead: the web tier
-calls the Forgejo admin API, consumes the invite and inserts the gallery user plus identity in one
-transaction. The login page hides the "Create a Forgejo account" link and links to that page.
+`ADMIN_USERNAMES` sign in without a code. The login page has no invite input; invite links may still
+point at `/auth/login?invite=<code>`, and the code is carried into the OAuth start URL so it works for
+someone who already has a Forgejo account but no gallery identity. New invite holders create the
+provider account from `/auth/register?invite=<code>`: the web tier calls the Forgejo admin API,
+consumes the invite and inserts the gallery user plus identity in one transaction. The login page
+hides the "Create a Forgejo account" link and links to that page.
 `ADMIN_USERNAMES` is applied on every sign-in (including dev sign-in) and is the bootstrap path;
 there is no web admin UI or audit entry yet.
 
