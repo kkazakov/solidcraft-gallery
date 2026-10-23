@@ -1,6 +1,7 @@
 # 08 — Authentication and authorization
 
-There are no passwords. Identity comes from Forgejo (hosted) or GitHub (external repositories).
+There are no passwords. The sign-in page uses Forgejo; GitHub remains a read-only source for
+external repositories, not a gallery login.
 That removes password storage, reset flows and credential stuffing from the threat model, and it
 means the site never sees a git password.
 
@@ -12,9 +13,11 @@ Forgejo account ──OAuth2──┐
 GitHub account ───OAuth───┘         └──► api_tokens (CLI)
 ```
 
-- A user may link both providers; `identities` is unique on `(provider, subject)`.
-- The first sign-in creates the user. During the beta, an **invite code** is required unless the
-  account is allowlisted.
+- The identity table still supports Forgejo and GitHub rows; only Forgejo is offered at sign-in.
+  `identities` is unique on `(provider, subject)`.
+- The first sign-in creates the user. When `INVITE_REQUIRED=1`, an invite is required unless the
+  account is allowlisted. The sign-in page no longer shows a code field; invite links carry the
+  code as `?invite=` into the provider start URL.
 - Username: the provider handle, normalized to `[a-z0-9-]`, 3–32 chars; collisions get `-2`, `-3`.
   Usernames are permanent in v1 (URLs depend on them).
 - Email is stored if the provider returns one; it is never shown publicly and is not a login key.
@@ -26,7 +29,7 @@ GitHub account ───OAuth───┘         └──► api_tokens (CLI)
 
 ### Forgejo (hosted)
 
-1. `GET /auth/login?provider=forgejo&redirect=/dashboard`
+1. `GET /auth/login/forgejo?redirect=/dashboard` (the sign-in page omits GitHub).
 2. Generate `state` (32 bytes) and PKCE `verifier`; store both in a signed, `HttpOnly`, 10-minute
    cookie.
 3. Redirect to `https://git.gallery.example/login/oauth/authorize?client_id=…&redirect_uri=…&scope=openid+profile+email+repo&state=…&code_challenge=…`.
@@ -63,9 +66,12 @@ separate credential, stored encrypted and used only by the server.
 
 ## Implementation status
 
-Forgejo and GitHub OAuth sign-in are implemented with a signed, HttpOnly transaction cookie,
-mandatory `state` and PKCE S256 (`/auth/login/:provider`, `/auth/callback/:provider`). The callback
-upserts `users` + `identities`, creates a normal session and only accepts relative redirect targets.
+Forgejo and GitHub OAuth callbacks are implemented with a signed, HttpOnly transaction cookie,
+mandatory `state` and PKCE S256 (`/auth/login/:provider`, `/auth/callback/:provider`). Only the
+Forgejo flow is offered on `/auth/login`; the GitHub callback remains for deployments that opt in
+out of band. The callback upserts `users` + `identities`, creates a normal session and only accepts
+relative redirect targets. A signed-in visitor who opens `/auth/login` is redirected to the target
+instead of being asked to sign in again.
 Access/refresh tokens are **not persisted yet** (token encryption lands with hosted repository
 provisioning); the Forgejo `repo` scope is requested so that step can reuse the grant. Linking an
 additional provider, unlinking and account deletion remain later work.
@@ -168,7 +174,8 @@ shown once by `pnpm invites create`; OAuth carries only its hash in the signed t
 Self-registration is a Forgejo setting: with `FORGEJO_DISABLE_REGISTRATION=false`, the gallery login
 links to `${FORGEJO_PUBLIC_URL}/user/sign_up`. The gallery invite gate is independent; set
 `INVITE_REQUIRED=0` to let any Forgejo account in. Existing identities and provider usernames in
-`ADMIN_USERNAMES` sign in without a code.
+`ADMIN_USERNAMES` sign in without a code. Invite links are passed as `?invite=` on the login URL and
+forwarded into the OAuth start URL; there is no visible invite input.
 `ADMIN_USERNAMES` is applied on every sign-in (including dev sign-in) and is the bootstrap path;
 there is no web admin UI or audit entry yet.
 

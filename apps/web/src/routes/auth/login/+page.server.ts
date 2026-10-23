@@ -1,6 +1,20 @@
-import { inviteRequired, providerConfig, providerConfigured } from '../../../lib/server/oauth.js';
+import { redirect, type RequestEvent } from '@sveltejs/kit';
+import { currentViewer } from '../../../lib/server/auth.js';
+import { providerConfig, providerConfigured, safeRedirect } from '../../../lib/server/oauth.js';
 
-export function load({ url }: { url: URL }) {
+export async function load(event: RequestEvent) {
+  const requested = safeRedirect(event.url.searchParams.get('redirect'));
+  // Never bounce a signed-in visitor back into the auth routes.
+  const target = requested.startsWith('/auth/') ? '/dashboard' : requested;
+
+  let viewer = null;
+  try {
+    viewer = await currentViewer(event);
+  } catch {
+    // Fall through to the sign-in page when the database is unavailable.
+  }
+  if (viewer) throw redirect(303, target);
+
   const forgejo = providerConfig('forgejo');
   const registrationUrl =
     forgejo && process.env.FORGEJO_DISABLE_REGISTRATION === 'false'
@@ -9,14 +23,10 @@ export function load({ url }: { url: URL }) {
 
   return {
     devLogin: process.env.DEV_LOGIN === '1' && process.env.NODE_ENV !== 'production',
-    redirect: url.searchParams.get('redirect') ?? '/dashboard',
-    invite: url.searchParams.get('invite') ?? '',
-    inviteRequired: inviteRequired(),
-    error: url.searchParams.get('error') ?? '',
+    redirect: target,
+    invite: event.url.searchParams.get('invite') ?? '',
+    error: event.url.searchParams.get('error') ?? '',
     registrationUrl,
-    providers: [
-      { id: 'forgejo', label: 'Forgejo', configured: providerConfigured('forgejo') },
-      { id: 'github', label: 'GitHub', configured: providerConfigured('github') },
-    ],
+    providers: [{ id: 'forgejo', label: 'Forgejo', configured: providerConfigured('forgejo') }],
   };
 }

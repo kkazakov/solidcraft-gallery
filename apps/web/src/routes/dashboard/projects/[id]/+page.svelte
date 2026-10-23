@@ -1,168 +1,210 @@
 <script lang="ts">
   let { data, form } = $props();
+
+  const date = new Intl.DateTimeFormat('en', { dateStyle: 'medium' });
+  const selectedVisibility = $derived(form?.details ? form.visibility : data.project.visibility);
+  const selectedLicense = $derived(
+    form?.details ? (form.visibility === 'private' ? '' : (form.license ?? '')) : (data.project.license ?? ''),
+  );
 </script>
 
 <svelte:head>
   <title>{data.project.title} — Project — SolidCraft Gallery</title>
 </svelte:head>
 
-<section class="shell" style="padding: 48px 0 80px">
-  <p class="eyebrow">Project</p>
-  <h1 style="letter-spacing: -0.03em; margin: 14px 0 8px">{data.project.title}</h1>
-  <div style="display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 14px">
-    <span class="badge">{data.project.visibility}</span>
-    <span class="badge">{data.project.status}</span>
-    <span class="badge">{data.project.repoProvider}</span>
-    <a href={`/${data.project.ownerUsername}/${data.project.slug}`}>View page</a>
+<section class="shell dashboard-page">
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href="/dashboard">Dashboard</a>
+    <span class="sep" aria-hidden="true">/</span>
+    <span class="mono">{data.project.slug}</span>
+  </nav>
+
+  <div class="dashboard-head">
+    <div>
+      <h1>{data.project.title}</h1>
+      <div class="badge-row">
+        <span class="badge">{data.project.visibility}</span>
+        <span class="badge">{data.project.status}</span>
+        <span class="badge">{data.project.repoProvider}</span>
+        {#if data.project.status === 'ready'}
+          <a href={`/${data.project.ownerUsername}/${data.project.slug}`}>View page</a>
+        {/if}
+      </div>
+    </div>
   </div>
 
-  <div class="grid" style="padding: 32px 0 0; grid-template-columns: minmax(280px, 2fr) minmax(260px, 1fr)">
-    {#if data.project.repoProvider !== 'github'}
-      <article class="card">
-        <h2>Publish a design</h2>
-        <p style="margin-bottom: 14px">
-          The server strips the model cache, commits the file to <span class="mono"
-            >designs/{data.project.slug}.solidcraft</span
-          >, and queues previews.
-        </p>
-        {#if data.project.repoProvider === 'forgejo'}
-          <p style="margin-bottom: 14px; font-size: 13px">
-            Hosted on Forgejo:
-            <a class="mono" href={data.project.repoUrl} target="_blank" rel="noopener noreferrer"
+  {#if data.created}
+    <p class="notice notice-ok">Project created. The preview appears as soon as the render finishes.</p>
+  {:else if data.saved === 'details'}
+    <p class="notice notice-ok">Changes saved.</p>
+  {:else if data.saved === 'version'}
+    <p class="notice notice-ok">Version published. It becomes active when rendering finishes.</p>
+  {:else if data.saved === 'active'}
+    <p class="notice notice-ok">Active version updated.</p>
+  {/if}
+
+  <div class="edit-grid">
+    <div class="stack">
+      <form method="POST" action="?/details" class="card form-page" data-visibility-form>
+        <h2>Project details</h2>
+        <p>Rename the project, write its description, and choose who can see it.</p>
+
+        <div class="form-stack">
+          <label class="field" for="title">
+            <span>Title</span>
+            <input
+              id="title"
+              name="title"
+              value={form?.details ? form.title : data.project.title}
+              required
+              maxlength="120"
+            />
+          </label>
+
+          <label class="field" for="description">
+            <span>Description</span>
+            <textarea id="description" name="description" rows="4" maxlength="2000"
+              >{form?.details ? form.description : data.project.description}</textarea
+            >
+          </label>
+
+          <div class="form-split">
+            <label class="field" for="visibility">
+              <span>Visibility</span>
+              <select id="visibility" name="visibility" data-visibility-select>
+                <option value="private" selected={selectedVisibility === 'private'}>Private</option>
+                <option value="unlisted" selected={selectedVisibility === 'unlisted'}>Unlisted</option>
+                <option value="public" selected={selectedVisibility === 'public'}>Public</option>
+              </select>
+              <span class="field-hint">Public projects appear in search and the gallery.</span>
+            </label>
+
+            <label class="field" for="license" data-license-field>
+              <span>License</span>
+              <select id="license" name="license" data-license-select>
+                <option value="">No license</option>
+                {#each data.licenses as license (license.id)}
+                  <option value={license.id} selected={selectedLicense === license.id}>{license.name}</option>
+                {/each}
+              </select>
+              <span class="field-hint">Required when the project is public.</span>
+            </label>
+          </div>
+        </div>
+
+        {#if form?.details && form.message}
+          <p class="form-message error">{form.message}</p>
+        {/if}
+
+        <div class="form-actions">
+          <button class="button primary" type="submit">Save changes</button>
+        </div>
+      </form>
+
+      {#if data.project.repoProvider !== 'github'}
+        <form method="POST" action="?/publish" enctype="multipart/form-data" class="card form-page">
+          <h2>Upload a new version</h2>
+          <p>The new version becomes active when its preview is ready.</p>
+
+          <div class="form-stack">
+            <div class="field">
+              <span>Design file</span>
+              <label class="upload-box" for="design">
+                <span class="upload-title">Choose a .solidcraft file</span>
+                <span class="field-hint">A SolidCraft container or JSON file, up to 25 MB.</span>
+                <input
+                  id="design"
+                  name="design"
+                  type="file"
+                  accept=".solidcraft,application/zip,application/json"
+                  required
+                />
+              </label>
+            </div>
+
+            <label class="field" for="version">
+              <span>Version</span>
+              <input
+                id="version"
+                name="version"
+                value={form?.publish ? (form.version ?? '') : ''}
+                maxlength="64"
+                placeholder="v1.1.0"
+                autocapitalize="off"
+                spellcheck="false"
+              />
+              <span class="field-hint">Used as the git tag for this version.</span>
+            </label>
+          </div>
+
+          {#if form?.publish && form.message}
+            <p class="form-message error">{form.message}</p>
+          {/if}
+
+          <div class="form-actions">
+            <button class="button primary" type="submit">Publish version</button>
+          </div>
+        </form>
+      {:else}
+        <article class="card">
+          <h2>Source: GitHub</h2>
+          <p>
+            This project is read-only here: commits and tags come from the repository. The site caches the lean design
+            at each synced commit and renders it locally.
+          </p>
+          <p>
+            <a class="mono wrap-anywhere" href={data.project.repoUrl} target="_blank" rel="noopener noreferrer"
               >{data.project.repoUrl}</a
             >
           </p>
-        {/if}
-        <form method="POST" action="?/publish" enctype="multipart/form-data" style="display: grid; gap: 10px">
-          <label for="design" style="font-size: 13px; color: var(--muted)">Design file</label>
-          <input id="design" name="design" type="file" accept=".solidcraft" required />
-          <label for="tag" style="font-size: 13px; color: var(--muted)">Release tag (optional)</label>
-          <input
-            id="tag"
-            name="tag"
-            maxlength="64"
-            placeholder="v1.0.0"
-            style="padding: 10px 12px; border-radius: 9px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); font: inherit"
-          />
-          <label for="message" style="font-size: 13px; color: var(--muted)">Commit message (optional)</label>
-          <input
-            id="message"
-            name="message"
-            maxlength="200"
-            placeholder="First release"
-            style="padding: 10px 12px; border-radius: 9px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); font: inherit"
-          />
-          <button class="button primary" type="submit">Publish</button>
-        </form>
-        {#if form?.message && !form.settings && !form.sync}
-          <p style="color: var(--warn); margin: 12px 0 0; font-size: 13px">{form.message}</p>
-        {/if}
-      </article>
-    {:else}
-      <article class="card">
-        <h2>Source: GitHub</h2>
-        <p style="margin-bottom: 14px">
-          This project is read-only here: commits and tags come from the repository. The site caches the lean design at
-          each synced commit and renders it locally.
-        </p>
-        <p style="margin-bottom: 14px">
-          <a class="mono" href={data.project.repoUrl} target="_blank" rel="noopener noreferrer"
-            >{data.project.repoUrl}</a
-          >
-        </p>
-        <form method="POST" action="?/sync">
-          <button class="button primary" type="submit">Sync now</button>
-        </form>
-        {#if form?.sync}
-          <p style="color: {form.ok ? 'var(--accent)' : 'var(--warn)'}; margin: 12px 0 0; font-size: 13px">
-            {form.message}
-          </p>
-        {/if}
-      </article>
-    {/if}
+          <form method="POST" action="?/sync">
+            <button class="button primary" type="submit">Sync now</button>
+          </form>
+          {#if form?.sync}
+            <p class="form-message" class:ok={form.ok} class:error={!form.ok}>{form.message}</p>
+          {/if}
+        </article>
+      {/if}
+    </div>
 
-    <article class="card">
+    <aside class="card">
       <h2>Versions</h2>
       {#if data.versions.length === 0}
         <p>Nothing published yet.</p>
       {:else}
-        <ul style="list-style: none; padding: 0; margin: 0; display: grid; gap: 10px">
+        {#if form?.activate && form.message}
+          <p class="form-message error">{form.message}</p>
+        {/if}
+        <ul class="version-list">
           {#each data.versions as version (version.id)}
-            <li style="border-bottom: 1px solid var(--border); padding-bottom: 8px">
-              <div style="display: flex; justify-content: space-between; gap: 8px">
-                <span class="mono">{version.tag ?? version.commitSha.slice(0, 7)}</span>
-                <span class="badge">{version.status}</span>
+            <li>
+              <div class="version-main">
+                <div class="version-line">
+                  <span class="mono">{version.tag ?? version.commitSha.slice(0, 7)}</span>
+                  <span class:ok={version.status === 'ready'} class:warn={version.status === 'failed'} class="badge">
+                    {version.status}
+                  </span>
+                  {#if data.activeVersionId === version.id}
+                    <span class="badge ok">active</span>
+                  {/if}
+                </div>
+                <time class="version-date" datetime={version.authoredAt.toISOString()}>
+                  {date.format(version.authoredAt)}
+                </time>
+                {#if version.status === 'failed' && version.errorDetail}
+                  <p class="form-message error">{version.errorDetail}</p>
+                {/if}
               </div>
-              {#if version.errorDetail}
-                <p style="color: var(--warn); font-size: 12px; margin: 4px 0 0">{version.errorDetail}</p>
+              {#if version.status === 'ready' && data.activeVersionId !== version.id}
+                <form method="POST" action="?/activate" class="version-action">
+                  <input type="hidden" name="versionId" value={version.id} />
+                  <button class="button small" type="submit">Set active</button>
+                </form>
               {/if}
             </li>
           {/each}
         </ul>
       {/if}
-    </article>
+    </aside>
   </div>
-
-  <article class="card" style="margin-top: 16px; max-width: 720px">
-    <h2>Project details</h2>
-    <p style="margin-bottom: 12px">
-      Changes the display title and the hosted <code>project.json</code>. The URL slug and repository name stay the
-      same.
-    </p>
-    <form method="POST" action="?/rename" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: end">
-      <label style="display: grid; gap: 4px; font-size: 13px; color: var(--muted); flex: 1; min-width: 240px">
-        Title
-        <input
-          name="title"
-          value={data.project.title}
-          required
-          maxlength="120"
-          style="padding: 9px 10px; border-radius: 9px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); font: inherit"
-        />
-      </label>
-      <button class="button primary" type="submit">Rename</button>
-    </form>
-    {#if data.saved === 'rename'}
-      <p style="color: var(--accent); margin: 10px 0 0; font-size: 13px">Saved</p>
-    {:else if form?.rename && form.message}
-      <p style="color: var(--warn); margin: 10px 0 0; font-size: 13px">{form.message}</p>
-    {/if}
-  </article>
-
-  <article class="card" style="margin-top: 16px; max-width: 720px">
-    <h2>Visibility and license</h2>
-    <p style="margin-bottom: 12px">
-      Public requires a ready preview and an SPDX license. Unlisted is reachable by link but excluded from search and
-      the sitemap.
-    </p>
-    <form method="POST" action="?/settings" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: end">
-      <label style="display: grid; gap: 4px; font-size: 13px; color: var(--muted)">
-        Visibility
-        <select
-          name="visibility"
-          style="padding: 9px 10px; border-radius: 9px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); font: inherit"
-        >
-          <option value="private" selected={data.project.visibility === 'private'}>Private</option>
-          <option value="unlisted" selected={data.project.visibility === 'unlisted'}>Unlisted</option>
-          <option value="public" selected={data.project.visibility === 'public'}>Public</option>
-        </select>
-      </label>
-      <label style="display: grid; gap: 4px; font-size: 13px; color: var(--muted); flex: 1; min-width: 180px">
-        License (SPDX)
-        <input
-          name="license"
-          value={data.project.license ?? ''}
-          placeholder="CC-BY-4.0"
-          maxlength="64"
-          style="padding: 9px 10px; border-radius: 9px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); font: inherit"
-        />
-      </label>
-      <button class="button primary" type="submit">Save</button>
-    </form>
-    {#if data.saved === 'settings'}
-      <p style="color: var(--accent); margin: 10px 0 0; font-size: 13px">Saved</p>
-    {:else if form?.settings && form.message}
-      <p style="color: var(--warn); margin: 10px 0 0; font-size: 13px">{form.message}</p>
-    {/if}
-  </article>
 </section>

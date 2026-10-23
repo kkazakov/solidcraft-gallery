@@ -3,7 +3,6 @@
 </svelte:head>
 
 <section class="shell prose">
-  <p class="eyebrow">About</p>
   <h1>A gallery that keeps the file.</h1>
   <p>
     SolidCraft Gallery is a public, git-backed home for SolidCraft designs. A project is a repository, a version is a
@@ -18,8 +17,8 @@
   </p>
   <h2>Status</h2>
   <p>
-    This build is the M0 scaffold. Accounts, publishing, search and the public gallery are being built next. Nothing
-    here pretends to be finished.
+    This is the M1 slice: accounts, hosted and external projects, publishing, previews, search and the public gallery.
+    Moderation, API tokens and the admin surfaces come next. Nothing here pretends to be finished.
   </p>
   <h2>Built on</h2>
   <p>

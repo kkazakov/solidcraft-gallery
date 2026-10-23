@@ -4,6 +4,8 @@
   let { data, children } = $props();
 </script>
 
+<a class="skip-link" href="#main">Skip to content</a>
+
 <header class="site-header">
   <div class="shell">
     <a class="brand" href="/">
@@ -44,16 +46,18 @@
   </div>
 </header>
 
-<main>
+<main id="main">
   {@render children()}
 </main>
 
 <footer class="site-footer">
   <div class="shell">
-    <span>Built in the open. Designs remain the property of their authors.</span>
-    <a href="/about">About</a>
-    <a href="/terms">Terms</a>
-    <a href="/privacy">Privacy</a>
-    <a href="https://github.com/tangency-labs/solidcraft">SolidCraft</a>
+    <span class="footer-note">Built in the open. Designs remain the property of their authors.</span>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="/about">About</a>
+      <a href="/terms">Terms</a>
+      <a href="/privacy">Privacy</a>
+      <a href="https://github.com/tangency-labs/solidcraft">SolidCraft</a>
+    </nav>
   </div>
 </footer>

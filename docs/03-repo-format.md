@@ -154,6 +154,9 @@ Rules:
 - Changing `public` → `private` makes the hosted repo private in the same transaction (best effort;
   the UI reports a partial failure).
 - Search, sitemap and RSS queries always filter `visibility = 'public' AND status = 'ready'`.
+- Public visibility may be chosen while the first version is still rendering. The project, its page
+  and its media stay hidden until that version is `ready`; the owner can see the pending state in
+  the dashboard.
 - A site project cannot be more permissive than its repository: a public page requires a
   public repository. The reverse is fine (a public repository can back an unlisted page).
 
@@ -162,6 +165,9 @@ Rules:
 - Every commit that changes the primary design is a **version**; the site indexes the latest one on
   the default branch.
 - A **tag** on a commit marks a release. The site lists releases first, then history.
+- The owner can pin a ready version as **active**. The public page and all downloads use the active
+  version; a newly rendered version becomes active automatically. Projects without an explicit
+  active version fall back to the newest ready one.
 - Recommended tag format: `vMAJOR.MINOR.PATCH` (e.g. `v1.2.0`); free-form tags are accepted but
   sorted lexicographically after semver.
 - The site never rewrites tags. A moved tag is re-indexed and shown with its new commit.

@@ -19,6 +19,7 @@ export interface Project {
   license: string | null;
   visibility: ProjectVisibility;
   status: ProjectStatus;
+  activeVersionId: string | null;
   designPath: string;
   tags: string[];
   publishedAt: Date | null;
@@ -133,6 +134,7 @@ export async function findProjectByOwnerSlug(db: Database, owner: string, slug: 
       p.license,
       p.visibility::text as visibility,
       p.status::text as status,
+      p.active_version_id as "activeVersionId",
       p.design_path as "designPath",
       p.tags,
       p.published_at as "publishedAt"
@@ -155,6 +157,7 @@ export async function findProjectById(db: Database, id: string): Promise<Project
       r.is_private as "repoPrivate", r.local_path as "localPath",
       p.slug::text as slug, p.title, p.description, p.license,
       p.visibility::text as visibility, p.status::text as status,
+      p.active_version_id as "activeVersionId",
       p.design_path as "designPath", p.tags, p.published_at as "publishedAt"
     from projects p
     join repos r on r.id = p.repo_id
@@ -249,17 +252,40 @@ export async function findVersionById(db: Database, id: string): Promise<Version
 export async function latestReadyVersion(db: Database, projectId: string): Promise<Version | null> {
   const rows = await db<Version[]>`
     select
-      id, project_id as "projectId", commit_sha as "commitSha", tag, message,
-      author_name as "authorName", authored_at as "authoredAt",
-      design_path as "designPath", design_key as "designKey", design_sha256 as "designSha256",
-      design_bytes as "designBytes", lean, status::text as status,
-      error_code as "errorCode", error_detail as "errorDetail", metrics, warnings
-    from versions
-    where project_id = ${projectId} and status = 'ready'
-    order by (tag is not null) desc, authored_at desc
+      v.id, v.project_id as "projectId", v.commit_sha as "commitSha", v.tag, v.message,
+      v.author_name as "authorName", v.authored_at as "authoredAt",
+      v.design_path as "designPath", v.design_key as "designKey", v.design_sha256 as "designSha256",
+      v.design_bytes as "designBytes", v.lean, v.status::text as status,
+      v.error_code as "errorCode", v.error_detail as "errorDetail", v.metrics, v.warnings
+    from versions v
+    where v.project_id = ${projectId} and v.status = 'ready'
+    order by
+      (v.id = (select p.active_version_id from projects p where p.id = ${projectId})) desc,
+      (v.tag is not null) desc,
+      v.authored_at desc
     limit 1
   `;
   return rows[0] ?? null;
+}
+
+/**
+ * Pin one ready version as the version shown on the public page. The guard
+ * keeps a version from another project out of this column.
+ */
+export async function setActiveVersion(db: Database, projectId: string, versionId: string): Promise<boolean> {
+  const rows = await db<{ id: string }[]>`
+    update projects
+    set active_version_id = ${versionId}, updated_at = now()
+    where id = ${projectId}
+      and exists (
+        select 1 from versions
+        where versions.id = ${versionId}
+          and versions.project_id = ${projectId}
+          and versions.status = 'ready'
+      )
+    returning id
+  `;
+  return rows.length > 0;
 }
 
 export async function markVersionRendering(db: Database, id: string): Promise<void> {
@@ -500,6 +526,7 @@ export async function findProjectByRepoId(db: Database, repoId: string): Promise
       r.is_private as "repoPrivate", r.local_path as "localPath",
       p.slug::text as slug, p.title, p.description, p.license,
       p.visibility::text as visibility, p.status::text as status,
+      p.active_version_id as "activeVersionId",
       p.design_path as "designPath", p.tags, p.published_at as "publishedAt"
     from projects p
     join repos r on r.id = p.repo_id
@@ -541,6 +568,15 @@ export async function setProjectVisibilityAndRepo(
   });
 }
 
-export async function updateProjectTitle(db: Database, id: string, title: string): Promise<void> {
-  await db`update projects set title = ${title}, updated_at = now() where id = ${id}`;
+export async function updateProjectDetails(
+  db: Database,
+  id: string,
+  title: string,
+  description: string,
+): Promise<void> {
+  await db`
+    update projects
+    set title = ${title}, description = ${description}, updated_at = now()
+    where id = ${id}
+  `;
 }
