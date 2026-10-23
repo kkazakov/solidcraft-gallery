@@ -34,10 +34,11 @@ uploads and the dashboard; it is never required to read, search or download a de
   /dashboard/account             identities, sessions, delete account
 
 (admin)
-  /admin                         stats + queue
-  /admin/reports                 report queue
-  /admin/projects                feature/quarantine
-  /admin/users                   roles, suspension, invites
+  /admin                         redirects to /admin/users
+  /admin/users                   paginated accounts
+  /admin/invites                 paginated codes, create/delete
+  /admin/reports                 planned
+  /admin/projects                planned
 
 (server)
   /media/[...]                   public and signed private artifacts
@@ -152,10 +153,21 @@ One form, one submit:
 
 ### Admin
 
-- `/admin`: queue depth, renders 24 h, failures by code, storage, recent signups.
+Implemented:
+
+- `/admin`: admin-only shell with the menu on the right; redirects to `/admin/users`.
+- `/admin/users`: paginated accounts with username, display name, email, role, sign-in providers,
+  project count, joined, last seen and suspension.
+- `/admin/invites`: paginated codes with note, uses, expiry, creator and state. Operators can create
+  a code with uses and expiry days (the raw code is shown once) and delete a code after a
+  confirmation step.
+
+Planned:
+
 - `/admin/reports`: table with reason, project, reporter, age; actions with a required note.
 - `/admin/projects`: search, feature toggle, quarantine with reason.
-- `/admin/users`: role, suspend, invites.
+- `/admin`: queue depth, renders, failures by code, storage and recent signups.
+- Audit entries for admin actions.
 
 ## Components
 

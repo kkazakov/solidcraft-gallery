@@ -324,3 +324,27 @@ only by Forgejo. Usernames are first-come within a code's remaining uses.
 **Rejected.** Keeping manual `forgejo admin user create` (the operator asked for self-service); enabling
 Forgejo's own sign-up (it has no invite gate); creating the gallery rows only on the OAuth round trip
 (the invite would already be spent).
+
+---
+
+## D17 — Web admin dashboard for users and beta invites
+
+**Context.** Invites were CLI-only (D14) and admins had no browser view of accounts or codes. The
+operator asked for an admin dashboard with a right-hand menu, a paginated users list, paginated beta
+codes with deletion, and one-time code creation.
+
+**Decision.** Add an admin-only `/admin` area linked from the top navigation after Forgejo.
+`/admin/users` lists accounts with role, sign-in providers, project count, join time, last-seen time
+and suspension. `/admin/invites` lists codes with note, uses, expiry, creator and state; it creates
+codes with uses and expiry days and hard-deletes rows after a confirmation step. A signed-in
+non-admin gets `404`; the subtree is `no-store`/`noindex`, and form posts are origin-checked. The raw
+code is returned only in the create POST response and is never stored or listed again. This
+supersedes D14's "Invites stay CLI-only" clause; the CLI remains supported and keeps revoke
+semantics.
+
+**Consequences.** Operators can run the beta without shell access. Raw codes are not recoverable from
+the database or the list. Hard delete removes the invite row and its note; accounts that accepted it
+are unaffected. Audit entries are still not written.
+
+**Rejected.** Read-only lists (the operator asked for delete and create); soft-revoke only in the UI
+(the operator asked for delete); storing raw codes (hashes remain the only stored form).

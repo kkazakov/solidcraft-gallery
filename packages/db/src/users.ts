@@ -185,3 +185,61 @@ export async function findOAuthIdentity(
 export async function setUserAdmin(db: Database, id: string): Promise<void> {
   await db`update users set role = 'admin' where id = ${id} and role <> 'admin'`;
 }
+
+export interface AdminUser {
+  id: string;
+  username: string;
+  email: string | null;
+  displayName: string;
+  role: Role;
+  suspendedAt: Date | null;
+  createdAt: Date;
+  lastSeenAt: Date | null;
+  providers: string[];
+  projectCount: number;
+}
+
+export interface AdminUserPage {
+  items: AdminUser[];
+  total: number;
+}
+
+/** Account overview for the admin dashboard, newest first. */
+export async function listUsersForAdmin(
+  db: Database,
+  options: { limit: number; offset: number },
+): Promise<AdminUserPage> {
+  const limit = Math.max(1, Math.min(Math.trunc(options.limit), 100));
+  const offset = Math.max(0, Math.trunc(options.offset));
+  const [items, counted] = await Promise.all([
+    db<AdminUser[]>`
+      select
+        u.id,
+        u.username::text as username,
+        u.email::text as email,
+        u.display_name as "displayName",
+        u.role::text as role,
+        u.suspended_at as "suspendedAt",
+        u.created_at as "createdAt",
+        u.last_seen_at as "lastSeenAt",
+        coalesce(
+          (
+            select array_agg(i.provider::text order by i.provider::text)
+            from identities i
+            where i.user_id = u.id
+          ),
+          '{}'::text[]
+        ) as providers,
+        (
+          select count(*)::int
+          from projects p
+          where p.owner_id = u.id and p.deleted_at is null
+        ) as "projectCount"
+      from users u
+      order by u.created_at desc, u.username::text asc
+      limit ${limit} offset ${offset}
+    `,
+    db<{ count: number }[]>`select count(*)::int as count from users`,
+  ]);
+  return { items, total: counted[0]?.count ?? 0 };
+}

@@ -10,4 +10,5 @@ README.md
 **/Dockerfile
 infra/caddy/Caddyfile
 AGENTS.md
+AGENTS.local.md
 STATUS.md
