@@ -17,12 +17,21 @@
   <h1>{t('login.heading')}</h1>
   <p class="page-sub">{t('login.intro')}</p>
 
+  {#if data.registered}
+    <p class="notice notice-ok">{t('login.registered')}</p>
+  {/if}
+
   {#if data.error === 'invite' && data.inviteRequired}
     <p class="notice">{t('login.inviteOnly')}</p>
   {/if}
 
   {#if data.inviteRequired && !data.registrationUrl}
-    <p class="auth-note">{t('login.operatorAccounts')}</p>
+    <p class="auth-note">
+      {t('login.operatorAccounts')}
+      <a href={data.invite ? `/auth/register?invite=${encodeURIComponent(data.invite)}` : '/auth/register'}>
+        {t('login.createWithInvite')}
+      </a>
+    </p>
   {/if}
 
   <form method="GET" action={formAction} class="form-stack">

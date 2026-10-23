@@ -207,6 +207,35 @@ export const de: Dictionary = {
   'login.devBody.after': '.',
   'login.username': 'Benutzername',
   'login.signIn': 'Anmelden',
+  'login.registered': 'Konto erstellt. Melden Sie sich mit Ihrem neuen Forgejo-Konto an.',
+  'login.createWithInvite': 'Sie haben eine Einladung? Konto erstellen',
+
+  'register.title': 'Beta-Konto erstellen — SolidCraft Gallery',
+  'register.heading': 'Beta-Konto erstellen',
+  'register.intro':
+    'Ihre Einladung ist gültig. Wählen Sie den Forgejo-Benutzernamen und das Passwort für die Anmeldung; wir legen das Konto an.',
+  'register.codeLabel': 'Einladungscode',
+  'register.codeSubmit': 'Weiter',
+  'register.codeInvalid':
+    'Diese Einladung ist unbekannt, abgelaufen oder aufgebraucht. Prüfen Sie den Code oder fragen Sie nach einer neuen.',
+  'register.usernameLabel': 'Benutzername',
+  'register.usernameHint': '3–32 Zeichen: Kleinbuchstaben, Ziffern und Bindestriche.',
+  'register.emailLabel': 'E-Mail (optional)',
+  'register.emailHint':
+    'Wird für das Zurücksetzen des Passworts genutzt. Bleibt das Feld leer, erzeugen wir eine Adresse.',
+  'register.passwordLabel': 'Passwort',
+  'register.passwordHint': 'Mindestens 8 Zeichen. Damit melden Sie sich bei Forgejo an.',
+  'register.submit': 'Konto erstellen',
+  'register.signIn': 'Sie haben schon ein Konto? Anmelden',
+  'register.errorInvite': 'Diese Einladung ist nicht mehr verwendbar. Fragen Sie nach einer neuen.',
+  'register.errorUsername': 'Dieser Benutzername ist bereits vergeben.',
+  'register.errorEmail': 'Diese E-Mail wird bereits verwendet.',
+  'register.errorInvalid': 'Prüfen Sie Benutzername, E-Mail und Passwort.',
+  'register.errorPassword': 'Das Passwort muss mindestens 8 Zeichen haben.',
+  'register.errorUnavailable': 'Die Kontoerstellung ist auf dieser Instanz nicht konfiguriert.',
+  'register.errorFailed':
+    'Das Konto konnte nicht erstellt werden. Versuchen Sie es erneut oder wenden Sie sich an den Betreiber.',
+  'register.closed': 'Diese Instanz benötigt keine Einladung. Melden Sie sich einfach an.',
 
   'about.title': 'Über — SolidCraft Gallery',
   'about.description':

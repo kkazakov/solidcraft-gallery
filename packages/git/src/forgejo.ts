@@ -24,6 +24,18 @@ export interface ForgejoFileResult {
   commit: string;
 }
 
+export interface ForgejoUser {
+  id: number;
+  login: string;
+  email: string | null;
+}
+
+interface ForgejoUserJson {
+  id?: unknown;
+  login?: unknown;
+  email?: unknown;
+}
+
 interface ForgejoRepoJson {
   id?: unknown;
   name?: unknown;
@@ -63,7 +75,12 @@ export class ForgejoClient {
     this.timeoutMs = options.timeoutMs ?? 12_000;
   }
 
-  private async request(path: string, init: RequestInit = {}, allow404 = false): Promise<Response> {
+  private async request(
+    path: string,
+    init: RequestInit = {},
+    allow404 = false,
+    surfaceError = false,
+  ): Promise<Response> {
     let response: Response;
     try {
       response = await this.fetchImpl(join(this.baseUrl, path), {
@@ -85,13 +102,34 @@ export class ForgejoClient {
       throw new AppError('forbidden', 'Forgejo refused the provisioning request');
     }
     if (response.status === 404) throw new AppError('not_found', 'Forgejo repository or file not found');
-    if (response.status === 409) throw new AppError('conflict', 'Forgejo reported a conflicting change');
-    if (response.status === 422) throw new AppError('validation_failed', 'Forgejo rejected the repository change');
+    if (response.status === 409) {
+      throw new AppError(
+        'conflict',
+        await this.apiMessage(response, 'Forgejo reported a conflicting change', surfaceError),
+      );
+    }
+    if (response.status === 422) {
+      throw new AppError(
+        'validation_failed',
+        await this.apiMessage(response, 'Forgejo rejected the repository change', surfaceError),
+      );
+    }
     if (response.status === 429) throw new AppError('rate_limited', 'Forgejo rate limit reached');
     if (!response.ok) {
       throw new AppError('upstream_unavailable', `Forgejo returned HTTP ${response.status}`);
     }
     return response;
+  }
+
+  /** Forgejo reports validation problems in `message`; keep it for user-facing errors. */
+  private async apiMessage(response: Response, fallback: string, surface: boolean): Promise<string> {
+    if (!surface) return fallback;
+    try {
+      const body = (await response.json()) as { message?: unknown };
+      return typeof body.message === 'string' && body.message.length > 0 ? body.message.slice(0, 300) : fallback;
+    } catch {
+      return fallback;
+    }
   }
 
   private repoFromJson(body: ForgejoRepoJson, fallback: { owner: string; name: string }): ForgejoRepo {
@@ -187,5 +225,52 @@ export class ForgejoClient {
       method: 'PATCH',
       body: JSON.stringify({ private: isPrivate }),
     });
+  }
+
+  /** Look up a provider account; null when the username is free. */
+  async findUser(username: string): Promise<ForgejoUser | null> {
+    const response = await this.request(`users/${encodeURIComponent(username)}`, {}, true);
+    if (response.status === 404) return null;
+    return this.userFromJson((await response.json()) as ForgejoUserJson);
+  }
+
+  /**
+   * Create an account with the admin token. This is how invite-only instances
+   * provision the provider identity behind a gallery invitation: self-service
+   * registration stays disabled in Forgejo.
+   */
+  async createUser(input: { username: string; email: string; password: string }): Promise<ForgejoUser> {
+    const response = await this.request(
+      'admin/users',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          username: input.username,
+          email: input.email,
+          password: input.password,
+          must_change_password: false,
+          send_notify: false,
+        }),
+      },
+      false,
+      true,
+    );
+    return this.userFromJson((await response.json()) as ForgejoUserJson);
+  }
+
+  /** Best-effort rollback when the gallery side of provisioning fails. */
+  async deleteUser(username: string): Promise<void> {
+    await this.request(`admin/users/${encodeURIComponent(username)}`, { method: 'DELETE' }, true);
+  }
+
+  private userFromJson(body: ForgejoUserJson): ForgejoUser {
+    if (typeof body.id !== 'number' || typeof body.login !== 'string') {
+      throw new AppError('upstream_unavailable', 'Forgejo returned an unexpected user');
+    }
+    return {
+      id: body.id,
+      login: body.login,
+      email: typeof body.email === 'string' ? body.email : null,
+    };
   }
 }
