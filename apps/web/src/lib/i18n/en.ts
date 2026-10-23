@@ -16,6 +16,7 @@ export const en = {
   'common.signOut': 'Sign out',
   'common.terms': 'Terms',
   'common.privacy': 'Privacy',
+  'common.forgejo': 'Forgejo',
   'common.github': 'GitHub',
   'common.footerNote': 'Built in the open. Designs remain the property of their authors.',
   'common.updated': 'Updated:',

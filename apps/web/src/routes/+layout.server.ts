@@ -1,4 +1,5 @@
 import { currentViewer } from '../lib/server/auth';
+import { forgejoPublicUrl } from '../lib/server/forgejo';
 import { formatUpdatedAt, siteBuiltAt } from '../lib/server/updated';
 
 export async function load(event) {
@@ -13,6 +14,7 @@ export async function load(event) {
 
   return {
     viewer,
+    forgejoUrl: forgejoPublicUrl(),
     locale: event.locals.locale,
     siteUpdated: {
       iso: builtAt.toISOString(),

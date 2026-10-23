@@ -15,6 +15,7 @@ export const es: Dictionary = {
   'common.signOut': 'Cerrar sesión',
   'common.terms': 'Condiciones',
   'common.privacy': 'Privacidad',
+  'common.forgejo': 'Forgejo',
   'common.github': 'GitHub',
   'common.footerNote': 'Construido a la vista de todos. Los diseños siguen siendo propiedad de sus autores.',
   'common.updated': 'Actualizado:',

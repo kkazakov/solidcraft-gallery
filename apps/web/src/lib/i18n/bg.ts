@@ -15,6 +15,7 @@ export const bg: Dictionary = {
   'common.signOut': 'Изход',
   'common.terms': 'Условия',
   'common.privacy': 'Поверителност',
+  'common.forgejo': 'Forgejo',
   'common.github': 'GitHub',
   'common.footerNote': 'Създадено открито. Дизайните остават собственост на техните автори.',
   'common.updated': 'Обновено:',
