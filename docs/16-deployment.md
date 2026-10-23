@@ -204,6 +204,19 @@ The invitee can either open that link or enter the code in the **Invite code** f
 page; both forward the code into the Forgejo OAuth start URL, and the account is created when the
 provider round trip completes. The field is a plain `GET` form, so it works without JavaScript.
 
+Forgejo sign-up is closed on drun.net, so the operator creates the provider account first and sends
+it with the invite:
+
+```sh
+docker compose -f compose.yaml --env-file .env exec -T forgejo \
+  forgejo admin user create --username <name> --email <email> --password <temp-password> \
+  --must-change-password
+```
+
+The user signs in at `https://forgejo.drun.net/` once to set a password, then opens the invite link
+(or pastes the code at `/auth/login`) and continues with Forgejo. The gallery account is created on
+that first round trip and the invite is consumed.
+
 ## HTTPS cutover
 
 ### Direct Caddy certificates
@@ -366,11 +379,11 @@ the `*-previous` tags you need.
   bound to `127.0.0.1`; Forgejo's web port is internal to the Compose network.
 - Root SSH is used because that is what the target provides. A non-root deploy user with a Docker
   group and sudo is the next hardening step.
-- The Compose example defaults to a closed beta (`FORGEJO_DISABLE_REGISTRATION=true`,
-  `INVITE_REQUIRED=1`). The current drun.net deployment keeps Forgejo self-registration open
-  (`FORGEJO_DISABLE_REGISTRATION=false`) so an invitee can create a Forgejo account, and gates the
-  gallery with `INVITE_REQUIRED=1`: a new provider identity needs a valid invite link. Set
-  `FORGEJO_DISABLE_REGISTRATION=true` as well to close sign-up end to end.
+- The Compose example and the current drun.net deployment are closed end to end:
+  `FORGEJO_DISABLE_REGISTRATION=true` and `INVITE_REQUIRED=1`. The operator creates each Forgejo
+  account (admin UI or `forgejo admin user create`) and pairs it with an invite code, so a new
+  gallery identity needs both. Forgejo sign-up is a separate switch: setting
+  `FORGEJO_DISABLE_REGISTRATION=false` would let invitees create the provider account themselves.
   `ADMIN_USERNAMES` must contain the Forgejo admin username.
 - Database passwords should be URL-safe (hex) because `DATABASE_URL` is assembled from
   `POSTGRES_PASSWORD`. Secrets with `@`, `:` or `/` will break the URL.

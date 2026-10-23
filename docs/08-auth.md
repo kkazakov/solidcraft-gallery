@@ -178,7 +178,10 @@ links to `${FORGEJO_PUBLIC_URL}/user/sign_up`. The gallery invite gate is indepe
 `ADMIN_USERNAMES` sign in without a code. The login page shows an invite code field whenever
 `INVITE_REQUIRED=1` (or a code is already in the URL); submitting it forwards the code into the OAuth
 start URL as `?invite=`, and invite links fill the same field. The field is a plain `GET` form, so it
-works with `csr = false`; there is still no separate "redeem" endpoint.
+works with `csr = false`; there is still no separate "redeem" endpoint. On drun.net Forgejo sign-up
+is closed (`FORGEJO_DISABLE_REGISTRATION=true`), so the operator creates the provider account and the
+invite field is the only self-service step; the login page then hides the "Create a Forgejo account"
+link and explains that an operator-created account is needed.
 `ADMIN_USERNAMES` is applied on every sign-in (including dev sign-in) and is the bootstrap path;
 there is no web admin UI or audit entry yet.
 

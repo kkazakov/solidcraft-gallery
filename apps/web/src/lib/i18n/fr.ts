@@ -190,6 +190,8 @@ export const fr: Dictionary = {
   'login.inviteRequiredHint': '(requis pour les nouveaux comptes)',
   'login.inviteOptionalHint': '(facultatif)',
   'login.invitePlaceholder': 'Collez votre invitation bêta',
+  'login.operatorAccounts':
+    'L’accès à la bêta nécessite un compte créé par l’opérateur et un code d’invitation. Demandez à un administrateur s’il vous en manque un.',
   'login.continueWith': 'Continuer avec {provider}',
   'login.notConfigured': 'La connexion {provider} n’est pas configurée',
   'login.oauthNote': 'La connexion utilise OAuth avec PKCE. Vous restez connecté sur ce navigateur.',
