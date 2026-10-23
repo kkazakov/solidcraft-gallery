@@ -233,3 +233,22 @@ still needs database and artifact access; those credentials are scoped and rotat
 
 **Rejected.** In-process rendering in the web tier (blast radius); a hosted rendering API
 (privacy, cost, file size).
+
+---
+
+## D13 — Open registration on the drun.net deployment
+
+**Context.** The first public deployment is on `solidcraft.drun.net` / `forgejo.drun.net`. The
+operator has asked for open Forgejo self-registration and no gallery invite gate, superseding the
+invite-only beta policy in D9 for this deployment.
+
+**Decision.** Set `FORGEJO_DISABLE_REGISTRATION=false` and `INVITE_REQUIRED=0` on the drun.net
+deployment. Any Forgejo identity can create a gallery account. Invite support stays in the code and
+`.env.example` keeps the closed defaults (`true`/`1`) for other deployments.
+
+**Consequences.** Registration is open to anyone who can create a Forgejo account, so moderation,
+quotas and abuse handling become the constraint. Closing the beta again is a configuration change,
+not a code change. D9 remains the safe default outside this deployment.
+
+**Rejected.** Keeping the invite gate on drun.net (the operator explicitly removed it); removing
+invite support from the code (it is still needed for controlled deployments).

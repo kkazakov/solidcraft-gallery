@@ -19,17 +19,19 @@
 
   <form method="GET" action="/auth/login" style="display: grid; gap: 12px">
     <input type="hidden" name="redirect" value={data.redirect} />
-    <label for="invite" style="display: grid; gap: 6px; font-size: 13px; color: var(--muted)">
-      Invite code {data.inviteRequired ? '(required for new accounts)' : '(optional)'}
-      <input
-        id="invite"
-        name="invite"
-        value={data.invite}
-        autocomplete="off"
-        placeholder="Paste your beta invite"
-        style="padding: 10px 12px; border-radius: 9px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); font: inherit"
-      />
-    </label>
+    {#if data.inviteRequired || data.invite}
+      <label for="invite" style="display: grid; gap: 6px; font-size: 13px; color: var(--muted)">
+        Invite code {data.inviteRequired ? '(required for new accounts)' : '(optional)'}
+        <input
+          id="invite"
+          name="invite"
+          value={data.invite}
+          autocomplete="off"
+          placeholder="Paste your invite"
+          style="padding: 10px 12px; border-radius: 9px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); font: inherit"
+        />
+      </label>
+    {/if}
     <div style="display: grid; gap: 10px">
       {#each data.providers as provider (provider.id)}
         {#if provider.configured}

@@ -1,6 +1,6 @@
 # Implementation status
 
-**Updated:** 2026-10-23 · **Milestone:** M0 complete; M1 slice, gallery, GitHub sources, OAuth, hosted Forgejo, nsjail, **invites/admin, Ansible deployment, HTTPS, Forgejo OAuth + hosted-repo token, open Forgejo registration** · **Next:** hosted-project smoke test, off-host backups, monitoring
+**Updated:** 2026-10-23 · **Milestone:** M0 complete; M1 slice, gallery, GitHub sources, OAuth, hosted Forgejo, nsjail, **admin, Ansible deployment, HTTPS, Forgejo OAuth + hosted-repo token, open registration** · **Next:** hosted-project smoke test, off-host backups, monitoring
 
 This file records what actually runs, not what is planned. The plan remains in
 [README.md](README.md) and [docs/14-roadmap.md](docs/14-roadmap.md).
@@ -122,11 +122,11 @@ The single-host stack is deployed with Ansible to `root@192.168.88.222` (see
 - A Forgejo admin token is configured as `FORGEJO_ADMIN_TOKEN`. A real `POST /api/v1/user/repos` /
   `DELETE /api/v1/repos/...` round trip with that token succeeded, and the web container has it, so
   hosted projects now provision real Forgejo repositories instead of local git.
-- A 5-use, 30-day beta invite was created for `gallery-admin`; the code is stored in
-  `/opt/solidcraft-gallery/backups/invite-beta.txt` (mode 0600), not in this repository.
-- Forgejo self-registration is enabled (`FORGEJO_DISABLE_REGISTRATION=false`). `/user/sign_up` returns
-  `200` and the gallery login page links to it. Gallery accounts still require an invite
-  (`INVITE_REQUIRED=1`), so opening Forgejo registration does not by itself grant gallery access.
+- The beta invite was revoked after the gate was removed; `pnpm invites list` shows it as
+  `revoked`. New identities no longer need an invite.
+- Registration is open end to end: Forgejo self-registration (`FORGEJO_DISABLE_REGISTRATION=false`,
+  `/user/sign_up` returns `200`) and gallery accounts (`INVITE_REQUIRED=0`). Any Forgejo identity can
+  now sign in and create a gallery account without an invite.
 - The user still signs in from their own browser; the server-side account and identity are already in
   place.
 - Caddy's own TLS path (`CADDY_AUTO_HTTPS=on` + `compose.tls.yaml`) remains available if the external
