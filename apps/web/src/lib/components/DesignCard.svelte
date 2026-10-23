@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { getI18n } from '../i18n/context';
+
   interface CardProject {
     id: string;
     slug: string;
@@ -12,7 +14,7 @@
   }
 
   let { project }: { project: CardProject } = $props();
-  const date = new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' });
+  const { t, formatDate } = getI18n();
 </script>
 
 <article class="design-card">
@@ -21,7 +23,7 @@
       {#if project.coverKey}
         <img
           src={`/media/${project.coverKey}`}
-          alt={`Isometric render of ${project.title}`}
+          alt={t('card.renderAlt', { title: project.title })}
           width="1200"
           height="900"
           decoding="async"
@@ -34,7 +36,9 @@
       <h2 class="card-title">{project.title}</h2>
       <p class="card-owner">
         {project.ownerUsername}{#if project.publishedAt}
-          · <time datetime={project.publishedAt.toISOString()}>{date.format(project.publishedAt)}</time>
+          · <time datetime={project.publishedAt.toISOString()}>
+            {formatDate(project.publishedAt, { month: 'short', day: 'numeric', year: 'numeric' })}
+          </time>
         {/if}
       </p>
       {#if project.description}

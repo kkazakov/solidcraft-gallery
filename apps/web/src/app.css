@@ -380,6 +380,23 @@ samp {
   gap: 8px;
 }
 
+.language-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.language-switch label {
+  color: var(--muted);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.language-switch select {
+  width: auto;
+  min-width: 124px;
+}
+
 .section {
   padding-bottom: 44px;
 }

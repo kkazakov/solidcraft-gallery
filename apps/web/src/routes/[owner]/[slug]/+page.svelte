@@ -1,14 +1,21 @@
 <script lang="ts">
+  import { getI18n } from '../../../lib/i18n/context';
+
   let { data } = $props();
-  const date = new Intl.DateTimeFormat('en', { dateStyle: 'medium' });
-  const number = new Intl.NumberFormat('en', { maximumFractionDigits: 1 });
+  const { t, enumLabel, formatDate, formatNumber } = getI18n();
+
+  const numberOptions: Intl.NumberFormatOptions = { maximumFractionDigits: 1 };
 </script>
 
 <svelte:head>
-  <title>{data.project.title} — SolidCraft Gallery</title>
+  <title>{t('project.title', { title: data.project.title })}</title>
   <meta
     name="description"
-    content={data.project.description || `${data.project.title}, a SolidCraft design by ${data.project.ownerUsername}.`}
+    content={data.project.description ||
+      t('project.descriptionFallback', {
+        title: data.project.title,
+        owner: data.project.ownerUsername,
+      })}
   />
   {#if data.project.visibility !== 'public'}
     <meta name="robots" content="noindex" />
@@ -19,15 +26,15 @@
 </svelte:head>
 
 <section class="shell project-page">
-  <nav class="breadcrumb" aria-label="Breadcrumb">
+  <nav class="breadcrumb" aria-label={t('common.breadcrumb')}>
     <a href={`/u/${data.project.ownerUsername}`}>{data.project.ownerUsername}</a>
     <span class="sep" aria-hidden="true">/</span>
     <span class="mono">{data.project.slug}</span>
     {#if data.project.visibility !== 'public'}
-      <span class="badge">{data.project.visibility}</span>
+      <span class="badge">{enumLabel('visibility', data.project.visibility)}</span>
     {/if}
     {#if data.isOwner}
-      <a href={`/dashboard/projects/${data.project.id}`}>Edit / publish</a>
+      <a href={`/dashboard/projects/${data.project.id}`}>{t('project.editPublish')}</a>
     {/if}
   </nav>
 
@@ -40,10 +47,12 @@
 
   {#if !data.latest}
     <article class="card empty-card">
-      <h2>Previews are being generated</h2>
+      <h2>{t('project.previewsTitle')}</h2>
       <p>
-        The design is published, but the renderer has not produced its previews yet. Refresh in a moment. {#if data.isOwner}If
-          it stays like this, open the project dashboard for the error.{/if}
+        {t('project.previewsBody')}
+        {#if data.isOwner}
+          {t('project.previewsOwner')}
+        {/if}
       </p>
     </article>
   {:else}
@@ -51,30 +60,45 @@
       <div>
         <div class="hero-image">
           {#if data.images.iso}
-            <img src={data.images.iso} alt={`Isometric render of ${data.project.title}`} width="1200" height="900" />
+            <img
+              src={data.images.iso}
+              alt={t('project.altIso', { title: data.project.title })}
+              width="1200"
+              height="900"
+            />
           {:else}
-            <div class="image-placeholder">No preview</div>
+            <div class="image-placeholder">{t('project.noPreview')}</div>
           {/if}
         </div>
         {#if data.images.top || data.images.front}
           <div class="image-row">
             {#if data.images.top}
               <div class="image-cell">
-                <img src={data.images.top} alt={`Top view of ${data.project.title}`} width="1200" height="900" />
+                <img
+                  src={data.images.top}
+                  alt={t('project.altTop', { title: data.project.title })}
+                  width="1200"
+                  height="900"
+                />
               </div>
             {/if}
             {#if data.images.front}
               <div class="image-cell">
-                <img src={data.images.front} alt={`Front view of ${data.project.title}`} width="1200" height="900" />
+                <img
+                  src={data.images.front}
+                  alt={t('project.altFront', { title: data.project.title })}
+                  width="1200"
+                  height="900"
+                />
               </div>
             {/if}
           </div>
         {/if}
       </div>
 
-      <aside class="stack" aria-label="Design details">
+      <aside class="stack" aria-label={t('common.designDetails')}>
         <article class="card card-aside">
-          <h2>Download</h2>
+          <h2>{t('project.download')}</h2>
           <div class="download-list">
             <a
               class="button primary"
@@ -93,47 +117,50 @@
               </a>
             {/if}
           </div>
-          <p class="card-note">Open the design with SolidCraft 0.18 or newer.</p>
+          <p class="card-note">{t('project.openWith')}</p>
           {#if data.project.repoUrl.startsWith('https://')}
             <p class="card-note">
-              <a href={data.project.repoUrl} target="_blank" rel="noopener noreferrer">Source repository</a>
+              <a href={data.project.repoUrl} target="_blank" rel="noopener noreferrer">
+                {t('project.sourceRepository')}
+              </a>
             </p>
           {/if}
         </article>
 
         {#if data.metrics}
           <article class="card card-aside">
-            <h2>Measurements</h2>
+            <h2>{t('project.measurements')}</h2>
             <dl class="measurements">
               {#if data.metrics.bbox}
                 <div>
-                  <dt>Bounding box</dt>
+                  <dt>{t('project.boundingBox')}</dt>
                   <dd>
-                    {number.format(data.metrics.bbox[0] ?? 0)} × {number.format(data.metrics.bbox[1] ?? 0)} × {number.format(
-                      data.metrics.bbox[2] ?? 0,
-                    )} mm
+                    {formatNumber(data.metrics.bbox[0] ?? 0, numberOptions)} × {formatNumber(
+                      data.metrics.bbox[1] ?? 0,
+                      numberOptions,
+                    )} × {formatNumber(data.metrics.bbox[2] ?? 0, numberOptions)} mm
                   </dd>
                 </div>
               {/if}
               <div>
-                <dt>Bodies</dt>
+                <dt>{t('project.bodies')}</dt>
                 <dd>{data.metrics.bodies}</dd>
               </div>
               {#if data.metrics.volume > 0}
                 <div>
-                  <dt>Volume</dt>
-                  <dd>{number.format(data.metrics.volume)} mm³</dd>
+                  <dt>{t('project.volume')}</dt>
+                  <dd>{formatNumber(data.metrics.volume, numberOptions)} mm³</dd>
                 </div>
               {/if}
               {#if data.metrics.mass > 0}
                 <div>
-                  <dt>Mass</dt>
-                  <dd>{number.format(data.metrics.mass)} g</dd>
+                  <dt>{t('project.mass')}</dt>
+                  <dd>{formatNumber(data.metrics.mass, numberOptions)} g</dd>
                 </div>
               {/if}
               <div>
-                <dt>License</dt>
-                <dd>{data.project.license ?? 'Not set'}</dd>
+                <dt>{t('project.license')}</dt>
+                <dd>{data.project.license ?? t('project.notSet')}</dd>
               </div>
             </dl>
           </article>
@@ -150,16 +177,18 @@
     </div>
 
     <section class="versions-section">
-      <h2>Versions</h2>
+      <h2>{t('project.versions')}</h2>
       <ul class="version-list">
         {#each data.versions as version (version.id)}
           <li>
             <span class="mono">{version.tag ?? version.commitSha.slice(0, 7)}</span>
-            <span class="badge">{version.status}</span>
+            <span class="badge">{enumLabel('status', version.status)}</span>
             {#if version.id === data.latest.id}
-              <span class="badge ok">live</span>
+              <span class="badge ok">{t('project.live')}</span>
             {/if}
-            <time class="date" datetime={version.authoredAt.toISOString()}>{date.format(version.authoredAt)}</time>
+            <time class="date" datetime={version.authoredAt.toISOString()}>
+              {formatDate(version.authoredAt)}
+            </time>
           </li>
         {/each}
       </ul>

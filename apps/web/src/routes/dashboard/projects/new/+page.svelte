@@ -1,24 +1,31 @@
 <script lang="ts">
+  import LanguageSwitcher from '../../../../lib/components/LanguageSwitcher.svelte';
+  import { getI18n } from '../../../../lib/i18n/context';
+
   let { data, form } = $props();
+  const { t } = getI18n();
 
   const selectedVisibility = $derived(form?.visibility ?? 'private');
 </script>
 
 <svelte:head>
-  <title>Create project — SolidCraft Gallery</title>
+  <title>{t('newProject.title')}</title>
 </svelte:head>
 
 <section class="shell dashboard-page">
-  <nav class="breadcrumb" aria-label="Breadcrumb">
-    <a href="/dashboard">Dashboard</a>
+  <nav class="breadcrumb" aria-label={t('common.breadcrumb')}>
+    <a href="/dashboard">{t('common.dashboard')}</a>
     <span class="sep" aria-hidden="true">/</span>
-    <span>New project</span>
+    <span>{t('newProject.breadcrumb')}</span>
   </nav>
 
   <div class="dashboard-head">
     <div>
-      <h1>Create project</h1>
-      <p>Publish a .solidcraft file as a new version. The preview appears after the renderer finishes.</p>
+      <h1>{t('newProject.heading')}</h1>
+      <p>{t('newProject.intro')}</p>
+    </div>
+    <div class="page-actions">
+      <LanguageSwitcher />
     </div>
   </div>
 
@@ -27,43 +34,47 @@
       <p class="notice">
         {form.message}
         {#if form.projectId}
-          <a href={`/dashboard/projects/${form.projectId}`}>Open the project</a>
+          <a href={`/dashboard/projects/${form.projectId}`}>{t('common.openProject')}</a>
         {/if}
       </p>
     {/if}
 
     <div class="form-stack">
       <label class="field" for="title">
-        <span>Project title</span>
+        <span>{t('newProject.titleLabel')}</span>
         <input
           id="title"
           name="title"
           value={form?.title ?? ''}
           required
           maxlength="120"
-          placeholder="Raspberry Pi 4 case"
+          placeholder={t('newProject.titlePlaceholder')}
         />
       </label>
 
       <label class="field" for="description">
-        <span>Description</span>
-        <textarea id="description" name="description" rows="3" maxlength="2000" placeholder="What the design is for."
-          >{form?.description ?? ''}</textarea
+        <span>{t('newProject.descriptionLabel')}</span>
+        <textarea
+          id="description"
+          name="description"
+          rows="3"
+          maxlength="2000"
+          placeholder={t('newProject.descriptionPlaceholder')}>{form?.description ?? ''}</textarea
         >
       </label>
 
       <div class="field">
-        <span>Design file</span>
+        <span>{t('newProject.designFile')}</span>
         <label class="upload-box" for="design">
-          <span class="upload-title">Choose a .solidcraft file</span>
-          <span class="field-hint">A SolidCraft container or JSON file, up to 25 MB.</span>
+          <span class="upload-title">{t('newProject.chooseFile')}</span>
+          <span class="field-hint">{t('newProject.designHint')}</span>
           <input id="design" name="design" type="file" accept=".solidcraft,application/zip,application/json" required />
         </label>
       </div>
 
       <div class="form-split">
         <label class="field" for="version">
-          <span>Version</span>
+          <span>{t('newProject.version')}</span>
           <input
             id="version"
             name="version"
@@ -73,47 +84,48 @@
             autocapitalize="off"
             spellcheck="false"
           />
-          <span class="field-hint">Used as the git tag for this version.</span>
+          <span class="field-hint">{t('newProject.versionHint')}</span>
         </label>
 
         <label class="field" for="visibility">
-          <span>Visibility</span>
+          <span>{t('newProject.visibility')}</span>
           <select id="visibility" name="visibility" data-visibility-select>
-            <option value="private" selected={selectedVisibility === 'private'}>Private</option>
-            <option value="public" selected={selectedVisibility === 'public'}>Public</option>
+            <option value="private" selected={selectedVisibility === 'private'}>{t('newProject.private')}</option>
+            <option value="public" selected={selectedVisibility === 'public'}>{t('newProject.public')}</option>
           </select>
-          <span class="field-hint">Public projects appear once the preview is ready.</span>
+          <span class="field-hint">{t('newProject.visibilityHint')}</span>
         </label>
       </div>
 
       <label class="field" for="license" data-license-field>
-        <span>License</span>
+        <span>{t('newProject.license')}</span>
         <select id="license" name="license" data-license-select>
-          <option value="">Choose a license</option>
+          <option value="">{t('newProject.chooseLicense')}</option>
           {#each data.licenses as license (license.id)}
             <option value={license.id} selected={form?.license === license.id}>{license.name}</option>
           {/each}
         </select>
-        <span class="field-hint">Required when the project is public. Uses GitHub's common license list.</span>
+        <span class="field-hint">{t('newProject.licenseHint')}</span>
       </label>
     </div>
 
     <div class="form-actions">
-      <button class="button primary" type="submit">Create project</button>
-      <a class="button" href="/dashboard">Cancel</a>
+      <button class="button primary" type="submit">{t('newProject.create')}</button>
+      <a class="button" href="/dashboard">{t('common.cancel')}</a>
     </div>
   </form>
 
   <details class="card connect-panel" open={Boolean(form?.connect)}>
-    <summary>Import a public GitHub repository</summary>
+    <summary>{t('newProject.importSummary')}</summary>
     <p>
-      The repository needs a <code>.solidcraft</code> file at the commit it points to. Add a
-      <code>project.json</code> at the root to set the title, license and design path. The site caches the lean design and
-      never writes to GitHub.
+      {t('newProject.importBody.before')} <code>.solidcraft</code>
+      {t('newProject.importBody.middle')}
+      <code>project.json</code>
+      {t('newProject.importBody.after')}
     </p>
     <form method="POST" action="?/connect" class="form-row">
       <label class="field">
-        <span class="sr-only">Repository URL</span>
+        <span class="sr-only">{t('newProject.repositoryUrl')}</span>
         <input
           name="url"
           type="url"
@@ -123,7 +135,7 @@
           spellcheck="false"
         />
       </label>
-      <button class="button primary" type="submit">Import repository</button>
+      <button class="button primary" type="submit">{t('newProject.importRepository')}</button>
     </form>
     {#if form?.connect}
       <p class="form-message error">{form.message}</p>

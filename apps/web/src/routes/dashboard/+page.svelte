@@ -1,34 +1,39 @@
 <script lang="ts">
+  import LanguageSwitcher from '../../lib/components/LanguageSwitcher.svelte';
+  import { getI18n } from '../../lib/i18n/context';
+
   let { data } = $props();
+  const { t, tp, enumLabel } = getI18n();
 </script>
 
 <svelte:head>
-  <title>Your projects — SolidCraft Gallery</title>
+  <title>{t('dashboard.title')}</title>
 </svelte:head>
 
 <section class="shell dashboard-page">
   <div class="dashboard-head">
     <div>
-      <h1>Your projects</h1>
+      <h1>{t('dashboard.heading')}</h1>
       <p>
-        {data.projects.length}
-        {data.projects.length === 1 ? 'project' : 'projects'}
-        · signed in as <span class="mono">{data.viewer.role}</span>
+        {tp('dashboard.projectCount', data.projects.length)} · {t('dashboard.signedInAs', {
+          role: data.viewer.role,
+        })}
       </p>
     </div>
     <div class="page-actions">
+      <LanguageSwitcher />
       <form method="POST" action="/auth/logout">
-        <button class="button small" type="submit">Sign out</button>
+        <button class="button small" type="submit">{t('common.signOut')}</button>
       </form>
-      <a class="button primary" href="/dashboard/projects/new">Create project</a>
+      <a class="button primary" href="/dashboard/projects/new">{t('common.createProject')}</a>
     </div>
   </div>
 
   {#if data.projects.length === 0}
     <article class="card empty-card">
-      <h2>No projects yet</h2>
-      <p>Create a project, publish a .solidcraft file, and its preview will appear here.</p>
-      <a class="button primary" href="/dashboard/projects/new">Create project</a>
+      <h2>{t('dashboard.emptyTitle')}</h2>
+      <p>{t('dashboard.emptyBody')}</p>
+      <a class="button primary" href="/dashboard/projects/new">{t('common.createProject')}</a>
     </article>
   {:else}
     <div class="card project-table">
@@ -40,13 +45,13 @@
               <span class="project-slug">{project.slug}</span>
             </div>
             <div class="project-badges">
-              <span class="badge">{project.visibility}</span>
+              <span class="badge">{enumLabel('visibility', project.visibility)}</span>
               <span
                 class:ok={project.status === 'ready'}
                 class:warn={project.status === 'error' || project.status === 'quarantined'}
                 class="badge"
               >
-                {project.status}
+                {enumLabel('status', project.status)}
               </span>
             </div>
           </li>

@@ -1,18 +1,19 @@
 <script lang="ts">
   import { page } from '$app/state';
+  import { getI18n } from '../lib/i18n/context';
+
+  const { t } = getI18n();
 </script>
 
 <svelte:head>
-  <title>{page.status} — SolidCraft Gallery</title>
+  <title>{t('error.title', { status: page.status })}</title>
 </svelte:head>
 
 <section class="shell error-page">
-  <p class="status-code">Error {page.status}</p>
-  <h1>{page.status === 404 ? 'Not found' : 'Something broke'}</h1>
+  <p class="status-code">{t('error.status', { status: page.status })}</p>
+  <h1>{page.status === 404 ? t('error.notFound') : t('error.broken')}</h1>
   <p>
-    {page.status === 404
-      ? 'That page does not exist, or it is private.'
-      : 'The request failed. The request id is in the response headers.'}
+    {page.status === 404 ? t('error.notFoundBody') : t('error.brokenBody')}
   </p>
-  <p><a class="button" href="/">Go home</a></p>
+  <p><a class="button" href="/">{t('error.goHome')}</a></p>
 </section>

@@ -1,14 +1,40 @@
 <!doctype html>
-<html lang="en">
+<html lang="%lang%">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
     <script>
+      // The language preference lives in localStorage; a cookie mirrors it so
+      // the server can render the right language. If the cookie was cleared
+      // but the local choice survived, restore it and reload once.
+      (() => {
+        // Keep the key and supported list in sync with lib/i18n/config.ts.
+        const key = 'gallery-language';
+        const supported = ['en', 'bg'];
+        let stored = null;
+        try {
+          stored = localStorage.getItem(key);
+        } catch {
+          return;
+        }
+        if (!stored || !supported.includes(stored) || stored === document.documentElement.lang) return;
+        try {
+          if (sessionStorage.getItem('gallery-language-sync') === '1') return;
+          sessionStorage.setItem('gallery-language-sync', '1');
+        } catch {
+          return;
+        }
+        document.cookie = key + '=' + encodeURIComponent(stored) + '; path=/; max-age=31536000; samesite=lax';
+        location.reload();
+      })();
+    </script>
+    <script>
       (() => {
         const key = 'gallery-theme';
         const root = document.documentElement;
-        const labels = { system: 'System', light: 'Light', dark: 'Dark' };
+        const fallbackLabels = { system: 'System', light: 'Light', dark: 'Dark' };
+        const fallbackTemplate = 'Theme: {mode}. Switch to {next}.';
         const next = { system: 'light', light: 'dark', dark: 'system' };
         let stored = null;
         try {
@@ -19,7 +45,20 @@
         let mode = stored === 'light' || stored === 'dark' ? stored : 'system';
         if (mode !== 'system') root.dataset.theme = mode;
 
-        const describe = () => `Theme: ${labels[mode]}. Switch to ${labels[next[mode]]}.`;
+        function toggleElement() {
+          return document.getElementById('theme-toggle');
+        }
+
+        function describe() {
+          const toggle = toggleElement();
+          const labels = {
+            system: toggle?.dataset.labelSystem || fallbackLabels.system,
+            light: toggle?.dataset.labelLight || fallbackLabels.light,
+            dark: toggle?.dataset.labelDark || fallbackLabels.dark,
+          };
+          const template = toggle?.dataset.labelTemplate || fallbackTemplate;
+          return template.replaceAll('{mode}', labels[mode]).replaceAll('{next}', labels[next[mode]]);
+        }
 
         function apply(value, persist) {
           mode = value;
@@ -39,7 +78,7 @@
             root.dataset.theme = mode;
           }
 
-          const toggle = document.getElementById('theme-toggle');
+          const toggle = toggleElement();
           if (toggle) {
             toggle.dataset.mode = mode;
             toggle.setAttribute('aria-label', describe());
@@ -48,7 +87,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-          const toggle = document.getElementById('theme-toggle');
+          const toggle = toggleElement();
           if (!toggle) return;
           apply(mode, false);
           toggle.addEventListener('click', () => apply(next[mode], true));
@@ -80,6 +119,19 @@
         document.addEventListener('change', (event) => {
           const target = event.target;
           if (!(target instanceof Element)) return;
+
+          const languageForm = target.closest('form[data-language-form]');
+          if (languageForm) {
+            const select = languageForm.querySelector('select[name="language"]');
+            if (select) {
+              try {
+                localStorage.setItem('gallery-language', select.value);
+              } catch {}
+            }
+            if (typeof languageForm.requestSubmit === 'function') languageForm.requestSubmit();
+            return;
+          }
+
           const form = target.closest('form[data-visibility-form]');
           if (form) sync(form);
         });

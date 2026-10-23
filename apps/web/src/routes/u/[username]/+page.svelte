@@ -1,24 +1,26 @@
 <script lang="ts">
   import DesignCard from '../../../lib/components/DesignCard.svelte';
+  import { getI18n } from '../../../lib/i18n/context';
 
   let { data } = $props();
+  const { t, tp } = getI18n();
 </script>
 
 <svelte:head>
-  <title>{data.user.username} — SolidCraft Gallery</title>
-  <meta name="description" content={`Public SolidCraft designs by ${data.user.username}.`} />
+  <title>{t('user.title', { username: data.user.username })}</title>
+  <meta name="description" content={t('user.description', { username: data.user.username })} />
 </svelte:head>
 
 <section class="shell page-head">
   <h1>{data.user.username}</h1>
-  <p class="page-sub">{data.projects.length} public design{data.projects.length === 1 ? '' : 's'}</p>
+  <p class="page-sub">{tp('user.designCount', data.projects.length)}</p>
 </section>
 
 <section class="shell section">
   {#if data.projects.length === 0}
     <article class="card empty-card">
-      <h2>No public designs yet</h2>
-      <p>This maker has not published a public project.</p>
+      <h2>{t('user.emptyTitle')}</h2>
+      <p>{t('user.emptyBody')}</p>
     </article>
   {:else}
     <div class="design-grid">

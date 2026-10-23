@@ -1,10 +1,22 @@
 <script lang="ts">
   import '../app.css';
+  import { setI18n } from '../lib/i18n/context';
 
   let { data, children } = $props();
+
+  // The locale is resolved per request and the app is server-rendered, so the
+  // initial prop is final for this page instance.
+  // svelte-ignore state_referenced_locally
+  const { t } = setI18n(data.locale);
+  const themeLabels = {
+    system: t('theme.label.system'),
+    light: t('theme.label.light'),
+    dark: t('theme.label.dark'),
+  };
+  const themeDescription = t('theme.describe', { mode: themeLabels.system, next: themeLabels.light });
 </script>
 
-<a class="skip-link" href="#main">Skip to content</a>
+<a class="skip-link" href="#main">{t('common.skipToContent')}</a>
 
 <header class="site-header">
   <div class="shell">
@@ -12,21 +24,25 @@
       <span class="brand-mark" aria-hidden="true">SC</span>
       <span>SolidCraft Gallery</span>
     </a>
-    <nav class="nav" aria-label="Main">
-      <a href="/search">Search</a>
-      <a href="/about">About</a>
+    <nav class="nav" aria-label={t('common.mainNav')}>
+      <a href="/search">{t('common.search')}</a>
+      <a href="/about">{t('common.about')}</a>
       {#if data.viewer}
-        <a href="/dashboard">Dashboard</a>
+        <a href="/dashboard">{t('common.dashboard')}</a>
       {:else}
-        <a href="/auth/login">Sign in</a>
+        <a href="/auth/login">{t('common.signIn')}</a>
       {/if}
-      <a href="https://github.com/kkazakov/solidcraft-gallery">GitHub</a>
+      <a href="https://github.com/kkazakov/solidcraft-gallery">{t('common.github')}</a>
       <button
         id="theme-toggle"
         class="theme-toggle"
         type="button"
-        aria-label="Theme: System. Switch to Light."
-        title="Theme: System. Switch to Light."
+        aria-label={themeDescription}
+        title={themeDescription}
+        data-label-system={themeLabels.system}
+        data-label-light={themeLabels.light}
+        data-label-dark={themeLabels.dark}
+        data-label-template={t('theme.describe')}
       >
         <svg class="theme-icon theme-icon-system" viewBox="0 0 24 24" aria-hidden="true">
           <circle cx="12" cy="12" r="8"></circle>
@@ -52,11 +68,11 @@
 
 <footer class="site-footer">
   <div class="shell">
-    <span class="footer-note">Built in the open. Designs remain the property of their authors.</span>
-    <nav class="footer-links" aria-label="Footer">
-      <a href="/about">About</a>
-      <a href="/terms">Terms</a>
-      <a href="/privacy">Privacy</a>
+    <span class="footer-note">{t('common.footerNote')}</span>
+    <nav class="footer-links" aria-label={t('common.footerNav')}>
+      <a href="/about">{t('common.about')}</a>
+      <a href="/terms">{t('common.terms')}</a>
+      <a href="/privacy">{t('common.privacy')}</a>
       <a href="https://github.com/tangency-labs/solidcraft">SolidCraft</a>
     </nav>
   </div>

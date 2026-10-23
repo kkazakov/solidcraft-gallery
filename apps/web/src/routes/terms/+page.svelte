@@ -1,12 +1,14 @@
+<script lang="ts">
+  import { getI18n } from '../../lib/i18n/context';
+
+  const { t } = getI18n();
+</script>
+
 <svelte:head>
-  <title>Terms — SolidCraft Gallery</title>
+  <title>{t('terms.title')}</title>
 </svelte:head>
 
 <section class="shell prose">
-  <h1>Terms of service</h1>
-  <p>
-    This is a placeholder for the beta terms. It is not legal advice and it is not in force. The published terms will
-    cover acceptable use, licensing of uploaded designs, takedowns, account suspension and the limits of the service.
-  </p>
-  <p>Questions before launch: open an issue in the repository.</p>
+  <h1>{t('terms.heading')}</h1>
+  {@html t('terms.body')}
 </section>

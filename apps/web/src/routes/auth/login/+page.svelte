@@ -1,5 +1,8 @@
 <script lang="ts">
+  import { getI18n } from '../../../lib/i18n/context';
+
   let { data } = $props();
+  const { t } = getI18n();
 
   function providerHref(id: string): string {
     const params = new URLSearchParams({ redirect: data.redirect });
@@ -9,47 +12,51 @@
 </script>
 
 <svelte:head>
-  <title>Sign in — SolidCraft Gallery</title>
+  <title>{t('login.title')}</title>
 </svelte:head>
 
 <section class="shell auth-page">
-  <h1>Sign in</h1>
-  <p class="page-sub">Use your Forgejo account to publish designs and manage your projects.</p>
+  <h1>{t('login.heading')}</h1>
+  <p class="page-sub">{t('login.intro')}</p>
 
   {#if data.error === 'invite' && data.inviteRequired}
-    <p class="notice">This instance is invite-only. Ask an administrator for an invite link.</p>
+    <p class="notice">{t('login.inviteOnly')}</p>
   {/if}
 
   <div class="auth-providers">
     {#each data.providers as provider (provider.id)}
       {#if provider.configured}
         <a class="button block" href={providerHref(provider.id)}>
-          Continue with {provider.label}
+          {t('login.continueWith', { provider: provider.label })}
         </a>
       {:else}
-        <span class="button block disabled" aria-disabled="true">{provider.label} sign-in is not configured</span>
+        <span class="button block disabled" aria-disabled="true">
+          {t('login.notConfigured', { provider: provider.label })}
+        </span>
       {/if}
     {/each}
   </div>
 
-  <p class="auth-note">Sign-in uses OAuth with PKCE. You stay signed in on this browser.</p>
+  <p class="auth-note">{t('login.oauthNote')}</p>
 
   {#if data.registrationUrl}
     <p class="auth-note">
-      New here? <a href={data.registrationUrl}>Create a Forgejo account</a>, then return to this page.
+      {t('login.newHere')} <a href={data.registrationUrl}>{t('login.createAccount')}</a>{t('login.newHereAfter')}
     </p>
   {/if}
 
   {#if data.devLogin}
     <div class="card auth-dev">
-      <h2>Development sign-in</h2>
-      <p>Creates a local account with no provider. Disabled when <code>NODE_ENV=production</code>.</p>
+      <h2>{t('login.devHeading')}</h2>
+      <p>
+        {t('login.devBody.before')} <code>NODE_ENV=production</code>{t('login.devBody.after')}
+      </p>
       <form method="GET" action="/auth/dev" class="form-row">
         <label class="field">
-          <span class="sr-only">Username</span>
+          <span class="sr-only">{t('login.username')}</span>
           <input id="username" name="username" value="dev" autocomplete="off" spellcheck="false" />
         </label>
-        <button class="button primary" type="submit">Sign in</button>
+        <button class="button primary" type="submit">{t('login.signIn')}</button>
       </form>
     </div>
   {/if}

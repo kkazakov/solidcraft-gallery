@@ -2,6 +2,7 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import { AppError, COMMON_LICENSES, LIMITS, can, canChangeVisibility, isCommonLicense } from '@gallery/core';
 import { readDesign } from '@gallery/design';
 import { findProjectById, getDatabase, latestReadyVersion, listVersions, type ProjectVisibility } from '@gallery/db';
+import { translate, type MessageKey, type MessageParams } from '../../../../lib/i18n/messages.js';
 import { requireViewer } from '../../../../lib/server/auth.js';
 import { syncGitHubProject } from '../../../../lib/server/external.js';
 import {
@@ -14,6 +15,13 @@ import {
 const TAG = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
 const VISIBILITIES = new Set<ProjectVisibility>(['public', 'unlisted', 'private']);
 
+/** The domain returns English reasons; map the known ones to message keys. */
+function visibilityReasonKey(reason: string): MessageKey | null {
+  if (reason === 'a public project needs a published version') return 'error.publicNeedsVersion';
+  if (reason === 'a public project needs an SPDX license') return 'error.publicNeedsLicense';
+  return null;
+}
+
 export async function load(event) {
   const viewer = await requireViewer(event);
   const project = await findProjectById(getDatabase(), event.params.id);
@@ -23,7 +31,10 @@ export async function load(event) {
   const activeVersionId = project.activeVersionId ?? latest?.id ?? null;
   const licenses = [...COMMON_LICENSES];
   if (project.license && !isCommonLicense(project.license)) {
-    licenses.unshift({ id: project.license, name: `${project.license} (current)` });
+    licenses.unshift({
+      id: project.license,
+      name: translate(event.locals.locale, 'manage.currentLicense', { license: project.license }),
+    });
   }
   return {
     viewer,
@@ -39,6 +50,7 @@ export async function load(event) {
 export const actions = {
   details: async (event) => {
     const viewer = await requireViewer(event);
+    const t = (key: MessageKey, params?: MessageParams) => translate(event.locals.locale, key, params);
     const db = getDatabase();
     const project = await findProjectById(db, event.params.id);
     if (!project || !can(project, viewer, 'edit')) throw error(404, 'Not found');
@@ -56,19 +68,19 @@ export const actions = {
     const invalid = (message: string, status = 400) => fail(status, { details: true, ...values, message });
 
     if (title.length < 1 || title.length > LIMITS.titleChars) {
-      return invalid(`Title must be 1–${LIMITS.titleChars} characters`);
+      return invalid(t('error.titleLength', { max: LIMITS.titleChars }));
     }
     if (description.length > LIMITS.descriptionChars) {
-      return invalid(`Description must be at most ${LIMITS.descriptionChars} characters`);
+      return invalid(t('error.descriptionLength', { max: LIMITS.descriptionChars }));
     }
     if (!VISIBILITIES.has(requestedVisibility as ProjectVisibility)) {
-      return invalid('Visibility must be private, unlisted or public');
+      return invalid(t('error.visibilityEdit'));
     }
     if (visibility === 'public' && !license) {
-      return invalid('Choose a license before making the project public');
+      return invalid(t('error.licenseRequired'));
     }
     if (license && !isCommonLicense(license) && license !== project.license) {
-      return invalid('Choose a license from the list');
+      return invalid(t('error.licenseFromList'));
     }
 
     const versions = await listVersions(db, project.id, 1);
@@ -78,14 +90,17 @@ export const actions = {
       hasVersion: versions.length > 0,
       license,
     });
-    if (!change.ok) return invalid(change.reason);
+    if (!change.ok) {
+      const reasonKey = visibilityReasonKey(change.reason);
+      return invalid(reasonKey ? t(reasonKey) : change.reason);
+    }
 
     try {
       await updateProjectDetails({ viewer, projectId: project.id, title, description });
       await updateProjectPublication({ viewer, projectId: project.id, visibility, license });
     } catch (updateError) {
       if (updateError instanceof AppError) return invalid(updateError.message, updateError.status);
-      return invalid('Could not save the project', 500);
+      return invalid(t('error.saveProject'), 500);
     }
 
     throw redirect(303, `${event.url.pathname}?saved=details`);
@@ -93,12 +108,13 @@ export const actions = {
 
   publish: async (event) => {
     const viewer = await requireViewer(event);
+    const t = (key: MessageKey, params?: MessageParams) => translate(event.locals.locale, key, params);
     const project = await findProjectById(getDatabase(), event.params.id);
     if (!project || !can(project, viewer, 'publish')) throw error(404, 'Not found');
     if (project.repoProvider === 'github') {
       return fail(400, {
         publish: true,
-        message: 'GitHub projects are read-only here. Push to GitHub and sync.',
+        message: t('error.githubReadOnly'),
         version: '',
       });
     }
@@ -109,13 +125,13 @@ export const actions = {
     const invalid = (message: string, status = 400) => fail(status, { publish: true, message, version });
 
     if (!(design instanceof File) || design.size === 0) {
-      return invalid('Choose a .solidcraft file to publish');
+      return invalid(t('error.designRequired'));
     }
     if (design.size > LIMITS.designBytes) {
-      return invalid(`The design is larger than ${LIMITS.designBytes / (1024 * 1024)} MB`, 413);
+      return invalid(t('error.designTooLarge', { mb: LIMITS.designBytes / (1024 * 1024) }), 413);
     }
     if (version && !TAG.test(version)) {
-      return invalid('Version must be 1–64 letters, digits, dots, underscores or hyphens');
+      return invalid(t('error.version'));
     }
 
     const bytes = new Uint8Array(await design.arrayBuffer());
@@ -136,7 +152,7 @@ export const actions = {
       });
     } catch (publishError) {
       if (publishError instanceof AppError) return invalid(publishError.message, publishError.status);
-      return invalid('Could not publish the design', 500);
+      return invalid(t('error.publishDesign'), 500);
     }
 
     throw redirect(303, `${event.url.pathname}?saved=version`);
@@ -144,6 +160,7 @@ export const actions = {
 
   activate: async (event) => {
     const viewer = await requireViewer(event);
+    const t = (key: MessageKey, params?: MessageParams) => translate(event.locals.locale, key, params);
     const form = await event.request.formData();
     const versionId = String(form.get('versionId') ?? '');
 
@@ -153,7 +170,7 @@ export const actions = {
       if (activateError instanceof AppError) {
         return fail(activateError.status, { activate: true, message: activateError.message });
       }
-      return fail(500, { activate: true, message: 'Could not change the active version' });
+      return fail(500, { activate: true, message: t('error.activateVersion') });
     }
 
     throw redirect(303, `${event.url.pathname}?saved=active`);
@@ -161,10 +178,11 @@ export const actions = {
 
   sync: async (event) => {
     const viewer = await requireViewer(event);
+    const t = (key: MessageKey, params?: MessageParams) => translate(event.locals.locale, key, params);
     const project = await findProjectById(getDatabase(), event.params.id);
     if (!project || !can(project, viewer, 'edit')) throw error(404, 'Not found');
     if (project.repoProvider === 'local') {
-      return fail(400, { sync: true, message: 'Local projects are published from this page' });
+      return fail(400, { sync: true, message: t('error.localProjects') });
     }
 
     try {
@@ -172,11 +190,11 @@ export const actions = {
       return {
         sync: true,
         ok: true,
-        message: result.changed ? 'Sync queued; the preview will refresh shortly' : 'Already up to date',
+        message: result.changed ? t('notice.syncQueued') : t('notice.syncUpToDate'),
       };
     } catch (syncError) {
       if (syncError instanceof AppError) return fail(syncError.status, { sync: true, message: syncError.message });
-      return fail(500, { sync: true, message: 'Could not sync the repository' });
+      return fail(500, { sync: true, message: t('error.syncRepository') });
     }
   },
 };

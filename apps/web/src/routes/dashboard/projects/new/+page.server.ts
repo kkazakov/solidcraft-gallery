@@ -2,6 +2,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { AppError, COMMON_LICENSES, LIMITS, isCommonLicense } from '@gallery/core';
 import { readDesign } from '@gallery/design';
 import { findProjectById, getDatabase } from '@gallery/db';
+import { translate, type MessageKey, type MessageParams } from '../../../../lib/i18n/messages.js';
 import { requireViewer } from '../../../../lib/server/auth.js';
 import { connectGitHubRepo } from '../../../../lib/server/external.js';
 import { applyProjectVisibility, createHostedProject, publishDesign } from '../../../../lib/server/projects.js';
@@ -16,6 +17,7 @@ export async function load(event) {
 export const actions = {
   create: async (event) => {
     const viewer = await requireViewer(event);
+    const t = (key: MessageKey, params?: MessageParams) => translate(event.locals.locale, key, params);
     const form = await event.request.formData();
 
     const title = String(form.get('title') ?? '').trim();
@@ -38,25 +40,25 @@ export const actions = {
     const invalid = (message: string, status = 400) => fail(status, { create: true, ...values, message });
 
     if (title.length < 1 || title.length > LIMITS.titleChars) {
-      return invalid(`Title must be 1–${LIMITS.titleChars} characters`);
+      return invalid(t('error.titleLength', { max: LIMITS.titleChars }));
     }
     if (description.length > LIMITS.descriptionChars) {
-      return invalid(`Description must be at most ${LIMITS.descriptionChars} characters`);
+      return invalid(t('error.descriptionLength', { max: LIMITS.descriptionChars }));
     }
     if (version && !TAG.test(version)) {
-      return invalid('Version must be 1–64 letters, digits, dots, underscores or hyphens');
+      return invalid(t('error.version'));
     }
     if (requestedVisibility !== 'private' && requestedVisibility !== 'public') {
-      return invalid('Visibility must be private or public');
+      return invalid(t('error.visibilityCreate'));
     }
     if (visibility === 'public' && !isCommonLicense(submittedLicense)) {
-      return invalid('Choose a license before making the project public');
+      return invalid(t('error.licenseRequired'));
     }
     if (!(design instanceof File) || design.size === 0) {
-      return invalid('Choose a .solidcraft file to publish');
+      return invalid(t('error.designRequired'));
     }
     if (design.size > LIMITS.designBytes) {
-      return invalid(`The design is larger than ${LIMITS.designBytes / (1024 * 1024)} MB`, 413);
+      return invalid(t('error.designTooLarge', { mb: LIMITS.designBytes / (1024 * 1024) }), 413);
     }
 
     const bytes = new Uint8Array(await design.arrayBuffer());
@@ -77,7 +79,7 @@ export const actions = {
       });
     } catch (error) {
       if (error instanceof AppError) return invalid(error.message, error.status);
-      return invalid('Could not create the project', 500);
+      return invalid(t('error.createProject'), 500);
     }
 
     try {
@@ -89,12 +91,12 @@ export const actions = {
         message: version ? `Publish ${version}` : 'First version',
       });
     } catch (error) {
-      const message = error instanceof AppError ? error.message : 'Could not publish the design';
+      const message = error instanceof AppError ? error.message : t('error.publishDesign');
       return fail(400, {
         create: true,
         ...values,
         projectId: project.id,
-        message: `Project created, but the design could not be published: ${message}`,
+        message: t('error.publishProjectPartial', { message }),
       });
     }
 
@@ -108,7 +110,7 @@ export const actions = {
           create: true,
           ...values,
           projectId: project.id,
-          message: 'Project created, but it could not be made public. Open the project to retry.',
+          message: t('error.publicProjectPartial'),
         });
       }
     }
@@ -118,6 +120,7 @@ export const actions = {
 
   connect: async (event) => {
     const viewer = await requireViewer(event);
+    const t = (key: MessageKey, params?: MessageParams) => translate(event.locals.locale, key, params);
     const form = await event.request.formData();
     const url = String(form.get('url') ?? '').trim();
 
@@ -126,7 +129,7 @@ export const actions = {
       connected = await connectGitHubRepo({ viewer, url });
     } catch (error) {
       if (error instanceof AppError) return fail(error.status, { connect: true, message: error.message });
-      return fail(500, { connect: true, message: 'Could not connect the repository' });
+      return fail(500, { connect: true, message: t('error.connectRepository') });
     }
 
     throw redirect(303, `/dashboard/projects/${connected.projectId}`);
