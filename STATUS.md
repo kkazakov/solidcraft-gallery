@@ -84,8 +84,8 @@ A real Forgejo stack is running locally via Compose (not a mock):
   durable deployment path.
 - Verified self-registration: `selfuser` signed up on Forgejo, approved OAuth and got a gallery account
   without an invite (`role=user`).
-- The theme defaults to the operating system; the header switch stores `light`/`dark`/`system` in
-  `localStorage` and applies it before paint.
+- The theme defaults to the operating system; a header icon cycles System → Light → Dark and stores
+  the choice in `localStorage` before paint.
 - Project titles can be renamed from the dashboard or `PATCH /api/v1/projects/:id`; the hosted
   `project.json` is committed in the same operation. Slugs and repository names remain immutable.
 - Visibility saves now update the project row and `repos.is_private` in one transaction, roll the
