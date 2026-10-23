@@ -7,10 +7,15 @@ designs: previews, search, versions, and downloads. Stack: Node 22, pnpm 10, Sve
 TypeScript 6, PostgreSQL 16, Forgejo, Vitest. You are implementing and reviewing this repository;
 read `docs/00-decisions.md` before changing a contract. Refer to this project as “SolidCraft Gallery”.
 
+This repository contains the working implementation; [STATUS.md](STATUS.md) is the current source of
+truth for what runs. The GitHub repository is public.
+
 ## 2. Commands
 
 ```sh
 pnpm install
+git switch -c <type>/<short-name> main   # every change starts on a branch
+git push -u origin <type>/<short-name>
 pnpm dev:web                 # http://localhost:5173
 pnpm dev:worker              # requires DATABASE_URL
 pnpm test                    # all workspaces; DB integration skips without DATABASE_URL
@@ -55,6 +60,17 @@ and `design` may import `core`; no package imports an app.
 
 ## 4. Conventions
 
+### Git workflow
+
+- `main` is integration only. **Never commit directly to `main`.**
+- Start every change from `main` on a new branch: `feat/…`, `fix/…`, `docs/…` or `chore/…`.
+- Commit and push branches to `origin` (the public repository) freely.
+- **Never open or merge a pull request into `main` unless the user explicitly asks for it.** No
+  automatic merges, no "merge when green".
+- This policy applies to every change, including documentation and this file.
+
+### Code
+
 - Server-only code lives in `src/lib/server` or `+page.server.ts`. Never import `@gallery/db` into a
   `.svelte` file.
 - OAuth is `src/lib/server/oauth.ts`: PKCE S256 plus a signed HttpOnly transaction cookie. Never trust
@@ -85,6 +101,8 @@ if (!can(project, viewer, 'view')) throw new AppError('not_found', 'No such proj
 ## 5. Boundaries
 
 - NEVER commit `.env`, tokens, keys, or a real user design without explicit permission.
+- NEVER commit directly to `main`. Every change starts on a branch and is pushed there.
+- NEVER open a pull request into `main`, or merge/fast-forward one, without an explicit user request.
 - NEVER run migrations against production, and never write a destructive migration without a human.
 - NEVER invoke `solidcraft-cli`, `git`, or `unzip` outside the sandbox/render package (M1+).
 - NEVER push to an external repository; the site is read-only for bring-your-own git.
@@ -98,6 +116,16 @@ if (!can(project, viewer, 'view')) throw new AppError('not_found', 'No such proj
 - The theme bootstrap is an inline script in `app.html`; it sets `data-theme` before paint and stores
   `light`/`dark`/`system` under `gallery-theme` in `localStorage`. There is no hydration, so keep it
   framework-free.
+- Project titles are renamed from the dashboard or `PATCH /api/v1/projects/:id`; the hosted
+  `project.json` is committed in the same operation. Slugs and repository names are immutable.
+- Visibility saves update the project row and `repos.is_private` in one transaction, roll the Forgejo
+  repository back on DB failure, and redirect to `?saved=settings`. Do not return action data for a
+  successful save: the pre-action page state can be stale.
+- Preview images are intentionally eager; do not re-add `loading="lazy"` to cards or project views
+  without checking screenshots and first paint.
+- The GitHub repository is public. Staging credentials live only in `/tmp/gallery-staging.env` and
+  `/tmp/forgejo-admin-*`; never copy them into the repo or screenshots. The Compose defaults keep
+  registration closed and invites required.
 - SvelteKit 3 has **no `svelte.config.js`** and **no `$lib` alias**. Pass `adapter` and `preprocess`
   to `sveltekit({...})` in `vite.config.ts`; import `Handle` from `@sveltejs/kit/hooks`; use relative
   imports for local server modules; `tsconfig.json` extends `"$app/tsconfig"`.
