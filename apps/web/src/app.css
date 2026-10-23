@@ -1355,6 +1355,15 @@ select:disabled {
   line-height: 1.65;
 }
 
+.prose ul {
+  margin: 6px 0 14px;
+  padding-left: 20px;
+}
+
+.prose li + li {
+  margin-top: 4px;
+}
+
 .prose a {
   color: var(--text);
 }
