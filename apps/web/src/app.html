@@ -8,33 +8,50 @@
       (() => {
         const key = 'gallery-theme';
         const root = document.documentElement;
+        const labels = { system: 'System', light: 'Light', dark: 'Dark' };
+        const next = { system: 'light', light: 'dark', dark: 'system' };
         let stored = null;
         try {
           stored = localStorage.getItem(key);
         } catch {
           // Storage can be blocked; system preference still applies.
         }
-        const initial = stored === 'light' || stored === 'dark' ? stored : 'system';
-        if (initial !== 'system') root.dataset.theme = initial;
+        let mode = stored === 'light' || stored === 'dark' ? stored : 'system';
+        if (mode !== 'system') root.dataset.theme = mode;
 
-        document.addEventListener('DOMContentLoaded', () => {
-          const select = document.getElementById('theme-select');
-          if (!select) return;
-          select.value = initial;
-          select.addEventListener('change', () => {
-            const value = select.value;
-            if (value === 'system') {
+        const describe = () => `Theme: ${labels[mode]}. Switch to ${labels[next[mode]]}.`;
+
+        function apply(value, persist) {
+          mode = value;
+          if (mode === 'system') {
+            if (persist) {
               try {
                 localStorage.removeItem(key);
               } catch {}
-              delete root.dataset.theme;
-            } else {
-              try {
-                localStorage.setItem(key, value);
-              } catch {}
-              root.dataset.theme = value;
             }
-          });
+            delete root.dataset.theme;
+          } else {
+            if (persist) {
+              try {
+                localStorage.setItem(key, mode);
+              } catch {}
+            }
+            root.dataset.theme = mode;
+          }
+
+          const toggle = document.getElementById('theme-toggle');
+          if (toggle) {
+            toggle.dataset.mode = mode;
+            toggle.setAttribute('aria-label', describe());
+            toggle.title = describe();
+          }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+          const toggle = document.getElementById('theme-toggle');
+          if (!toggle) return;
+          apply(mode, false);
+          toggle.addEventListener('click', () => apply(next[mode], true));
         });
       })();
     </script>

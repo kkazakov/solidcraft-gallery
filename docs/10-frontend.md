@@ -247,7 +247,7 @@ The request id is shown for support and logged with the error.
 ## Theme
 
 The public shell defaults to the operating system colour scheme through `prefers-color-scheme`.
-The header selector offers **System**, **Light** and **Dark**; an explicit choice is stored under
-`gallery-theme` in `localStorage`. A tiny inline bootstrap in `app.html` applies the stored value to
+A single icon at the end of the header nav cycles **System → Light → Dark**; the icon shows the
+current mode. An explicit choice is stored under `gallery-theme` in `localStorage`. A tiny inline bootstrap in `app.html` applies the stored value to
 `<html data-theme="…">` before the stylesheet paints, so there is no flash. Because public pages set
 `csr = false`, the switch is framework-free and degrades to System when JavaScript is unavailable.

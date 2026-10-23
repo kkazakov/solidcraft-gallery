@@ -140,22 +140,51 @@ a:hover {
   color: var(--text);
 }
 
-.theme-select {
-  appearance: none;
+.theme-toggle {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  padding: 0;
   border: 1px solid var(--border);
+  border-radius: 8px;
   background: var(--panel);
   color: var(--muted);
-  border-radius: 8px;
-  padding: 5px 10px;
-  font: inherit;
-  font-size: 13px;
   cursor: pointer;
 }
 
-.theme-select:hover,
-.theme-select:focus-visible {
+.theme-toggle:hover,
+.theme-toggle:focus-visible {
   color: var(--text);
   border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.theme-icon {
+  display: none;
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+:root:not([data-theme]) .theme-icon-system,
+:root[data-theme='light'] .theme-icon-light,
+:root[data-theme='dark'] .theme-icon-dark {
+  display: block;
+}
+
+.theme-icon-system path {
+  fill: currentColor;
+  stroke: none;
 }
 
 .sr-only {
@@ -395,11 +424,6 @@ main {
     gap: 12px;
     overflow-x: auto;
     padding-bottom: 2px;
-  }
-
-  .theme-select {
-    padding: 4px 7px;
-    font-size: 12px;
   }
 
   .hero {
