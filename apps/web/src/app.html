@@ -116,6 +116,23 @@
           document.querySelectorAll('form[data-visibility-form]').forEach(sync);
         }
 
+        // Signing out forgets the language preference along with the session.
+        // The server clears the cookie; drop the browser-owned copy before the
+        // form navigates so the pre-paint bootstrap cannot mirror it back.
+        document.addEventListener(
+          'submit',
+          (event) => {
+            const form = event.target;
+            if (!(form instanceof HTMLFormElement)) return;
+            const action = form.getAttribute('action');
+            if (!action || new URL(action, location.href).pathname !== '/auth/logout') return;
+            try {
+              localStorage.removeItem('gallery-language');
+            } catch {}
+          },
+          true,
+        );
+
         document.addEventListener('change', (event) => {
           const target = event.target;
           if (!(target instanceof Element)) return;

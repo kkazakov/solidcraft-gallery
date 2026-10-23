@@ -197,7 +197,8 @@ safe relative path (open-redirect check). Errors render a page with a retry link
 
 #### `POST /auth/logout`
 
-Revokes the session and clears the cookie. CSRF-protected.
+Revokes the session and clears the session and language-preference cookies. The browser also
+drops its stored language choice, so the next visit follows `Accept-Language`. CSRF-protected.
 
 ### Current user
 

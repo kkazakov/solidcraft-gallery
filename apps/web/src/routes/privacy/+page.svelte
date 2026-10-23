@@ -38,7 +38,8 @@
     </li>
     <li>
       <strong>Preferences.</strong> Your theme choice is stored in your browser under <code>gallery-theme</code>. It
-      stays on your device and is not sent to us.
+      stays on your device and is not sent to us. Your language choice is stored under <code>gallery-language</code>
+      in your browser and mirrored in a cookie so pages render in that language.
     </li>
   </ul>
 
@@ -51,6 +52,10 @@
     <li>
       <code>__Host-gallery_oauth</code> protects the sign-in round trip. It is essential, HttpOnly, Secure, SameSite=Lax,
       and expires after 10 minutes.
+    </li>
+    <li>
+      <code>gallery-language</code> remembers your language choice. It is readable by the page, Secure, SameSite=Lax, expires
+      after one year, and is cleared when you sign out.
     </li>
   </ul>
   <p>

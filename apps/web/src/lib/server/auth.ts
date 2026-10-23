@@ -1,6 +1,7 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
 import { hashSessionToken, newSessionToken, sessionCookieName } from '@gallery/core';
+import { LANGUAGE_COOKIE } from '../i18n/config.js';
 import {
   createSession,
   deleteSession,
@@ -60,6 +61,10 @@ export async function signOut(event: RequestEvent): Promise<void> {
   const token = event.cookies.get(COOKIE);
   if (token) await deleteSession(getDatabase(), hashSessionToken(token));
   event.cookies.delete(COOKIE, { path: '/' });
+  // The language preference belongs to the signed-in session: drop the cookie
+  // so the next visit falls back to Accept-Language. The browser-owned copy is
+  // cleared by the logout form before it navigates.
+  event.cookies.delete(LANGUAGE_COOKIE, { path: '/' });
 }
 
 /** Same-origin check for state-changing form posts until the CSRF token lands. */
