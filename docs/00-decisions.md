@@ -336,10 +336,11 @@ codes with deletion, and one-time code creation.
 **Decision.** Add an admin-only `/admin` area linked from the top navigation after Forgejo.
 `/admin/users` lists accounts with role, sign-in providers, project count, join time, last-seen time
 and suspension. `/admin/invites` lists codes with note, uses, expiry, creator and state; it creates
-codes with uses and expiry days and hard-deletes rows. A signed-in non-admin gets `404`; the subtree
-is `no-store`/`noindex`, and form posts are origin-checked. The raw code is returned only in the
-create POST response and is never stored or listed again. This supersedes D14's "Invites stay
-CLI-only" clause; the CLI remains supported and keeps revoke semantics.
+codes with uses and expiry days and hard-deletes rows after a confirmation step. A signed-in
+non-admin gets `404`; the subtree is `no-store`/`noindex`, and form posts are origin-checked. The raw
+code is returned only in the create POST response and is never stored or listed again. This
+supersedes D14's "Invites stay CLI-only" clause; the CLI remains supported and keeps revoke
+semantics.
 
 **Consequences.** Operators can run the beta without shell access. Raw codes are not recoverable from
 the database or the list. Hard delete removes the invite row and its note; accounts that accepted it

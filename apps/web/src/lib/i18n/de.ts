@@ -222,6 +222,11 @@ export const de: Dictionary = {
   'admin.invites.never': 'Nie',
   'admin.invites.delete': 'Löschen',
   'admin.invites.deleteHint': 'Löschen entfernt den Code, aber keine Konten, die ihn bereits genutzt haben.',
+  'admin.invites.confirmTitle': 'Diesen Einladungscode löschen?',
+  'admin.invites.confirmBody':
+    'Dadurch werden der Code und seine Notiz entfernt. Konten, die ihn bereits genutzt haben, bleiben bestehen. Das lässt sich nicht rückgängig machen.',
+  'admin.invites.confirmDelete': 'Code löschen',
+  'admin.invites.cancel': 'Abbrechen',
   'admin.invites.empty': 'Noch keine Einladungscodes. Legen Sie oben einen an.',
   'admin.invites.deleted': 'Einladungscode gelöscht.',
   'admin.invites.missing': 'Dieser Einladungscode existiert nicht mehr.',

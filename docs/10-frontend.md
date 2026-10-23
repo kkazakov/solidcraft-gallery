@@ -159,7 +159,8 @@ Implemented:
 - `/admin/users`: paginated accounts with username, display name, email, role, sign-in providers,
   project count, joined, last seen and suspension.
 - `/admin/invites`: paginated codes with note, uses, expiry, creator and state. Operators can create
-  a code with uses and expiry days (the raw code is shown once) and delete a code.
+  a code with uses and expiry days (the raw code is shown once) and delete a code after a
+  confirmation step.
 
 Planned:
 

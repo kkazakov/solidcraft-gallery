@@ -218,6 +218,11 @@ export const en = {
   'admin.invites.never': 'Never',
   'admin.invites.delete': 'Delete',
   'admin.invites.deleteHint': 'Delete removes the code but not accounts that already used it.',
+  'admin.invites.confirmTitle': 'Delete this invite code?',
+  'admin.invites.confirmBody':
+    'This removes the code and its note. Accounts that already used it are not affected. This cannot be undone.',
+  'admin.invites.confirmDelete': 'Delete code',
+  'admin.invites.cancel': 'Cancel',
   'admin.invites.empty': 'No invite codes yet. Create one above.',
   'admin.invites.deleted': 'Invite code deleted.',
   'admin.invites.missing': 'That invite code no longer exists.',

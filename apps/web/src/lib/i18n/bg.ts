@@ -217,6 +217,11 @@ export const bg: Dictionary = {
   'admin.invites.never': 'Никога',
   'admin.invites.delete': 'Изтрий',
   'admin.invites.deleteHint': 'Изтриването премахва кода, но не и акаунтите, които вече са го използвали.',
+  'admin.invites.confirmTitle': 'Да изтрия ли този код за покана?',
+  'admin.invites.confirmBody':
+    'Това премахва кода и бележката му. Акаунтите, които вече са го използвали, не се засягат. Действието е необратимо.',
+  'admin.invites.confirmDelete': 'Изтрий кода',
+  'admin.invites.cancel': 'Отказ',
   'admin.invites.empty': 'Още няма кодове за покани. Създайте един по-горе.',
   'admin.invites.deleted': 'Кодът за покана е изтрит.',
   'admin.invites.missing': 'Този код за покана вече не съществува.',

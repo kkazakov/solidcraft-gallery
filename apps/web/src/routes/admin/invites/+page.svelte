@@ -30,6 +30,10 @@
   function pageHref(target: number): string {
     return target > 1 ? `/admin/invites?page=${target}` : '/admin/invites';
   }
+
+  function confirmHref(id: string): string {
+    return `/admin/invites?page=${data.page}&confirm=${encodeURIComponent(id)}`;
+  }
 </script>
 
 <svelte:head>
@@ -45,6 +49,52 @@
   <p class="notice-ok admin-notice" role="status">{t('admin.invites.deleted')}</p>
 {:else if data.notice === 'missing'}
   <p class="notice admin-notice" role="status">{t('admin.invites.missing')}</p>
+{/if}
+
+{#if data.confirmInvite}
+  <article class="card admin-confirm" aria-labelledby="invite-confirm-title">
+    <h2 id="invite-confirm-title">{t('admin.invites.confirmTitle')}</h2>
+    <p>{t('admin.invites.confirmBody')}</p>
+    <dl class="admin-confirm-meta">
+      <div>
+        <dt>{t('admin.invites.id')}</dt>
+        <dd><code>#{data.confirmInvite.id.slice(0, 8)}</code></dd>
+      </div>
+      <div>
+        <dt>{t('admin.invites.columnNote')}</dt>
+        <dd>{data.confirmInvite.note || t('admin.invites.noNote')}</dd>
+      </div>
+      <div>
+        <dt>{t('admin.invites.uses')}</dt>
+        <dd>
+          {t('admin.invites.usesValue', {
+            used: data.confirmInvite.uses,
+            max: data.confirmInvite.maxUses,
+          })}
+        </dd>
+      </div>
+      <div>
+        <dt>{t('admin.invites.expires')}</dt>
+        <dd>
+          {#if data.confirmInvite.expiresAt}
+            <time datetime={data.confirmInvite.expiresAt.toISOString()}>
+              {formatDate(data.confirmInvite.expiresAt, { dateStyle: 'medium' })}
+            </time>
+          {:else}
+            {t('admin.invites.never')}
+          {/if}
+        </dd>
+      </div>
+    </dl>
+    <div class="form-actions">
+      <form method="POST" action="?/delete">
+        <input type="hidden" name="id" value={data.confirmInvite.id} />
+        <input type="hidden" name="page" value={data.page} />
+        <button class="button danger" type="submit">{t('admin.invites.confirmDelete')}</button>
+      </form>
+      <a class="button" href={pageHref(data.page)}>{t('admin.invites.cancel')}</a>
+    </div>
+  </article>
 {/if}
 
 {#if data.created}
@@ -144,11 +194,7 @@
               </span>
             </td>
             <td class="admin-actions">
-              <form method="POST" action="?/delete">
-                <input type="hidden" name="id" value={invite.id} />
-                <input type="hidden" name="page" value={data.page} />
-                <button class="button small" type="submit">{t('admin.invites.delete')}</button>
-              </form>
+              <a class="button small" href={confirmHref(invite.id)}>{t('admin.invites.delete')}</a>
             </td>
           </tr>
         {/each}

@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createDatabase, type Database } from '../src/client.js';
-import { createInvite, deleteInvite, listInvitesPage } from '../src/invites.js';
+import { createInvite, deleteInvite, findInviteById, listInvitesPage } from '../src/invites.js';
 import { ensureDevUser, listUsersForAdmin, setUserAdmin, upsertOAuthUser } from '../src/users.js';
 
 const url = process.env.DATABASE_URL;
@@ -76,6 +76,15 @@ maybe('admin dashboard queries (integration)', () => {
     const page = await listInvitesPage(db, { limit: 1, offset: 0 });
     expect(page.items).toHaveLength(1);
     expect(page.total).toBeGreaterThanOrEqual(2);
+
+    expect(await findInviteById(db, one.id)).toMatchObject({
+      id: one.id,
+      note: `${prefix}-one`,
+      maxUses: 3,
+      uses: 0,
+    });
+    expect(await findInviteById(db, two.id)).not.toBeNull();
+    expect(await findInviteById(db, '00000000-0000-4000-8000-000000000000')).toBeNull();
 
     const deleted = await deleteInvite(db, one.id);
     expect(deleted).toEqual({ id: one.id, note: `${prefix}-one`, maxUses: 3, uses: 0 });

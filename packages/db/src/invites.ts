@@ -84,6 +84,21 @@ export async function listInvites(db: Database): Promise<Invite[]> {
   return (await listInvitesPage(db, { limit: 200, offset: 0 })).items;
 }
 
+/** One code for the admin confirmation step; callers validate the UUID first. */
+export async function findInviteById(db: Database, id: string): Promise<Invite | null> {
+  const rows = await db<Invite[]>`
+    select
+      i.id, i.note, i.max_uses as "maxUses", i.uses,
+      i.expires_at as "expiresAt", i.revoked_at as "revokedAt",
+      i.created_at as "createdAt", u.username::text as "createdBy"
+    from invites i
+    join users u on u.id = i.created_by
+    where i.id = ${id}
+    limit 1
+  `;
+  return rows[0] ?? null;
+}
+
 export interface DeletedInvite {
   id: string;
   note: string;

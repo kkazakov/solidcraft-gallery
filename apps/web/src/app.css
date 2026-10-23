@@ -517,6 +517,18 @@ a.badge:hover {
   color: var(--accent-ink);
 }
 
+.button.danger {
+  border-color: color-mix(in srgb, var(--warn) 45%, var(--border));
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.button.danger:hover {
+  border-color: var(--warn);
+  background: var(--warn);
+  color: var(--accent-ink);
+}
+
 .button.block {
   width: 100%;
 }
@@ -1467,6 +1479,55 @@ select:disabled {
 }
 
 .admin-actions form {
+  margin: 0;
+}
+
+.admin-confirm {
+  border-color: color-mix(in srgb, var(--warn) 40%, var(--border));
+  background: var(--warn-soft);
+}
+
+.admin-confirm h2 {
+  margin: 0;
+}
+
+.admin-confirm > p {
+  margin: 6px 0 0;
+  color: var(--text);
+  font-size: 13.5px;
+}
+
+.admin-confirm-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px 20px;
+  margin: 14px 0 0;
+}
+
+.admin-confirm-meta div {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.admin-confirm-meta dt {
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.admin-confirm-meta dd {
+  margin: 0;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.admin-confirm .form-actions {
+  margin-top: 16px;
+}
+
+.admin-confirm .form-actions form {
   margin: 0;
 }
 

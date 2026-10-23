@@ -221,6 +221,11 @@ export const es: Dictionary = {
   'admin.invites.never': 'Nunca',
   'admin.invites.delete': 'Eliminar',
   'admin.invites.deleteHint': 'Eliminar quita el código, pero no las cuentas que ya lo usaron.',
+  'admin.invites.confirmTitle': '¿Eliminar este código de invitación?',
+  'admin.invites.confirmBody':
+    'Esto quita el código y su nota. Las cuentas que ya lo usaron no se ven afectadas. No se puede deshacer.',
+  'admin.invites.confirmDelete': 'Eliminar código',
+  'admin.invites.cancel': 'Cancelar',
   'admin.invites.empty': 'Todavía no hay códigos de invitación. Crea uno arriba.',
   'admin.invites.deleted': 'Código de invitación eliminado.',
   'admin.invites.missing': 'Ese código de invitación ya no existe.',

@@ -1,5 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { createInvite, deleteInvite, getDatabase, listInvitesPage } from '@gallery/db';
+import { createInvite, deleteInvite, findInviteById, getDatabase, listInvitesPage } from '@gallery/db';
 import {
   INVITES_PAGE_SIZE,
   inviteExpiry,
@@ -36,10 +36,12 @@ export async function load(event) {
   }
 
   const now = new Date();
+  const confirmParam = event.url.searchParams.get('confirm') ?? '';
+  const confirmInvite = isUuid(confirmParam) ? await findInviteById(db, confirmParam) : null;
   const notice =
     event.url.searchParams.get('deleted') === '1'
       ? 'deleted'
-      : event.url.searchParams.get('missing') === '1'
+      : event.url.searchParams.get('missing') === '1' || (confirmParam && !confirmInvite)
         ? 'missing'
         : null;
 
@@ -50,6 +52,7 @@ export async function load(event) {
     pages,
     notice,
     created: flash ? { code: flash.code, url: registrationUrl(flash.code) } : null,
+    confirmInvite: confirmInvite ? { ...confirmInvite, state: inviteState(confirmInvite, now) } : null,
   };
 }
 
