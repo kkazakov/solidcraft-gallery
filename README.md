@@ -12,7 +12,7 @@ from. [STATUS.md](STATUS.md) is the current source of truth for what runs.
 > **Implementation status (23 Oct 2026):** M0 is complete; the M1 slice, public gallery and OAuth
 > work — Forgejo/GitHub sign-in with invite-gated beta, local/Forgejo/GitHub projects, publish/sync/webhooks, nsjail-sandboxed
 > `solidcraft-cli` rendering, project pages, search, sitemap, media, downloads, visibility and an
-> admin dashboard for users and beta invites.
+> admin dashboard for users and beta invites, including a confirmation step for deleting codes.
 > See [STATUS.md](STATUS.md).
 
 ## Screenshots
@@ -26,8 +26,8 @@ Taken from the local staging stack: real Forgejo, real `solidcraft-cli`, nsjail 
 | ![Search results](docs/screenshots/search.png) | ![Forgejo repository](docs/screenshots/forgejo.png) |
 | **Gallery in dark mode** | **Project page in dark mode** |
 | ![Gallery home in dark mode](docs/screenshots/home-dark.png) | ![Project page in dark mode](docs/screenshots/project-dark.png) |
-| **Administration — users** | **Administration — invite codes** |
-| ![Admin users](docs/screenshots/admin-users.png) | ![Admin invite codes](docs/screenshots/admin-invites.png) |
+| **Administration — users** | **Administration — invite codes & delete confirmation** |
+| ![Admin users](docs/screenshots/admin-users.png) | ![Admin invite codes and delete confirmation](docs/screenshots/admin-invites.png) |
 
 Despite the folder name, this is **not a SolidCraft plugin**. SolidCraft's plugin boundary is an
 in-document command executor with no storage, accounts, background sync or UI; a gallery needs all
@@ -41,7 +41,7 @@ four. The rationale is recorded in [docs/00 — Decisions](docs/00-decisions.md)
 |---|---|
 | **Public** (anonymous) | Browse, search, tag, view a design with rendered images and measurements, read its README, download `.solidcraft` / STEP / STL, open the source repository, open the design in SolidCraft. |
 | **Signed in** | Dashboard with your projects and connected repositories, create or import a project, publish a version, choose public / unlisted / private, manage tags and metadata, API tokens, account settings. |
-| **Admin** | Operator dashboard for accounts and beta invite codes: a paginated users list, paginated invite codes, and one-time code creation with uses and expiry. Reports, moderation and audit are planned. |
+| **Admin** | Operator dashboard for accounts and beta invite codes: paginated users, paginated invite codes, one-time code creation with uses and expiry, and two-step deletion confirmation. Only `role = admin` accounts see the link; signed-in non-admins get `404`. Reports, moderation and audit are planned. |
 
 Every project is a git repository containing one or more `.solidcraft` files exactly as the app
 saves them. The site indexes the repository and renders previews; it does not own a second copy of
@@ -51,6 +51,25 @@ or on GitHub, GitLab, Gitea, or Codeberg.
 **The central bet:** a few-megabyte `.solidcraft` container is a good git object when the app's
 disposable model cache is stripped. That gives direct format support, readable history, and no
 custom storage layer. See [docs/03-repo-format.md](docs/03-repo-format.md).
+
+---
+
+## Administration
+
+Admins see **Administration** in the header after Forgejo. `/admin` redirects to `/admin/users`, and
+the right-hand menu has two pages:
+
+- **Users** — a paginated account list with role, sign-in providers, project count, join and
+  last-seen dates, and suspension state. It is read-only for now.
+- **Invite codes** — a paginated list with note, uses, expiry, creator and state. Operators create a
+  code with uses and expiry days (the raw code and registration link are shown once), and delete a
+  code through a confirmation step.
+
+The raw code is never stored in the database or listed: a signed, short-lived HttpOnly cookie carries
+it across the create redirect so it can be shown once. Deleting a code removes the row and its note
+but leaves accounts that already used it intact. Admin responses are `private, no-store` and
+`noindex`; `/admin` is disallowed in `robots.txt`, and signed-in non-admins get `404`. The decision is
+recorded as [D17](docs/00-decisions.md).
 
 ---
 
@@ -153,6 +172,7 @@ Forgejo bootstrap, backups and rollback.
 | `.solidcraft` supported directly | [03 — Repo format](docs/03-repo-format.md) | M0–M1 |
 | Git backend, hosted or user-owned | [07 — Git integration](docs/07-git-integration.md) | M1, M3 |
 | Public and logged-in surfaces | [01 — Product](docs/01-product.md), [08 — Auth](docs/08-auth.md) | M1–M3 |
+| Admin dashboard for users and invite codes | [10 — Frontend](docs/10-frontend.md), [08 — Auth](docs/08-auth.md) | M4 slice |
 | Authentication (OAuth for people, HTTP Basic for git) | [08 — Auth](docs/08-auth.md) | M1 |
 | Private, unlisted and public projects | [03](docs/03-repo-format.md), [04](docs/04-data-model.md) | M1–M3 |
 | Moderation, reports, takedowns | [11 — Security](docs/11-security.md), [15 — Risks](docs/15-risks.md) | M4 |

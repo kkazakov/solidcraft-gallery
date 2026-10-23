@@ -7,6 +7,9 @@ designs: previews, search, versions, and downloads. Stack: Node 22, pnpm 10, Sve
 TypeScript 6, PostgreSQL 16, Forgejo, Vitest. You are implementing and reviewing this repository;
 read `docs/00-decisions.md` before changing a contract. Refer to this project as “SolidCraft Gallery”.
 
+The admin dashboard at `/admin` covers accounts and beta invite codes; moderation, reports and audit
+are still planned. The rest of this file describes the contracts and workflow for all surfaces.
+
 This repository contains the working implementation; [STATUS.md](STATUS.md) is the current source of
 truth for what runs. The GitHub repository is public. Epics and tasks are tracked on the
 [SolidCraft Gallery board](https://github.com/users/kkazakov/projects/3).
@@ -107,7 +110,8 @@ and `design` may import `core`; no package imports an app.
    package and `DATABASE_URL=… pnpm --filter @gallery/db test` when SQL changed.
 3. `pnpm check` and `pnpm lint` pass.
 4. Visual changes refreshed `docs/screenshots/` and their README embeds.
-5. The branch is pushed and the board item is `Done` with the verification comment.
+5. The local app is running and the clickable URL is in the response (see “Local run and hand-off”).
+6. The branch is pushed and the board item is `Done` with the verification comment.
 
 ### Code
 
@@ -140,11 +144,48 @@ import { AppError, can } from '@gallery/core';
 if (!can(project, viewer, 'view')) throw new AppError('not_found', 'No such project');
 ```
 
+### Admin dashboard
+
+- Routes live in `apps/web/src/routes/admin`: `/admin` redirects to `/admin/users`, and the shared
+  layout provides the right-hand menu. The layout guard is not enough — every admin page load and
+  action must call `requireAdmin` from `lib/server/admin.ts`; signed-in non-admins get `404`.
+- Admin responses are `private, no-store` with `noindex`; `/admin` is disallowed in `robots.txt`.
+  Do not add shared caching to this subtree.
+- `/admin/users` is read-only: it shows role, identities, project count, join/last-seen and
+  suspension, but exposes no role or suspension mutations yet.
+- Invite creation takes uses, expiry days and an optional note. The raw code crosses the create
+  POST → `303` → list GET in the signed, short-lived `invite-flash` cookie; it is never stored in the
+  database or listed. Do not return the raw code from a load or action response.
+- Invite deletion is two-step: the table links to `?confirm=<uuid>`, which renders the confirmation
+  card, and only its POST to `?/delete` removes the row. Keep the list free of direct delete forms
+  and validate the UUID before `findInviteById`.
+
 ### Visual changes
 
 - Whenever a visual element changes (header/nav, theme toggle, cards, public or search pages, project
   layout), refresh the affected images in `docs/screenshots/` and their README embeds in the same
   branch. Screenshots are part of the deliverable, not a follow-up task.
+- Admin visual changes refresh `docs/screenshots/admin-users.png` and
+  `docs/screenshots/admin-invites.png`; the invite image includes the delete-confirmation state.
+
+### Local run and hand-off
+
+- After every implemented feature or bug-fix, leave the local app **running** and end the response
+  with the URL the user can click. Do not wait to be asked, and never report "done" against a server
+  that is stopped, stale, or returning errors.
+- Dev server: `pnpm dev:web` → <http://localhost:5173/>. If it is already up
+  (`curl -fsS -o /dev/null -w '%{http_code}\n' http://localhost:5173/` prints `200`), let Vite HMR
+  pick the change up. Restart it only when the change requires one: `package.json`/lockfile,
+  `vite.config.ts`, `.env`, or a new migration.
+- Full stack (Postgres, Forgejo, worker, Caddy):
+  `docker compose -f infra/compose.yaml -f infra/compose.build.yaml up -d --build`, then
+  <http://localhost:8080/>. Images build from source, so a code change needs the rebuild.
+- Verify before quoting: the same `curl` against the chosen URL must print `200`. If it does not,
+  fix the server and report that, rather than a dead link.
+- Print exactly one working URL on its own final line, e.g. `Open: http://localhost:5173/`, so it is
+  clickable in chat.
+- For admin UI work, run with `DEV_LOGIN=1` and sign in at `/auth/dev?username=<admin>`;
+  `ADMIN_USERNAMES` promotes that account on sign-in. The admin area is `/admin`.
 
 ## 5. Boundaries
 
@@ -160,6 +201,8 @@ if (!can(project, viewer, 'view')) throw new AppError('not_found', 'No such proj
   fails.
 - NEVER report a successful task without updating project `3`; a task is only complete when the board
   says `Done`.
+- NEVER hand back a feature or bug-fix without a running local server and its clickable URL; if the
+  server cannot start, say so explicitly instead of reporting success.
 - REQUIRE HUMAN CONFIRMATION for: rotating secrets, changing the GitHub repository visibility,
   deleting data, major dependency upgrades, and editing `.github/workflows`.
 
@@ -225,3 +268,8 @@ if (!can(project, viewer, 'view')) throw new AppError('not_found', 'No such proj
 - Forgejo needs two URLs: browser-facing `FORGEJO_PUBLIC_URL` (authorize) and server-to-server
   `FORGEJO_INTERNAL_URL` (token/profile; `http://forgejo:3000` in compose).
 - Prettier cannot parse Dockerfiles/Caddyfile; they are in `.prettierignore` on purpose.
+- The invite flash cookie is signed with `SESSION_SECRET`, path-scoped to `/admin/invites`, HttpOnly
+  and valid for 60 seconds. Never log the raw code or store it outside the flash cookie; a refresh
+  after creation must not show it again.
+- If a new SSR load branch is not picked up after editing `+page.server.ts` or a DB helper, restart
+  `pnpm dev:web`. A stale SSR module looks like a query bug.
