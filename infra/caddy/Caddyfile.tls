@@ -1,0 +1,7 @@
+{
+	# Automatic HTTPS for the two domains. The playbook copies this file over
+	# Caddyfile when CADDY_AUTO_HTTPS=on; compose.tls.yaml publishes 80/443.
+	email {$ACME_EMAIL:admin@example.com}
+}
+
+import sites.caddy

@@ -13,6 +13,15 @@ dist/
 .env.*
 !.env.example
 
+# local tooling
+.deploy/
+.venv/
+.ansible/
+*.retry
+deploy.lock
+infra/.deploy/
+infra/ansible/.deploy/
+
 # local data
 artifacts/
 data/

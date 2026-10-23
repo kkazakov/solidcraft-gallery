@@ -1,13 +1,8 @@
 {
-  auto_https off
+	# HTTP-only deployment. The playbook installs Caddyfile.tls instead when
+	# CADDY_AUTO_HTTPS=on.
+	auto_https off
+	email {$ACME_EMAIL:admin@example.com}
 }
 
-:80 {
-  encode zstd gzip
-  reverse_proxy web:3000
-}
-
-:8081 {
-  encode zstd gzip
-  reverse_proxy forgejo:3000
-}
+import sites.caddy

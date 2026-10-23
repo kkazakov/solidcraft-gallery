@@ -1,6 +1,6 @@
 import { redirect, type RequestEvent } from '@sveltejs/kit';
 import { currentViewer } from '../../../lib/server/auth.js';
-import { providerConfig, providerConfigured, safeRedirect } from '../../../lib/server/oauth.js';
+import { inviteRequired, providerConfig, providerConfigured, safeRedirect } from '../../../lib/server/oauth.js';
 
 export async function load(event: RequestEvent) {
   const requested = safeRedirect(event.url.searchParams.get('redirect'));
@@ -26,6 +26,7 @@ export async function load(event: RequestEvent) {
     redirect: target,
     invite: event.url.searchParams.get('invite') ?? '',
     error: event.url.searchParams.get('error') ?? '',
+    inviteRequired: inviteRequired(),
     registrationUrl,
     providers: [{ id: 'forgejo', label: 'Forgejo', configured: providerConfigured('forgejo') }],
   };

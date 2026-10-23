@@ -1,0 +1,406 @@
+---
+- name: Create the deployment directories
+  ansible.builtin.file:
+    path: '{{ item }}'
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - '{{ deploy_dir }}'
+    - '{{ deploy_dir }}/caddy'
+    - '{{ deploy_dir }}/postgres'
+    - '{{ deploy_dir }}/backups'
+    - '{{ solidcraft_cli_path | dirname }}'
+
+- name: Install the deployment environment file
+  ansible.builtin.copy:
+    src: '{{ env_file }}'
+    dest: '{{ deploy_dir }}/.env'
+    owner: root
+    group: root
+    mode: '0600'
+    backup: true
+  no_log: true
+
+- name: Install the Compose file
+  ansible.builtin.copy:
+    src: '{{ repo_root }}/infra/compose.yaml'
+    dest: '{{ deploy_dir }}/compose.yaml'
+    owner: root
+    group: root
+    mode: '0644'
+  register: gallery_compose_file
+
+- name: Install the Compose TLS overlay
+  ansible.builtin.copy:
+    src: '{{ repo_root }}/infra/compose.tls.yaml'
+    dest: '{{ deploy_dir }}/compose.tls.yaml'
+    owner: root
+    group: root
+    mode: '0644'
+  register: gallery_compose_tls_file
+
+- name: Install the Caddy site definitions
+  ansible.builtin.copy:
+    src: '{{ repo_root }}/infra/caddy/sites.caddy'
+    dest: '{{ deploy_dir }}/caddy/sites.caddy'
+    owner: root
+    group: root
+    mode: '0644'
+  register: gallery_caddy_sites
+  notify: Reload Caddy
+
+- name: Install the Caddyfile for the selected TLS mode
+  ansible.builtin.copy:
+    src: "{{ repo_root }}/infra/caddy/{{ 'Caddyfile.tls' if caddy_auto_https == 'on' else 'Caddyfile' }}"
+    dest: '{{ deploy_dir }}/caddy/Caddyfile'
+    owner: root
+    group: root
+    mode: '0644'
+  register: gallery_caddyfile
+  notify: Reload Caddy
+
+- name: Install the PostgreSQL init script
+  ansible.builtin.copy:
+    src: '{{ repo_root }}/infra/postgres/init.sh'
+    dest: '{{ deploy_dir }}/postgres/init.sh'
+    owner: root
+    group: root
+    mode: '0755'
+  register: gallery_pg_init
+
+- name: Upload the pinned solidcraft-cli
+  ansible.builtin.copy:
+    src: '{{ solidcraft_cli_source }}'
+    dest: '{{ solidcraft_cli_path }}'
+    owner: root
+    group: root
+    mode: '0755'
+  when: solidcraft_cli_source | length > 0
+
+- name: Build the web and worker images on the controller
+  ansible.builtin.command:
+    argv:
+      - docker
+      - compose
+      - -f
+      - '{{ repo_root }}/infra/compose.yaml'
+      - -f
+      - '{{ repo_root }}/infra/compose.build.yaml'
+      - --env-file
+      - '{{ env_file }}'
+      - build
+      - web
+      - worker
+    chdir: '{{ repo_root }}'
+  delegate_to: localhost
+  run_once: true
+  changed_when: true
+
+- name: Read the local image IDs
+  ansible.builtin.command:
+    argv:
+      - docker
+      - image
+      - inspect
+      - --format
+      - '{% raw %}{{ .Id }}{% endraw %}'
+      - '{{ web_image }}'
+      - '{{ worker_image }}'
+  delegate_to: localhost
+  register: gallery_local_image_ids
+  changed_when: false
+
+- name: Read the image IDs already on the host
+  ansible.builtin.command:
+    argv:
+      - docker
+      - image
+      - inspect
+      - --format
+      - '{% raw %}{{ .Id }}{% endraw %}'
+      - '{{ web_image }}'
+      - '{{ worker_image }}'
+  register: gallery_remote_image_ids
+  changed_when: false
+  failed_when: false
+
+- name: Decide whether the images need to be transferred
+  ansible.builtin.set_fact:
+    gallery_images_changed: '{{ gallery_remote_image_ids.rc != 0 or (gallery_remote_image_ids.stdout_lines != gallery_local_image_ids.stdout_lines) }}'
+
+- name: Create the local image export directory
+  ansible.builtin.file:
+    path: '{{ image_archive | dirname }}'
+    state: directory
+    mode: '0700'
+  delegate_to: localhost
+  run_once: true
+  when: gallery_images_changed | bool
+
+- name: Export the images for transfer
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      umask 077
+      tmp="{{ image_archive }}.tmp"
+      docker save "{{ web_image }}" "{{ worker_image }}" | gzip -1 > "$tmp"
+      mv "$tmp" "{{ image_archive }}"
+    chdir: '{{ repo_root }}'
+    executable: /bin/bash
+  delegate_to: localhost
+  run_once: true
+  changed_when: true
+  when: gallery_images_changed | bool
+
+- name: Upload the image archive
+  ansible.builtin.copy:
+    src: '{{ image_archive }}'
+    dest: '{{ deploy_dir }}/gallery-images.tar.gz'
+    owner: root
+    group: root
+    mode: '0600'
+  register: gallery_images_upload
+  when: gallery_images_changed | bool
+
+- name: Preserve the previous web image for rollback
+  ansible.builtin.command:
+    argv: [docker, tag, '{{ web_image }}', '{{ web_image }}-previous']
+  register: gallery_previous_web
+  changed_when: false
+  failed_when: false
+  when: gallery_images_changed | bool
+
+- name: Preserve the previous worker image for rollback
+  ansible.builtin.command:
+    argv: [docker, tag, '{{ worker_image }}', '{{ worker_image }}-previous']
+  register: gallery_previous_worker
+  changed_when: false
+  failed_when: false
+  when: gallery_images_changed | bool
+
+- name: Load the new images
+  ansible.builtin.command:
+    argv: [docker, load, -i, '{{ deploy_dir }}/gallery-images.tar.gz']
+  register: gallery_images_load
+  changed_when: true
+  when: gallery_images_changed | bool
+
+- name: Remove the transferred image archive
+  ansible.builtin.file:
+    path: '{{ deploy_dir }}/gallery-images.tar.gz'
+    state: absent
+
+- name: Prune dangling images
+  ansible.builtin.command:
+    argv: [docker, image, prune, -f]
+  register: gallery_image_prune
+  changed_when: "'Total reclaimed space: 0B' not in gallery_image_prune.stdout"
+
+- name: Validate the Compose configuration
+  ansible.builtin.command:
+    argv: "{{ compose_prefix + ['config', '--quiet'] }}"
+    chdir: '{{ deploy_dir }}'
+  changed_when: false
+
+- name: Start PostgreSQL
+  ansible.builtin.command:
+    argv: "{{ compose_prefix + ['up', '-d', 'postgres'] }}"
+    chdir: '{{ deploy_dir }}'
+  register: gallery_postgres_start
+  changed_when: true
+
+- name: Find the PostgreSQL container
+  ansible.builtin.command:
+    argv: "{{ compose_prefix + ['ps', '-q', 'postgres'] }}"
+    chdir: '{{ deploy_dir }}'
+  register: gallery_postgres_id
+  changed_when: false
+  until: gallery_postgres_id.stdout | trim | length > 0
+  retries: 30
+  delay: 2
+
+- name: Wait for PostgreSQL to become healthy
+  ansible.builtin.command:
+    argv:
+      - docker
+      - inspect
+      - --format
+      - '{% raw %}{{ .State.Health.Status }}{% endraw %}'
+      - '{{ gallery_postgres_id.stdout | trim }}'
+  register: gallery_postgres_health
+  changed_when: false
+  until: gallery_postgres_health.stdout | trim == 'healthy'
+  retries: 30
+  delay: 2
+  failed_when: gallery_postgres_health.stdout | trim == 'unhealthy'
+
+- name: Check whether the database has been initialised
+  ansible.builtin.command:
+    argv: '{{ compose_prefix + postgres_schema_args }}'
+    chdir: '{{ deploy_dir }}'
+  register: gallery_schema
+  changed_when: false
+
+- name: Back up the database before migrations
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      umask 077
+      mkdir -p "{{ deploy_dir }}/backups"
+      stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+      out="{{ deploy_dir }}/backups/gallery-${stamp}.dump"
+      {{ compose_prefix | join(' ') }} exec -T postgres pg_dump \
+        --username "{{ postgres_user }}" \
+        --dbname "{{ postgres_db }}" \
+        --format=custom > "$out"
+      printf '%s\n' "$out"
+    chdir: '{{ deploy_dir }}'
+    executable: /bin/sh
+  register: gallery_backup
+  when:
+    - backup_before_deploy | bool
+    - gallery_schema.stdout | trim | length > 0
+  changed_when: true
+
+- name: Prune old database dumps # noqa: risky-shell-pipe
+  ansible.builtin.shell:
+    cmd: |
+      set -eu
+      cd "{{ deploy_dir }}/backups"
+      files=$(ls -1t gallery-*.dump 2>/dev/null | tail -n +{{ keep_backups + 1 }} || true)
+      if [ -n "$files" ]; then
+        printf '%s\n' "$files" | while IFS= read -r file; do rm -f -- "$file"; done
+      fi
+    executable: /bin/sh
+  when:
+    - backup_before_deploy | bool
+    - keep_backups | int > 0
+  changed_when: true
+
+- name: Apply database migrations
+  ansible.builtin.command:
+    argv: "{{ compose_prefix + ['run', '--rm', '--no-deps', 'web', 'pnpm', '--filter', '@gallery/db', 'migrate'] }}"
+    chdir: '{{ deploy_dir }}'
+  register: gallery_migrate
+  changed_when: "'applied' in gallery_migrate.stdout"
+
+- name: Start the Compose stack
+  ansible.builtin.command:
+    argv: "{{ compose_prefix + ['up', '-d', '--remove-orphans'] }}"
+    chdir: '{{ deploy_dir }}'
+  register: gallery_up
+  changed_when: true
+
+- name: Apply pending Caddy configuration changes
+  ansible.builtin.meta: flush_handlers
+
+- name: Wait for the web liveness endpoint
+  ansible.builtin.uri:
+    url: 'http://127.0.0.1:{{ web_port }}/healthz'
+    status_code: 200
+    return_content: false
+  register: gallery_web_health
+  until: gallery_web_health.status == 200
+  retries: 60
+  delay: 2
+
+- name: Wait for the web readiness endpoint
+  ansible.builtin.uri:
+    url: 'http://127.0.0.1:{{ web_port }}/readyz'
+    status_code: 200
+  register: gallery_web_ready
+  until: gallery_web_ready.status == 200
+  retries: 30
+  delay: 2
+
+- name: Wait for the gallery home page
+  ansible.builtin.uri:
+    url: 'http://127.0.0.1:{{ web_port }}/'
+    status_code: 200
+  register: gallery_home
+  until: gallery_home.status == 200
+  retries: 30
+  delay: 2
+
+- name: Wait for the Forgejo health endpoint
+  ansible.builtin.uri:
+    url: 'http://127.0.0.1:{{ forgejo_port }}/api/healthz'
+    status_code: 200
+  register: gallery_forgejo_health
+  until: gallery_forgejo_health.status == 200
+  retries: 60
+  delay: 2
+
+- name: Check the web domain host header
+  ansible.builtin.uri:
+    url: 'http://127.0.0.1:{{ web_port }}/healthz'
+    headers:
+      Host: '{{ web_domain }}'
+    status_code: 200
+  register: gallery_web_domain
+  until: gallery_web_domain.status == 200
+  retries: 15
+  delay: 2
+
+- name: Check the Forgejo domain host header
+  ansible.builtin.uri:
+    url: 'http://127.0.0.1:{{ forgejo_port }}/api/healthz'
+    headers:
+      Host: '{{ forgejo_domain }}'
+    status_code: 200
+  register: gallery_forgejo_domain
+  until: gallery_forgejo_domain.status == 200
+  retries: 15
+  delay: 2
+
+- name: Verify the pinned CLI inside the worker
+  ansible.builtin.command:
+    argv: "{{ compose_prefix + ['exec', '-T', 'worker', 'solidcraft-cli', '--version'] }}"
+    chdir: '{{ deploy_dir }}'
+  register: gallery_cli_verify
+  changed_when: false
+
+- name: Require the expected CLI version
+  ansible.builtin.assert:
+    that:
+      - solidcraft_cli_version in gallery_cli_verify.stdout
+    fail_msg: 'The mounted solidcraft-cli does not report {{ solidcraft_cli_version }}.'
+    quiet: true
+
+- name: List Forgejo users
+  ansible.builtin.command:
+    argv: "{{ compose_prefix + ['exec', '-T', '-u', 'git', 'forgejo', 'forgejo', 'admin', 'user', 'list'] }}"
+    chdir: '{{ deploy_dir }}'
+  register: gallery_forgejo_users
+  changed_when: false
+  failed_when: false
+  when: forgejo_bootstrap_admin | bool
+
+- name: Create the first Forgejo administrator
+  ansible.builtin.command:
+    argv: '{{ compose_prefix + forgejo_admin_create_args }}'
+    chdir: '{{ deploy_dir }}'
+  when:
+    - forgejo_bootstrap_admin | bool
+    - forgejo_admin_password | length > 0
+    - forgejo_admin_username not in (gallery_forgejo_users.stdout | default(''))
+  no_log: true
+  changed_when: true
+
+- name: Show the running services
+  ansible.builtin.command:
+    argv: "{{ compose_prefix + ['ps'] }}"
+    chdir: '{{ deploy_dir }}'
+  register: gallery_ps
+  changed_when: false
+
+- name: Deployment summary
+  ansible.builtin.debug:
+    msg:
+      - 'Web:     http://{{ deploy_host }}:{{ web_port }} ({{ web_domain }})'
+      - 'Forgejo: http://{{ deploy_host }}:{{ forgejo_port }} ({{ forgejo_domain }})'
+      - 'TLS:     {{ "enabled on 80/443" if caddy_auto_https == "on" else "off (high ports only)" }}'
+      - 'Images:  {{ web_image }}, {{ worker_image }}'
+      - '{{ gallery_ps.stdout_lines }}'

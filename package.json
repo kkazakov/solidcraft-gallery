@@ -18,9 +18,11 @@
     "format": "prettier --write .",
     "db:migrate": "pnpm --filter @gallery/db migrate",
     "craftpub": "tsx scripts/craftpub.ts",
-    "compose:up": "docker compose -f infra/compose.yaml up -d --build",
+    "deploy": "./scripts/deploy.sh",
+    "deploy:check": "./scripts/deploy.sh --check",
+    "compose:up": "docker compose -f infra/compose.yaml -f infra/compose.build.yaml up -d --build",
     "compose:down": "docker compose -f infra/compose.yaml down",
-    "compose:config": "docker compose -f infra/compose.yaml config --quiet",
+    "compose:config": "docker compose -f infra/compose.yaml -f infra/compose.build.yaml config --quiet",
     "invites": "tsx scripts/invites.ts"
   },
   "devDependencies": {

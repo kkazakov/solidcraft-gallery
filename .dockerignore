@@ -11,3 +11,8 @@ fixtures
 *.md
 .env
 .env.*
+.deploy
+.venv
+.ansible
+deploy.lock
+infra

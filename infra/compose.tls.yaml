@@ -1,0 +1,8 @@
+# Add 80/443 to Caddy for automatic HTTPS. The Ansible playbook includes this
+# file when CADDY_AUTO_HTTPS=on; it is safe to use manually for the same effect.
+services:
+  caddy:
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'

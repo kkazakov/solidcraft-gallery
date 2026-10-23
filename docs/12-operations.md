@@ -14,48 +14,53 @@ production data is copied to staging; fixtures are generated.
 ## Compose topology
 
 ```text
-caddy        :80/:443     TLS, compression, body limits, security headers
+caddy        :8080 -> web, :8081 -> forgejo; :80/:443 when TLS is enabled
 web          :3000        SvelteKit SSR + API
 worker       (no ports)   jobs, CLI, sandbox
 forgejo      :3000 internal, :2222 SSH (optional)
-postgres     :5432 internal
-minio        :9000 internal (optional; local volume by default)
+postgres     :5432 loopback only
 ```
 
-Volumes: `pgdata`, `forgejo_data`, `artifacts`, `caddy_data`, `caddy_config`.
-Networks: `edge` (caddy, web, forgejo), `internal` (web, worker, postgres, forgejo, minio).
+Volumes: `pgdata`, `forgejo_data`, `gallery_data`, `caddy_data`, `caddy_config`.
+One default Compose network; no service except Caddy publishes an application port.
 
 The worker has no inbound ports. The worker container needs `SYS_ADMIN` and `seccomp=unconfined` so
-nsjail can create namespaces; mount the pinned CLI at `/usr/local/bin/solidcraft-cli`. Forgejo is
-reachable publicly only for git over HTTPS
-(`git.gallery.example`); its admin UI is restricted by Forgejo itself and optionally by Caddy IP
-rules.
+nsjail can create namespaces; the pinned CLI is bind-mounted at `/usr/local/bin/solidcraft-cli`.
+Forgejo is reachable as `forgejo.drun.net` on the Forgejo port (and HTTPS when enabled); its admin
+UI is restricted by Forgejo itself and optionally by Caddy IP rules.
 
 ## Configuration
 
-All configuration is environment variables. Secrets are mounted as files in production
-(`*_FILE` variants) or provided by the orchestrator; never committed.
+All configuration is environment variables in one `.env` at the repository root. The Ansible
+playbook uploads it to the host with mode `0600`; Compose builds the internal `DATABASE_URL` from
+`POSTGRES_*`. Never commit `.env`; `.env.example` documents every value. See
+[16 — Deployment](16-deployment.md).
 
 | Variable | Required | Default | Notes |
 |---|---|---|---|
-| `PUBLIC_ORIGIN` | yes | — | `https://gallery.example`; used for OAuth, CSP, absolute URLs |
-| `DATABASE_URL` | yes | — | `postgres://gallery:…@postgres:5432/gallery` |
+| `WEB_DOMAIN` / `FORGEJO_DOMAIN` | yes | `solidcraft.drun.net` / `forgejo.drun.net` | Hostnames, no scheme |
+| `WEB_PORT` / `FORGEJO_PORT` | yes | `8080` / `8081` | Published by Caddy |
+| `CADDY_AUTO_HTTPS` | no | `off` | `on` publishes 80/443 and obtains certificates |
+| `PUBLIC_ORIGIN` | yes | — | `https://solidcraft.drun.net`; OAuth, CSP, absolute URLs |
+| `DATABASE_URL` | built by Compose | — | `postgres://gallery:…@postgres:5432/gallery` |
 | `SESSION_SECRET` | yes | — | 32+ bytes; rotates sessions on change |
 | `TOKEN_ENC_KEY` | yes | — | base64 32 bytes; AES-256-GCM for provider tokens |
 | `SIGNED_URL_SECRET` | yes | — | HMAC for private media |
-| `FORGEJO_PUBLIC_URL` | yes | — | browser-facing `https://git.gallery.example` |
-| `FORGEJO_INTERNAL_URL` | no | public URL | server-to-server URL, e.g. `http://forgejo:3000` |
-| `FORGEJO_CLIENT_ID` / `_SECRET` | yes | — | OAuth2 app |
+| `FORGEJO_PUBLIC_URL` | yes | — | browser-facing `https://forgejo.drun.net/` |
+| `FORGEJO_INTERNAL_URL` | no | compose sets `http://forgejo:3000` | server-to-server URL |
+| `FORGEJO_CLIENT_ID` / `_SECRET` | yes | — | OAuth2 app, created after first boot |
 | `FORGEJO_ADMIN_TOKEN` | no | — | provisioning token for hosted repos; unset uses local git |
+| `FORGEJO_ADMIN_USERNAME` / `_PASSWORD` / `_EMAIL` | yes | — | first-boot admin created by Ansible |
 | `FORGEJO_DISABLE_REGISTRATION` | no | `true` | set `false` for Forgejo self-registration |
-| `FORGEJO_ADMIN_TOKEN` | no | — | provisioning fallback; scoped, rotatable |
-| `GITHUB_CLIENT_ID` / `_SECRET` | yes | — | OAuth for external repos |
+| `GITHUB_CLIENT_ID` / `_SECRET` | no | — | OAuth for external repos |
 | `GITHUB_WEBHOOK_SECRET` | no | — | GitHub push webhook HMAC; disabled when unset |
 | `ARTIFACT_DIR` | yes | `/var/lib/gallery/artifacts` | local driver |
 | `STORAGE_DRIVER` | no | `local` | `local` or `s3` |
 | `S3_ENDPOINT` / `_BUCKET` / `_KEY` / `_SECRET` | if s3 | — | MinIO/B2 |
-| `SOLIDCRAFT_CLI` | yes | `/usr/local/bin/solidcraft-cli` | pinned binary |
-| `SOLIDCRAFT_CLI_VERSION` | yes | — | displayed in admin, checked at boot |
+| `SOLIDCRAFT_CLI` | yes | `/usr/local/bin/solidcraft-cli` | path inside the worker |
+| `SOLIDCRAFT_CLI_PATH` | yes | `/opt/solidcraft-gallery/bin/solidcraft-cli` | host path bind-mounted into the worker |
+| `SOLIDCRAFT_CLI_SOURCE` | first deploy | — | controller path Ansible uploads |
+| `SOLIDCRAFT_CLI_VERSION` | yes | `0.19.0` | checked after deployment |
 | `MAX_DESIGN_BYTES` | no | `26214400` | 25 MB |
 | `MAX_REPO_BYTES` | no | `1073741824` | 1 GB |
 | `RENDER_TIMEOUT_SECONDS` | no | `60` | sandbox wall clock |
@@ -76,18 +81,28 @@ directory writable, database reachable, migration state current. Fail fast, exit
 
 ## Deploy
 
-1. CI builds `web` and `worker` images tagged with the git SHA; scans dependencies; runs tests.
-2. The release job takes a database backup (or verifies the nightly one is < 24 h old).
-3. `docker compose pull` on the host.
-4. Run migrations in a one-shot container: `node dist/migrate.js`.
-5. Start `web` and `worker` with the new tag; wait for `/healthz` and `/readyz`.
-6. `caddy reload` (config is mounted).
-7. Smoke tests: home 200, search 200, a fixture project page 200, publish dry-run in staging only.
-8. If any step fails: redeploy the previous tag. Migrations are forward-only; a destructive
-   migration requires an explicit restore plan.
+The single-host deployment is automated with Ansible; the full runbook is
+[16 — Deployment](16-deployment.md).
 
-Deploy frequency: on merge to `main` for staging, manual tag for production. No deploy on Fridays
-after 15:00.
+```sh
+cp .env.example .env && chmod 600 .env   # once
+uv venv .venv && uv pip install -r infra/ansible/requirements.txt
+./scripts/deploy.sh --check
+./scripts/deploy.sh
+```
+
+1. The controller builds `web` and `worker`, saves them, and uploads the archive to the host.
+2. The host keeps the previous image tags, loads the new images and starts PostgreSQL.
+3. A `pg_dump` is written under `/opt/solidcraft-gallery/backups` when the schema exists.
+4. Migrations run in a one-shot web container.
+5. Compose starts the stack; the playbook waits for `/healthz`, `/readyz`, the home page and
+   Forgejo `/api/healthz`, including the domain `Host` headers.
+6. The pinned CLI is verified inside the worker and the first Forgejo admin is created if needed.
+
+Rollback: retag `*-previous` and `docker compose up -d --no-deps web worker`. Schema migrations are
+forward-only; a destructive migration still requires an explicit restore plan.
+
+Deploy frequency: manual for production. No deploy on Fridays after 15:00.
 
 ### Migration policy
 
@@ -111,6 +126,10 @@ after 15:00.
   project, verifies a render and a private download, and records the time (RTO target: 4 h).
 - Database and Forgejo backups are consistent with each other at the commit level; artifacts are
   content-addressed and can be regenerated, so they are the lowest priority.
+- The Ansible deployment writes a pre-migration `pg_dump` into
+  `/opt/solidcraft-gallery/backups` and keeps the newest `DEPLOY_KEEP_BACKUPS` dumps. These stay on
+  the host; copying them off-host is still required for disaster recovery. Forgejo's data volume is
+  not covered by that dump.
 - A backup is not considered valid until a restore has succeeded.
 
 ## Monitoring

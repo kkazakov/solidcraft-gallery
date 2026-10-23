@@ -16,7 +16,7 @@
   <h1>Sign in</h1>
   <p class="page-sub">Use your Forgejo account to publish designs and manage your projects.</p>
 
-  {#if data.error === 'invite'}
+  {#if data.error === 'invite' && data.inviteRequired}
     <p class="notice">This instance is invite-only. Ask an administrator for an invite link.</p>
   {/if}
 
