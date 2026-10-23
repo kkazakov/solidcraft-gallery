@@ -1,6 +1,6 @@
 # Implementation status
 
-**Updated:** 2026-10-23 · **Milestone:** M0 complete; M1 slice, gallery, GitHub sources, OAuth, hosted Forgejo, nsjail, **invites/admin, Ansible deployment, HTTPS + Forgejo OAuth** · **Next:** first browser sign-in + invites, hosted-repo token, off-host backups, monitoring
+**Updated:** 2026-10-23 · **Milestone:** M0 complete; M1 slice, gallery, GitHub sources, OAuth, hosted Forgejo, nsjail, **invites/admin, Ansible deployment, HTTPS, Forgejo OAuth + hosted-repo token** · **Next:** hosted-project smoke test, off-host backups, monitoring
 
 This file records what actually runs, not what is planned. The plan remains in
 [README.md](README.md) and [docs/14-roadmap.md](docs/14-roadmap.md).
@@ -113,14 +113,19 @@ The single-host stack is deployed with Ansible to `root@192.168.88.222` (see
   `redirect_uri=https://solidcraft.drun.net/auth/callback/forgejo`.
 - The Forgejo OAuth2 application **SolidCraft Gallery** exists (confidential, redirect URI
   `https://solidcraft.drun.net/auth/callback/forgejo`); `FORGEJO_CLIENT_ID`/`_SECRET` are set and the
-  web container was redeployed.
+  web container was redeployed. The first OAuth consent was completed for `gallery-admin`; the user
+  row is `admin` with a `forgejo` identity.
 - `solidcraft-cli 0.19.0` runs inside the worker; the Forgejo admin `gallery-admin` exists and is
   active; pre-migration `pg_dump` files land in `/opt/solidcraft-gallery/backups`.
 - A second deploy skips the image transfer when the local and remote image IDs match, runs the
   backup and migration steps, and leaves the data volumes intact.
-- Still to do manually: complete the first browser OAuth consent, then create invites; optionally
-  create a Forgejo admin token for hosted repositories (`FORGEJO_ADMIN_TOKEN`). Without that token,
-  hosted projects use local git storage.
+- A Forgejo admin token is configured as `FORGEJO_ADMIN_TOKEN`. A real `POST /api/v1/user/repos` /
+  `DELETE /api/v1/repos/...` round trip with that token succeeded, and the web container has it, so
+  hosted projects now provision real Forgejo repositories instead of local git.
+- A 5-use, 30-day beta invite was created for `gallery-admin`; the code is stored in
+  `/opt/solidcraft-gallery/backups/invite-beta.txt` (mode 0600), not in this repository.
+- The user still signs in from their own browser; the server-side account and identity are already in
+  place.
 - Caddy's own TLS path (`CADDY_AUTO_HTTPS=on` + `compose.tls.yaml`) remains available if the external
   terminator is ever removed.
 
