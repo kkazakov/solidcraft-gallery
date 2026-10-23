@@ -82,6 +82,12 @@ import { AppError, can } from '@gallery/core';
 if (!can(project, viewer, 'view')) throw new AppError('not_found', 'No such project');
 ```
 
+### Visual changes
+
+- Whenever a visual element changes (header/nav, theme toggle, cards, public or search pages, project
+  layout), refresh the affected images in `docs/screenshots/` and their README embeds in the same
+  branch. Screenshots are part of the deliverable, not a follow-up task.
+
 ## 5. Boundaries
 
 - NEVER commit `.env`, tokens, keys, or a real user design without explicit permission.
