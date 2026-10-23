@@ -7,6 +7,10 @@
   // Enter in the invite field submits to the default provider's start URL.
   const defaultProvider = $derived(data.providers.find((provider) => provider.configured));
   const formAction = $derived(defaultProvider ? `/auth/login/${defaultProvider.id}` : '/auth/login');
+  // Invite links land here too, so carry the code over to the registration page.
+  const registerHref = $derived(
+    data.invite ? `/auth/register?invite=${encodeURIComponent(data.invite)}` : '/auth/register',
+  );
 </script>
 
 <svelte:head>
@@ -25,12 +29,10 @@
     <p class="notice">{t('login.inviteOnly')}</p>
   {/if}
 
-  {#if data.inviteRequired && !data.registrationUrl}
+  {#if data.inviteRequired}
     <p class="auth-note">
-      {t('login.operatorAccounts')}
-      <a href={data.invite ? `/auth/register?invite=${encodeURIComponent(data.invite)}` : '/auth/register'}>
-        {t('login.createWithInvite')}
-      </a>
+      {t('login.betaInviteOnly')}
+      <a href={registerHref}>{t('login.createWithInvite')}</a>
     </p>
   {/if}
 
