@@ -1,6 +1,6 @@
 # Implementation status
 
-**Updated:** 2026-10-23 · **Milestone:** M0 complete; M1 slice, gallery, GitHub sources, OAuth, hosted Forgejo, nsjail, **admin, Ansible deployment, HTTPS, Forgejo OAuth + hosted-repo token, open registration, English/Bulgarian UI** · **Next:** hosted-project smoke test, off-host backups, monitoring, Bulgarian copy
+**Updated:** 2026-10-23 · **Milestone:** M0 complete; M1 slice, gallery, GitHub sources, OAuth, hosted Forgejo, nsjail, **admin, Ansible deployment, HTTPS, Forgejo OAuth + hosted-repo token, invite-gated beta, English/Bulgarian UI** · **Next:** hosted-project smoke test, off-host backups, monitoring, Bulgarian copy
 
 This file records what actually runs, not what is planned. The plan remains in
 [README.md](README.md) and [docs/14-roadmap.md](docs/14-roadmap.md).
@@ -132,11 +132,13 @@ The single-host stack is deployed with Ansible to `root@192.168.88.222` (see
 - A Forgejo admin token is configured as `FORGEJO_ADMIN_TOKEN`. A real `POST /api/v1/user/repos` /
   `DELETE /api/v1/repos/...` round trip with that token succeeded, and the web container has it, so
   hosted projects now provision real Forgejo repositories instead of local git.
-- The beta invite was revoked after the gate was removed; `pnpm invites list` shows it as
-  `revoked`. New identities no longer need an invite.
-- Registration is open end to end: Forgejo self-registration (`FORGEJO_DISABLE_REGISTRATION=false`,
-  `/user/sign_up` returns `200`) and gallery accounts (`INVITE_REQUIRED=0`). Any Forgejo identity can
-  now sign in and create a gallery account without an invite.
+- The gallery is on a **closed beta**: `INVITE_REQUIRED=1`, so a new provider identity needs a
+  valid invite link (`/auth/login?invite=<code>`) unless it matches `ADMIN_USERNAMES`. Existing
+  identities and allowlisted admins sign in without a code. Invites are created with `pnpm invites`
+  and are CLI-only; the raw code is shown once.
+- Forgejo self-registration stays open (`FORGEJO_DISABLE_REGISTRATION=false`, `/user/sign_up`
+  returns `200`) so an invitee can create a Forgejo account; the gallery invite is what gates the
+  site. Setting `FORGEJO_DISABLE_REGISTRATION=true` would close sign-up end to end.
 - The user still signs in from their own browser; the server-side account and identity are already in
   place.
 - Caddy's own TLS path (`CADDY_AUTO_HTTPS=on` + `compose.tls.yaml`) remains available if the external

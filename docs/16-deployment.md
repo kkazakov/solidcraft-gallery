@@ -358,9 +358,11 @@ the `*-previous` tags you need.
 - Root SSH is used because that is what the target provides. A non-root deploy user with a Docker
   group and sudo is the next hardening step.
 - The Compose example defaults to a closed beta (`FORGEJO_DISABLE_REGISTRATION=true`,
-  `INVITE_REQUIRED=1`). The current drun.net deployment opens both: Forgejo self-registration is on
-  and the gallery accepts any provider identity without an invite. Set the variables back to
-  `true`/`1` to close the beta again. `ADMIN_USERNAMES` must contain the Forgejo admin username.
+  `INVITE_REQUIRED=1`). The current drun.net deployment keeps Forgejo self-registration open
+  (`FORGEJO_DISABLE_REGISTRATION=false`) so an invitee can create a Forgejo account, and gates the
+  gallery with `INVITE_REQUIRED=1`: a new provider identity needs a valid invite link. Set
+  `FORGEJO_DISABLE_REGISTRATION=true` as well to close sign-up end to end.
+  `ADMIN_USERNAMES` must contain the Forgejo admin username.
 - Database passwords should be URL-safe (hex) because `DATABASE_URL` is assembled from
   `POSTGRES_PASSWORD`. Secrets with `@`, `:` or `/` will break the URL.
 
