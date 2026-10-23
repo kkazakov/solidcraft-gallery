@@ -2,7 +2,7 @@
  * Supported UI locales. Add a locale here and in `messages.ts`; the rest of the
  * site reads the list rather than hard-coding codes.
  */
-export const LOCALES = ['en', 'bg'] as const;
+export const LOCALES = ['en', 'bg', 'fr', 'de', 'es'] as const;
 
 export type Locale = (typeof LOCALES)[number];
 
@@ -21,6 +21,9 @@ export const LANGUAGE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 export const LOCALE_LABELS: Record<Locale, string> = {
   en: 'English',
   bg: 'Български',
+  fr: 'Français',
+  de: 'Deutsch',
+  es: 'Español',
 };
 
 export function isLocale(value: unknown): value is Locale {

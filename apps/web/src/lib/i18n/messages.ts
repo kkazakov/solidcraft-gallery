@@ -1,6 +1,9 @@
 import { DEFAULT_LOCALE, type Locale } from './config.js';
 import { bg } from './bg.js';
+import { de } from './de.js';
 import { en } from './en.js';
+import { es } from './es.js';
+import { fr } from './fr.js';
 
 /** Every message key, inferred from the English source dictionary. */
 export type MessageKey = keyof typeof en;
@@ -15,7 +18,7 @@ type PluralOneKey = Extract<MessageKey, `${string}.one`>;
 /** Base key of a plural pair, for example `home.publicDesigns`. */
 export type PluralKey = PluralOneKey extends `${infer Base}.one` ? Base : never;
 
-const DICTIONARIES: Record<Locale, Dictionary> = { en, bg };
+const DICTIONARIES: Record<Locale, Dictionary> = { en, bg, fr, de, es };
 
 function dictionaryFor(locale: Locale): Dictionary {
   return DICTIONARIES[locale] ?? DICTIONARIES[DEFAULT_LOCALE];

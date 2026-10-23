@@ -18,7 +18,7 @@ This file records what actually runs, not what is planned. The plan remains in
 | `@gallery/render` — nsjail plan, direct plan, no-shell runner | done | 12 tests |
 | nsjail worker — sandboxed CLI with no network, read-only root, rlimits | done | container render of 5 artifacts under nsjail |
 | `@gallery/web` — OAuth, dashboard create/edit flow, publish, gallery/search, GitHub connect/sync/webhook, Forgejo provisioning | done | end-to-end curl/browser flow + 26 integration/unit tests |
-| Localization — English + Bulgarian placeholders, `Accept-Language` detection, dashboard preference in localStorage/cookie | done | 16 unit tests; curl checks for HTML `lang`, cookie precedence and `POST /language` |
+| Localization — English, Bulgarian, French, German and Spanish, `Accept-Language` detection, dashboard preference in localStorage/cookie | done | 21 unit tests; curl checks for HTML `lang`, cookie precedence and `POST /language` |
 | `@gallery/worker` — job loop, retries, nsjail render handler (local, Forgejo and cached external) | done | 9 tests + containerized nsjail render |
 | `craftpub` — `lean`, `validate`, `inspect` | done | fixtures and failure exits exercised |
 | Compose (Caddy, web, worker, Postgres, Forgejo, Mailpit) | config valid | web/worker images build |
