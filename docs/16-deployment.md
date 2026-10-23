@@ -195,6 +195,11 @@ docker compose -f compose.yaml --env-file .env exec -T web \
   pnpm invites create --by gallery-admin --note "beta" --uses 5 --days 30
 ```
 
+From a workstation checkout, `./scripts/new-invite.sh` wraps the same call and prints the login link
+the invitee opens (`${PUBLIC_ORIGIN}/auth/login?invite=<code>`); `./scripts/new-invite.sh list` and
+`./scripts/new-invite.sh revoke <id>` map to the CLI. The raw code is printed once — the gallery
+stores only its SHA-256 hash.
+
 ## HTTPS cutover
 
 ### Direct Caddy certificates

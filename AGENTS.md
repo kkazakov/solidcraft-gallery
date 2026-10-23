@@ -29,6 +29,7 @@ pnpm db:migrate              # requires DATABASE_URL
 pnpm craftpub validate fixtures/box.lean.solidcraft
 pnpm craftpub lean fixtures/box.cached.solidcraft --out /tmp/lean.solidcraft
 pnpm invites create --by <admin> --note <text> --uses <n> --days <n>
+./scripts/new-invite.sh --note <text> --uses <n> --days <n>   # create invite + login link (deployed stack)
 docker compose -f infra/compose.yaml -f infra/compose.build.yaml up -d --build
 docker compose -f infra/compose.yaml -f infra/compose.build.yaml config --quiet
 ./scripts/deploy.sh --check          # validate .env, Compose and Ansible
