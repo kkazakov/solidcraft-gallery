@@ -59,6 +59,11 @@
       {#if form?.detail}
         <p class="field-hint">{form.detail}</p>
       {/if}
+      {#if form?.error === 'username-taken'}
+        <p class="auth-note">
+          <a href={`/auth/login?invite=${encodeURIComponent(data.invite)}`}>{t('register.existingHint')}</a>
+        </p>
+      {/if}
 
       <label class="field" for="username">
         <span>{t('register.usernameLabel')}</span>

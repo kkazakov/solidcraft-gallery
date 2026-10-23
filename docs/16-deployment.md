@@ -206,9 +206,11 @@ Forgejo account with `FORGEJO_ADMIN_TOKEN`, consumes the invite, links the `forg
 same transaction and sends the user to `/auth/login?registered=1` to sign in. Forgejo sign-up itself
 stays closed; the invite is the only way in.
 
-The **Invite code** field on the sign-in page is for the other case: a person who already has a
-Forgejo account (created earlier, or provisioned by hand) but no gallery identity. It cannot create a
-provider account, so new people must use the registration page.
+A person who already has a Forgejo account (created earlier, or provisioned by hand) but no gallery
+identity does not need a separate form: the same invite link may point at `/auth/login?invite=<code>`,
+where the code rides along into the OAuth callback and is consumed on first sign-in. The sign-in page
+has no code input; new people use the registration page. The registration page links an existing
+account to that sign-in URL when the username is already taken.
 
 Manual provisioning is the fallback — for example when the invite holder should not choose the password:
 

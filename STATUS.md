@@ -134,10 +134,10 @@ The single-host stack is deployed with Ansible to `root@192.168.88.222` (see
   hosted projects now provision real Forgejo repositories instead of local git.
 - The gallery is on a **closed beta**: `INVITE_REQUIRED=1`, so a new provider identity needs a
   valid invite unless it matches `ADMIN_USERNAMES`. New people register at
-  `/auth/register?invite=<code>`; the sign-in page links there and keeps an **Invite code** field for
-  people who already have a Forgejo account but no gallery identity. Existing identities and
-  allowlisted admins sign in without a code. Invites are created with `pnpm invites` /
-  `scripts/new-invite.sh`; the raw code is shown once.
+  `/auth/register?invite=<code>`, linked from the sign-in page (which has no invite input). An invite
+  link that points at `/auth/login?invite=<code>` still works for someone who already has a Forgejo
+  account but no gallery identity. Existing identities and allowlisted admins sign in without a
+  code. Invites are created with `pnpm invites` / `scripts/new-invite.sh`; the raw code is shown once.
 - Forgejo sign-up is **closed** (`FORGEJO_DISABLE_REGISTRATION=true`). Invite holders create their
   own provider account at `/auth/register?invite=<code>`: the gallery provisions it with
   `FORGEJO_ADMIN_TOKEN`, consumes the invite and inserts the user + `forgejo` identity atomically,
