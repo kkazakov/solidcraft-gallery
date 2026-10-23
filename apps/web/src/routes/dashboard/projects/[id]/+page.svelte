@@ -3,9 +3,7 @@
 
   const date = new Intl.DateTimeFormat('en', { dateStyle: 'medium' });
   const selectedVisibility = $derived(form?.details ? form.visibility : data.project.visibility);
-  const selectedLicense = $derived(
-    form?.details ? (form.license ?? '') : (data.project.license ?? ''),
-  );
+  const selectedLicense = $derived(form?.details ? (form.license ?? '') : (data.project.license ?? ''));
 </script>
 
 <svelte:head>

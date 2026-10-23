@@ -1,5 +1,11 @@
 <script lang="ts">
   let { data } = $props();
+
+  function providerHref(id: string): string {
+    const params = new URLSearchParams({ redirect: data.redirect });
+    if (data.invite) params.set('invite', data.invite);
+    return `/auth/login/${id}?${params.toString()}`;
+  }
 </script>
 
 <svelte:head>
@@ -11,16 +17,13 @@
   <p class="page-sub">Use your Forgejo account to publish designs and manage your projects.</p>
 
   {#if data.error === 'invite'}
-    <p class="notice">This instance is invite-only. Ask an administrator for access.</p>
+    <p class="notice">This instance is invite-only. Ask an administrator for an invite link.</p>
   {/if}
 
   <div class="auth-providers">
     {#each data.providers as provider (provider.id)}
       {#if provider.configured}
-        <a
-          class="button block"
-          href={`/auth/login/${provider.id}?redirect=${encodeURIComponent(data.redirect)}`}
-        >
+        <a class="button block" href={providerHref(provider.id)}>
           Continue with {provider.label}
         </a>
       {:else}

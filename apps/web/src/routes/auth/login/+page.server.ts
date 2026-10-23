@@ -22,6 +22,7 @@ export async function load(event: RequestEvent) {
   return {
     devLogin: process.env.DEV_LOGIN === '1' && process.env.NODE_ENV !== 'production',
     redirect: target,
+    invite: event.url.searchParams.get('invite') ?? '',
     error: event.url.searchParams.get('error') ?? '',
     registrationUrl,
     providers: [{ id: 'forgejo', label: 'Forgejo', configured: providerConfigured('forgejo') }],

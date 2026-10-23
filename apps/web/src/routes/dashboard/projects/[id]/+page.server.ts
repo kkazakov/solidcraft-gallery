@@ -106,8 +106,7 @@ export const actions = {
     const form = await event.request.formData();
     const design = form.get('design');
     const version = String(form.get('version') ?? '').trim();
-    const invalid = (message: string, status = 400) =>
-      fail(status, { publish: true, message, version });
+    const invalid = (message: string, status = 400) => fail(status, { publish: true, message, version });
 
     if (!(design instanceof File) || design.size === 0) {
       return invalid('Choose a .solidcraft file to publish');

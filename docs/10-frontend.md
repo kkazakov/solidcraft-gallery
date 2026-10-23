@@ -22,7 +22,7 @@ uploads and the dashboard; it is never required to read, search or download a de
   /[owner]/[slug]/versions/[ref] one version
   /u/[username]                  profile
   /about /terms /privacy /dmca   static pages
-  /login                         sign-in chooser
+  /login                         Forgejo sign-in
   /auth/error                    callback failure
 
 (app)   (requires session)

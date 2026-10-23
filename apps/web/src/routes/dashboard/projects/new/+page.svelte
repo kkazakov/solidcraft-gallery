@@ -22,13 +22,7 @@
     </div>
   </div>
 
-  <form
-    method="POST"
-    action="?/create"
-    enctype="multipart/form-data"
-    class="card form-page"
-    data-visibility-form
-  >
+  <form method="POST" action="?/create" enctype="multipart/form-data" class="card form-page" data-visibility-form>
     {#if form?.message && !form?.connect}
       <p class="notice">
         {form.message}
@@ -54,7 +48,8 @@
       <label class="field" for="description">
         <span>Description</span>
         <textarea id="description" name="description" rows="3" maxlength="2000" placeholder="What the design is for."
-        >{form?.description ?? ''}</textarea>
+          >{form?.description ?? ''}</textarea
+        >
       </label>
 
       <div class="field">

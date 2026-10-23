@@ -27,7 +27,14 @@ export const actions = {
     const license = visibility === 'public' ? submittedLicense : null;
     const design = form.get('design');
 
-    const values = { title, description, version, visibility, license: submittedLicense, projectId: undefined as string | undefined };
+    const values = {
+      title,
+      description,
+      version,
+      visibility,
+      license: submittedLicense,
+      projectId: undefined as string | undefined,
+    };
     const invalid = (message: string, status = 400) => fail(status, { create: true, ...values, message });
 
     if (title.length < 1 || title.length > LIMITS.titleChars) {
