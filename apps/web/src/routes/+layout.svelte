@@ -60,4 +60,10 @@
       <a href="https://github.com/tangency-labs/solidcraft">SolidCraft</a>
     </nav>
   </div>
+  <div class="shell footer-updated">
+    <span>
+      Updated:
+      <time datetime={data.siteUpdated.iso} data-site-updated>{data.siteUpdated.label}</time>
+    </span>
+  </div>
 </footer>
