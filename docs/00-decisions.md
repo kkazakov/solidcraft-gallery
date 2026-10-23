@@ -252,3 +252,26 @@ not a code change. D9 remains the safe default outside this deployment.
 
 **Rejected.** Keeping the invite gate on drun.net (the operator explicitly removed it); removing
 invite support from the code (it is still needed for controlled deployments).
+
+---
+
+## D14 — Invite-gated beta returns to drun.net, with a visible code field
+
+**Context.** The operator asked for beta invitations on `solidcraft.drun.net` again and for the
+invite code field that the sign-in page used to have. D13 had opened the deployment and D9's gate was
+unused; the operator has now re-enabled it and wants the code to be enterable, not only link-driven.
+
+**Decision.** Set `INVITE_REQUIRED=1` on the drun.net deployment while keeping Forgejo
+self-registration open (`FORGEJO_DISABLE_REGISTRATION=false`) so an invitee can create the provider
+account the gallery login needs. The sign-in page renders an invite code field whenever the gate is
+on; it is a plain `GET` form, so it works with `csr = false`, and it forwards the code as `?invite=`
+into the provider start URL. Invite links prefill the same field. Invites stay CLI-only
+(`pnpm invites`, wrapped by `scripts/new-invite.sh`).
+
+**Consequences.** Every new gallery identity needs a valid code unless it is in `ADMIN_USERNAMES`;
+existing identities are unaffected. Forgejo accounts remain open to create, so the gallery gate — not
+Forgejo — is the beta boundary. Closing provider sign-up too is a one-variable change.
+
+**Rejected.** Link-only invites (the operator asked for the field); adding a separate invite-redeem
+endpoint (the OAuth transaction already carries the hashed code); closing Forgejo self-registration
+(invitees would need hand-made provider accounts).
