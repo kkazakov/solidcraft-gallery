@@ -18,6 +18,12 @@
       {:else}
         <a href="/auth/login">Sign in</a>
       {/if}
+      <label class="sr-only" for="theme-select">Color theme</label>
+      <select id="theme-select" class="theme-select" aria-label="Color theme">
+        <option value="system" selected>System</option>
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select>
       <a href="https://github.com/kkazakov/solidcraft-gallery">GitHub</a>
     </nav>
   </div>

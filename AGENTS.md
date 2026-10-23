@@ -95,6 +95,9 @@ if (!can(project, viewer, 'view')) throw new AppError('not_found', 'No such proj
 
 ## 6. Gotchas
 
+- The theme bootstrap is an inline script in `app.html`; it sets `data-theme` before paint and stores
+  `light`/`dark`/`system` under `gallery-theme` in `localStorage`. There is no hydration, so keep it
+  framework-free.
 - SvelteKit 3 has **no `svelte.config.js`** and **no `$lib` alias**. Pass `adapter` and `preprocess`
   to `sveltekit({...})` in `vite.config.ts`; import `Handle` from `@sveltejs/kit/hooks`; use relative
   imports for local server modules; `tsconfig.json` extends `"$app/tsconfig"`.

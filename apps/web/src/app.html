@@ -3,7 +3,41 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="dark light" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      (() => {
+        const key = 'gallery-theme';
+        const root = document.documentElement;
+        let stored = null;
+        try {
+          stored = localStorage.getItem(key);
+        } catch {
+          // Storage can be blocked; system preference still applies.
+        }
+        const initial = stored === 'light' || stored === 'dark' ? stored : 'system';
+        if (initial !== 'system') root.dataset.theme = initial;
+
+        document.addEventListener('DOMContentLoaded', () => {
+          const select = document.getElementById('theme-select');
+          if (!select) return;
+          select.value = initial;
+          select.addEventListener('change', () => {
+            const value = select.value;
+            if (value === 'system') {
+              try {
+                localStorage.removeItem(key);
+              } catch {}
+              delete root.dataset.theme;
+            } else {
+              try {
+                localStorage.setItem(key, value);
+              } catch {}
+              root.dataset.theme = value;
+            }
+          });
+        });
+      })();
+    </script>
     <link rel="icon" href="%sveltekit.assets%/favicon.svg" />
     %sveltekit.head%
   </head>
