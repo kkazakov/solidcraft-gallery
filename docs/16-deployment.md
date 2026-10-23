@@ -356,8 +356,10 @@ the `*-previous` tags you need.
   bound to `127.0.0.1`; Forgejo's web port is internal to the Compose network.
 - Root SSH is used because that is what the target provides. A non-root deploy user with a Docker
   group and sudo is the next hardening step.
-- Forgejo registration is closed (`FORGEJO_DISABLE_REGISTRATION=true`) and the gallery requires an
-  invite (`INVITE_REQUIRED=1`). `ADMIN_USERNAMES` must contain the Forgejo admin username.
+- The Compose example defaults to closed Forgejo registration (`FORGEJO_DISABLE_REGISTRATION=true`).
+  The current drun.net deployment sets it to `false`, so `/user/sign_up` is public; the gallery itself
+  still requires an invite (`INVITE_REQUIRED=1`). `ADMIN_USERNAMES` must contain the Forgejo admin
+  username.
 - Database passwords should be URL-safe (hex) because `DATABASE_URL` is assembled from
   `POSTGRES_PASSWORD`. Secrets with `@`, `:` or `/` will break the URL.
 
