@@ -66,10 +66,6 @@ services:
       PUBLISH_DISABLED: ${PUBLISH_DISABLED:-0}
       ALLOW_ANY_GIT_HOST: ${ALLOW_ANY_GIT_HOST:-0}
       LOG_LEVEL: ${LOG_LEVEL:-info}
-      # adapter-node uses ORIGIN for CSRF and absolute URLs. Without it, the
-      # HTTP hop from the external TLS proxy makes SvelteKit see http:// and
-      # reject https form posts as cross-site.
-      ORIGIN: ${PUBLIC_ORIGIN:?PUBLIC_ORIGIN is required}
       PROTOCOL_HEADER: x-forwarded-proto
       HOST_HEADER: host
       NODE_ENV: production

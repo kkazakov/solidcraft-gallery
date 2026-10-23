@@ -6,9 +6,14 @@ import { defineConfig } from 'vite';
 // Inlined into the server bundle so the footer can report the release time.
 const BUILT_AT = new Date().toISOString();
 
+// SvelteKit uses paths.origin as the trusted origin for form submissions.
+// The production image is built with PUBLIC_ORIGIN; local builds leave it unset.
+const PUBLIC_ORIGIN = process.env.PUBLIC_ORIGIN?.trim() || undefined;
+
 export default defineConfig({
   plugins: [
     sveltekit({
+      ...(PUBLIC_ORIGIN ? { paths: { origin: PUBLIC_ORIGIN } } : {}),
       preprocess: vitePreprocess(),
       adapter: adapter({ out: 'build' }),
     }),

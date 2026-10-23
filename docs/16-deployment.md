@@ -346,7 +346,7 @@ the `*-previous` tags you need.
 | `port is already allocated` | Change `WEB_PORT`/`FORGEJO_PORT`, or free the port |
 | Certificate issuance fails | DNS must point at the host, 80/443 must be reachable, `CADDY_AUTO_HTTPS=on`; check Caddy logs |
 | OAuth redirect mismatch | `PUBLIC_ORIGIN` and the Forgejo application redirect URI must both be `https://solidcraft.drun.net/auth/callback/forgejo` |
-| `Cross-site POST form submissions are forbidden` | The app must know its public origin. Compose sets adapter-node `ORIGIN` from `PUBLIC_ORIGIN`; keep `PUBLIC_ORIGIN` on `https://…` when TLS terminates at a proxy. |
+| `Cross-site POST form submissions are forbidden` | The web image bakes `PUBLIC_ORIGIN` into SvelteKit's `paths.origin` at build time. Keep it on `https://…` and redeploy after changing it. |
 | `ansible-playbook` exits with a non-blocking IO error | Run it from a normal terminal (not a pipe), or redirect stdout/stderr to a file |
 | Deploy is refused because the tree is dirty | Commit, or use `DEPLOY_ALLOW_DIRTY=1` for a development deploy |
 
