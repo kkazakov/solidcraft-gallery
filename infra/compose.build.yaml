@@ -1,0 +1,12 @@
+# Build overlay used by the Ansible controller and by local development.
+# The production host only consumes the prebuilt images from compose.yaml.
+services:
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+
+  worker:
+    build:
+      context: ..
+      dockerfile: apps/worker/Dockerfile

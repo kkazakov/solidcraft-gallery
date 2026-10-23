@@ -1,32 +1,52 @@
-name: gallery
+name: ${COMPOSE_PROJECT_NAME:-gallery}
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: '10m'
+    max-file: '3'
 
 services:
   caddy:
-    image: caddy:2-alpine
+    image: ${CADDY_IMAGE:-caddy:2-alpine}
+    restart: unless-stopped
+    logging: *default-logging
     ports:
-      - '8080:80'
-      - '8081:8081'
+      - '${WEB_PORT:-8080}:8080'
+      - '${FORGEJO_PORT:-8081}:8081'
+    environment:
+      WEB_DOMAIN: ${WEB_DOMAIN:?WEB_DOMAIN is required}
+      FORGEJO_DOMAIN: ${FORGEJO_DOMAIN:?FORGEJO_DOMAIN is required}
+      ACME_EMAIL: ${ACME_EMAIL:-admin@example.com}
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy/sites.caddy:/etc/caddy/sites.caddy:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
       web:
-        condition: service_started
+        condition: service_healthy
       forgejo:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -O /dev/null http://127.0.0.1:8080/healthz']
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   web:
-    build:
-      context: ..
-      dockerfile: apps/web/Dockerfile
+    image: ${WEB_IMAGE:-gallery-web:local}
+    restart: unless-stopped
+    init: true
+    logging: *default-logging
     environment:
-      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-http://localhost:8080}
-      DATABASE_URL: postgres://gallery:gallery@postgres:5432/gallery
-      SESSION_SECRET: ${SESSION_SECRET:-dev-only-session-secret}
-      TOKEN_ENC_KEY: ${TOKEN_ENC_KEY:-dev-only-token-key}
-      SIGNED_URL_SECRET: ${SIGNED_URL_SECRET:-dev-only-signed-url-secret}
-      FORGEJO_URL: ${FORGEJO_PUBLIC_URL:-http://localhost:8081}
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:?PUBLIC_ORIGIN is required}
+      DATABASE_URL: postgres://${POSTGRES_USER:?POSTGRES_USER is required}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:?POSTGRES_DB is required}
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required}
+      TOKEN_ENC_KEY: ${TOKEN_ENC_KEY:?TOKEN_ENC_KEY is required}
+      SIGNED_URL_SECRET: ${SIGNED_URL_SECRET:?SIGNED_URL_SECRET is required}
+      FORGEJO_URL: ${FORGEJO_PUBLIC_URL:?FORGEJO_PUBLIC_URL is required}
       # Server-to-server; the browser still uses the public URL above.
       FORGEJO_INTERNAL_URL: http://forgejo:3000
       FORGEJO_CLIENT_ID: ${FORGEJO_CLIENT_ID:-}
@@ -36,10 +56,16 @@ services:
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
       GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
       INVITE_REQUIRED: ${INVITE_REQUIRED:-1}
       ADMIN_USERNAMES: ${ADMIN_USERNAMES:-}
       APP_VERSION: ${APP_VERSION:-dev}
       DATA_DIR: /var/lib/gallery
+      MAX_DESIGN_BYTES: ${MAX_DESIGN_BYTES:-26214400}
+      MAX_REPO_BYTES: ${MAX_REPO_BYTES:-1073741824}
+      PUBLISH_DISABLED: ${PUBLISH_DISABLED:-0}
+      ALLOW_ANY_GIT_HOST: ${ALLOW_ANY_GIT_HOST:-0}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
       PROTOCOL_HEADER: x-forwarded-proto
       HOST_HEADER: host
       NODE_ENV: production
@@ -50,79 +76,120 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/healthz').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   worker:
-    build:
-      context: ..
-      dockerfile: apps/worker/Dockerfile
+    image: ${WORKER_IMAGE:-gallery-worker:local}
+    restart: unless-stopped
+    init: true
+    logging: *default-logging
     environment:
-      DATABASE_URL: postgres://gallery:gallery@postgres:5432/gallery
-      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-1}
+      DATABASE_URL: postgres://${POSTGRES_USER:?POSTGRES_USER is required}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:?POSTGRES_DB is required}
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-2}
       WORKER_PAUSED: ${WORKER_PAUSED:-0}
       SOLIDCRAFT_CLI: /usr/local/bin/solidcraft-cli
+      SOLIDCRAFT_CLI_VERSION: ${SOLIDCRAFT_CLI_VERSION:-0.19.0}
       DATA_DIR: /var/lib/gallery
       SANDBOX_MODE: ${SANDBOX_MODE:-nsjail}
       ALLOW_UNSANDBOXED_RENDER: ${ALLOW_UNSANDBOXED_RENDER:-0}
+      RENDER_TIMEOUT_SECONDS: ${RENDER_TIMEOUT_SECONDS:-60}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
       NODE_ENV: production
     # nsjail creates namespaces and mounts; the CLI inside the jail is still
-    # unprivileged and has no network. Mount the pinned CLI at SOLIDCRAFT_CLI.
+    # unprivileged and has no network. The CLI binary is bind-mounted read-only.
     cap_add:
       - SYS_ADMIN
     security_opt:
       - seccomp:unconfined
     volumes:
       - gallery_data:/var/lib/gallery
+      - ${SOLIDCRAFT_CLI_PATH:?SOLIDCRAFT_CLI_PATH is required}:/usr/local/bin/solidcraft-cli:ro
     depends_on:
       postgres:
         condition: service_healthy
 
   postgres:
-    image: postgres:16-alpine
+    image: ${POSTGRES_IMAGE:-postgres:16-alpine}
+    restart: unless-stopped
+    logging: *default-logging
     environment:
-      POSTGRES_USER: gallery
-      POSTGRES_PASSWORD: gallery
-      POSTGRES_DB: gallery
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
+      FORGEJO_DB_NAME: ${FORGEJO_DB_NAME:?FORGEJO_DB_NAME is required}
+      FORGEJO_DB_USER: ${FORGEJO_DB_USER:?FORGEJO_DB_USER is required}
+      FORGEJO_DB_PASSWORD: ${FORGEJO_DB_PASSWORD:?FORGEJO_DB_PASSWORD is required}
     ports:
-      - '5432:5432'
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./postgres/init.sql:/docker-entrypoint-initdb.d/10-forgejo.sql:ro
+      - ./postgres/init.sh:/docker-entrypoint-initdb.d/10-forgejo.sh:ro
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U gallery -d gallery']
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
       interval: 5s
       timeout: 3s
       retries: 20
 
   forgejo:
-    image: codeberg.org/forgejo/forgejo:9
+    image: ${FORGEJO_IMAGE:-codeberg.org/forgejo/forgejo:9}
+    restart: unless-stopped
+    logging: *default-logging
     environment:
       USER_UID: '1000'
       USER_GID: '1000'
       FORGEJO__database__DB_TYPE: postgres
       FORGEJO__database__HOST: postgres:5432
-      FORGEJO__database__NAME: forgejo
-      FORGEJO__database__USER: forgejo
-      FORGEJO__database__PASSWD: forgejo
-      FORGEJO__server__ROOT_URL: ${FORGEJO_PUBLIC_URL:-http://localhost:8081/}
+      FORGEJO__database__NAME: ${FORGEJO_DB_NAME:?FORGEJO_DB_NAME is required}
+      FORGEJO__database__USER: ${FORGEJO_DB_USER:?FORGEJO_DB_USER is required}
+      FORGEJO__database__PASSWD: ${FORGEJO_DB_PASSWORD:?FORGEJO_DB_PASSWORD is required}
+      FORGEJO__database__SSL_MODE: disable
+      FORGEJO__server__ROOT_URL: ${FORGEJO_PUBLIC_URL:?FORGEJO_PUBLIC_URL is required}
+      FORGEJO__server__DOMAIN: ${FORGEJO_DOMAIN:?FORGEJO_DOMAIN is required}
       FORGEJO__server__HTTP_PORT: '3000'
+      FORGEJO__server__SSH_DOMAIN: ${FORGEJO_DOMAIN:?FORGEJO_DOMAIN is required}
+      FORGEJO__server__SSH_PORT: ${FORGEJO_SSH_PORT:-2222}
+      # The image runs OpenSSH on :22. Keep the built-in server off explicitly:
+      # Forgejo persists this value in app.ini, so an unset variable is not enough
+      # on an existing volume.
+      FORGEJO__server__START_SSH_SERVER: 'false'
+      FORGEJO__server__LFS_START_SERVER: 'true'
       FORGEJO__security__INSTALL_LOCK: 'true'
       FORGEJO__service__DISABLE_REGISTRATION: ${FORGEJO_DISABLE_REGISTRATION:-true}
       FORGEJO__openid__ENABLE_OPENID_SIGNIN: 'false'
-      FORGEJO__log__LEVEL: info
+      FORGEJO__log__LEVEL: ${FORGEJO_LOG_LEVEL:-info}
     ports:
-      - '3001:3000'
-      - '2222:22'
+      - '${FORGEJO_SSH_PORT:-2222}:22'
     volumes:
       - forgejo_data:/data
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -O /dev/null http://127.0.0.1:3000/api/healthz']
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
+  # Local-only mail catcher. Start it with `--profile dev`.
   mailpit:
     image: axllent/mailpit:latest
+    profiles: ['dev']
+    restart: unless-stopped
     ports:
-      - '8025:8025'
-      - '1025:1025'
+      - '127.0.0.1:8025:8025'
+      - '127.0.0.1:1025:1025'
 
 volumes:
   caddy_data:

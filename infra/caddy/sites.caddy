@@ -1,0 +1,32 @@
+# Shared site definitions. `Caddyfile` (HTTP) and `Caddyfile.tls` both import
+# this file; the Ansible playbook copies the selected one to `Caddyfile`.
+(web) {
+	encode zstd gzip
+	reverse_proxy web:3000
+}
+
+(forgejo) {
+	encode zstd gzip
+	reverse_proxy forgejo:3000
+}
+
+# Direct ports. These work with either a hostname or the bare host IP, which
+# keeps the stack reachable before DNS and HTTPS are finished.
+:8080 {
+	import web
+}
+
+:8081 {
+	import forgejo
+}
+
+# Domain listeners. In the HTTP deployment these are plain HTTP listeners
+# inside the container and are not published. In the TLS deployment they are
+# the automatic-HTTPS listeners on 80/443.
+{$WEB_DOMAIN} {
+	import web
+}
+
+{$FORGEJO_DOMAIN} {
+	import forgejo
+}

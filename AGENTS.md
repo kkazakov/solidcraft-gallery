@@ -29,8 +29,10 @@ pnpm db:migrate              # requires DATABASE_URL
 pnpm craftpub validate fixtures/box.lean.solidcraft
 pnpm craftpub lean fixtures/box.cached.solidcraft --out /tmp/lean.solidcraft
 pnpm invites create --by <admin> --note <text> --uses <n> --days <n>
-docker compose -f infra/compose.yaml up -d --build
-docker compose -f infra/compose.yaml config --quiet
+docker compose -f infra/compose.yaml -f infra/compose.build.yaml up -d --build
+docker compose -f infra/compose.yaml -f infra/compose.build.yaml config --quiet
+./scripts/deploy.sh --check          # validate .env, Compose and Ansible
+./scripts/deploy.sh                  # build, upload and deploy to DEPLOY_HOST
 
 # GitHub project board: "SolidCraft Gallery" (user project 3)
 gh auth refresh -s project,read:project    # one-time; gh project needs this scope
@@ -43,9 +45,10 @@ gh project item-create 3 --owner kkazakov --title "<task>" --body "<epic and acc
 Local database for integration tests:
 
 ```sh
-docker compose -f infra/compose.yaml up -d postgres
-DATABASE_URL=postgres://gallery:gallery@localhost:5432/gallery pnpm db:migrate
-DATABASE_URL=postgres://gallery:gallery@localhost:5432/gallery pnpm --filter @gallery/db test
+docker compose -f infra/compose.yaml -f infra/compose.build.yaml up -d postgres
+set -a; . ./.env; set +a
+DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/${POSTGRES_DB}" pnpm db:migrate
+DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/${POSTGRES_DB}" pnpm --filter @gallery/db test
 ```
 
 ## 3. Architecture

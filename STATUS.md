@@ -1,6 +1,6 @@
 # Implementation status
 
-**Updated:** 2026-10-22 · **Milestone:** M0 complete; M1 slice, gallery, GitHub sources, OAuth, hosted Forgejo, nsjail, **invites/admin** · **Next:** user-owned tokens, deployment hardening
+**Updated:** 2026-10-23 · **Milestone:** M0 complete; M1 slice, gallery, GitHub sources, OAuth, hosted Forgejo, nsjail, **invites/admin, Ansible deployment** · **Next:** Forgejo OAuth app + HTTPS cutover, user-owned tokens, monitoring
 
 This file records what actually runs, not what is planned. The plan remains in
 [README.md](README.md) and [docs/14-roadmap.md](docs/14-roadmap.md).
@@ -21,6 +21,7 @@ This file records what actually runs, not what is planned. The plan remains in
 | `@gallery/worker` — job loop, retries, nsjail render handler (local, Forgejo and cached external) | done | 9 tests + containerized nsjail render |
 | `craftpub` — `lean`, `validate`, `inspect` | done | fixtures and failure exits exercised |
 | Compose (Caddy, web, worker, Postgres, Forgejo, Mailpit) | config valid | web/worker images build |
+| Ansible deployment to `root@192.168.88.222` | done | `./scripts/deploy.sh`; health checks on 8080/8081 |
 | CI — lint, check, test, build, migrate, DB tests | done | workflow; first push run |
 | `AGENTS.md` | done | reviewed against the repository |
 
@@ -94,6 +95,25 @@ A real Forgejo stack is running locally via Compose (not a mock):
   provisioned a real private repo, publish wrote `project.json` + the 449-byte lean design, nsjail
   rendered five artifacts, public visibility flipped the Forgejo repo to public, and the public page,
   image and download returned 200.
+
+## Remote deployment
+
+The single-host stack is deployed with Ansible to `root@192.168.88.222` (see
+[16 — Deployment](docs/16-deployment.md)):
+
+- Caddy publishes the gallery on `http://192.168.88.222:8080` and Forgejo on
+  `http://192.168.88.222:8081`; `solidcraft.drun.net` and `forgejo.drun.net` are configured in `.env`.
+- `CADDY_AUTO_HTTPS=off` until DNS and 80/443 are ready. The playbook ships a TLS Caddyfile and the
+  `compose.tls.yaml` overlay for the cutover.
+- Verified: `/healthz`, `/readyz`, `/` and Forgejo `/api/healthz` return success; the domain `Host`
+  headers route correctly; `solidcraft-cli 0.19.0` runs inside the worker; the Forgejo admin
+  `gallery-admin` exists and is active; pre-migration `pg_dump` files land in
+  `/opt/solidcraft-gallery/backups`.
+- A second deploy skips the image transfer when the local and remote image IDs match, runs the
+  backup and migration steps, and leaves the data volumes intact.
+- Still manual: creating the Forgejo OAuth2 application, setting `FORGEJO_CLIENT_ID`/`_SECRET`, and
+  the HTTPS cutover. Sign-in is expected to stay unusable over plain HTTP because production
+  cookies are `Secure`.
 
 ## Not implemented (next)
 

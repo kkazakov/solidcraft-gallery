@@ -1,0 +1,6 @@
+---
+- name: Reload Caddy
+  ansible.builtin.command:
+    argv: "{{ compose_prefix + ['exec', '-T', 'caddy', 'caddy', 'reload', '--config', '/etc/caddy/Caddyfile'] }}"
+    chdir: '{{ deploy_dir }}'
+  changed_when: true

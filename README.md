@@ -94,6 +94,24 @@ is `ready`.
 
 ---
 
+## Deployment
+
+The single-host stack is deployed with Ansible and Docker Compose. Caddy publishes the gallery on
+`8080` and Forgejo on `8081`; `solidcraft.drun.net` and `forgejo.drun.net` are configured in `.env`,
+and HTTPS is a one-line cutover when DNS is ready.
+
+```sh
+cp .env.example .env && chmod 600 .env
+uv venv .venv && uv pip install -r infra/ansible/requirements.txt
+./scripts/deploy.sh --check
+./scripts/deploy.sh
+```
+
+See [16 — Deployment](docs/16-deployment.md) for prerequisites, secrets, the HTTPS cutover,
+Forgejo bootstrap, backups and rollback.
+
+---
+
 ## Plan map
 
 | Document | Contents |
@@ -114,6 +132,7 @@ is `ready`.
 | [13 — Testing](docs/13-testing.md) | Unit, integration, end-to-end, fixtures, golden images, load, CI |
 | [14 — Roadmap](docs/14-roadmap.md) | Milestones M0–M6, deliverables, acceptance criteria, estimates |
 | [15 — Risks](docs/15-risks.md) | Risk register, open questions, launch checklist |
+| [16 — Deployment](docs/16-deployment.md) | Ansible pipeline, `.env`, first deploy, HTTPS cutover, rollback |
 | [Appendix A](docs/appendix/schema.sql) | PostgreSQL DDL |
 | [Appendix B](docs/appendix/project.schema.json) | JSON Schema for `project.json` |
 | [Appendix C](docs/appendix/cli-recipes.md) | Exact `solidcraft-cli` commands used by ingest and by authors |
@@ -131,7 +150,7 @@ is `ready`.
 | Authentication (OAuth for people, HTTP Basic for git) | [08 — Auth](docs/08-auth.md) | M1 |
 | Private, unlisted and public projects | [03](docs/03-repo-format.md), [04](docs/04-data-model.md) | M1–M3 |
 | Moderation, reports, takedowns | [11 — Security](docs/11-security.md), [15 — Risks](docs/15-risks.md) | M4 |
-| Deploy, backups, monitoring | [12 — Operations](docs/12-operations.md) | M5–M6 |
+| Deploy, backups, monitoring | [12 — Operations](docs/12-operations.md), [16 — Deployment](docs/16-deployment.md) | M5–M6 |
 
 ---
 
