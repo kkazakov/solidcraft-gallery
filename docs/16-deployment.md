@@ -234,6 +234,11 @@ can hit rate limits.
 
 ### External TLS terminator (Cloudflare Tunnel or proxy)
 
+**Current deployment (2026-10-23).** Both domains resolve to `92.247.221.87`, where an OpenResty
+terminator serves Let's Encrypt certificates and proxies to this host's `8080`/`8081`. Caddy stays
+on HTTP, so `CADDY_AUTO_HTTPS=off` is the correct setting; the Caddy TLS path below is the fallback
+if that terminator is removed.
+
 Use this when TLS ends outside the host. Keep `CADDY_AUTO_HTTPS=off` so the playbook keeps the
 HTTP Caddyfile and does not publish 80/443, and route:
 

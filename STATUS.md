@@ -1,6 +1,6 @@
 # Implementation status
 
-**Updated:** 2026-10-23 · **Milestone:** M0 complete; M1 slice, gallery, GitHub sources, OAuth, hosted Forgejo, nsjail, **invites/admin, Ansible deployment** · **Next:** Forgejo OAuth app + HTTPS cutover, user-owned tokens, monitoring
+**Updated:** 2026-10-23 · **Milestone:** M0 complete; M1 slice, gallery, GitHub sources, OAuth, hosted Forgejo, nsjail, **invites/admin, Ansible deployment, HTTPS + Forgejo OAuth** · **Next:** first browser sign-in + invites, hosted-repo token, off-host backups, monitoring
 
 This file records what actually runs, not what is planned. The plan remains in
 [README.md](README.md) and [docs/14-roadmap.md](docs/14-roadmap.md).
@@ -103,17 +103,26 @@ The single-host stack is deployed with Ansible to `root@192.168.88.222` (see
 
 - Caddy publishes the gallery on `http://192.168.88.222:8080` and Forgejo on
   `http://192.168.88.222:8081`; `solidcraft.drun.net` and `forgejo.drun.net` are configured in `.env`.
-- `CADDY_AUTO_HTTPS=off` until DNS and 80/443 are ready. The playbook ships a TLS Caddyfile and the
-  `compose.tls.yaml` overlay for the cutover.
-- Verified: `/healthz`, `/readyz`, `/` and Forgejo `/api/healthz` return success; the domain `Host`
-  headers route correctly; `solidcraft-cli 0.19.0` runs inside the worker; the Forgejo admin
-  `gallery-admin` exists and is active; pre-migration `pg_dump` files land in
-  `/opt/solidcraft-gallery/backups`.
+- **HTTPS is live through an external OpenResty TLS terminator.** Both domains resolve to
+  `92.247.221.87`, which proxies to this host's `8080`/`8081`; Caddy stays on HTTP and
+  `CADDY_AUTO_HTTPS=off` is intentional for this mode. Certificates are valid Let's Encrypt certs
+  (`solidcraft.drun.net` and `forgejo.drun.net`, expiry 2027-01-21).
+- Verified over HTTPS: `/healthz`, `/readyz`, `/` and Forgejo `/api/healthz` return success;
+  `https://solidcraft.drun.net/auth/login` offers "Continue with Forgejo"; the OAuth start returns a
+  `303` to `https://forgejo.drun.net/login/oauth/authorize` with
+  `redirect_uri=https://solidcraft.drun.net/auth/callback/forgejo`.
+- The Forgejo OAuth2 application **SolidCraft Gallery** exists (confidential, redirect URI
+  `https://solidcraft.drun.net/auth/callback/forgejo`); `FORGEJO_CLIENT_ID`/`_SECRET` are set and the
+  web container was redeployed.
+- `solidcraft-cli 0.19.0` runs inside the worker; the Forgejo admin `gallery-admin` exists and is
+  active; pre-migration `pg_dump` files land in `/opt/solidcraft-gallery/backups`.
 - A second deploy skips the image transfer when the local and remote image IDs match, runs the
   backup and migration steps, and leaves the data volumes intact.
-- Still manual: creating the Forgejo OAuth2 application, setting `FORGEJO_CLIENT_ID`/`_SECRET`, and
-  the HTTPS cutover. Sign-in is expected to stay unusable over plain HTTP because production
-  cookies are `Secure`.
+- Still to do manually: complete the first browser OAuth consent, then create invites; optionally
+  create a Forgejo admin token for hosted repositories (`FORGEJO_ADMIN_TOKEN`). Without that token,
+  hosted projects use local git storage.
+- Caddy's own TLS path (`CADDY_AUTO_HTTPS=on` + `compose.tls.yaml`) remains available if the external
+  terminator is ever removed.
 
 ## Not implemented (next)
 

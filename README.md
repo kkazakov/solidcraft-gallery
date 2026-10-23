@@ -97,8 +97,9 @@ is `ready`.
 ## Deployment
 
 The single-host stack is deployed with Ansible and Docker Compose. Caddy publishes the gallery on
-`8080` and Forgejo on `8081`; `solidcraft.drun.net` and `forgejo.drun.net` are configured in `.env`,
-and HTTPS is a one-line cutover when DNS is ready.
+`8080` and Forgejo on `8081`; `solidcraft.drun.net` and `forgejo.drun.net` are configured in `.env`.
+HTTPS is currently terminated by an external OpenResty proxy in front of those ports; the repository
+also ships a Caddy TLS path (`CADDY_AUTO_HTTPS=on`) for a direct deployment.
 
 ```sh
 cp .env.example .env && chmod 600 .env
