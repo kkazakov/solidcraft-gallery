@@ -275,3 +275,25 @@ Forgejo — is the beta boundary. Closing provider sign-up too is a one-variable
 **Rejected.** Link-only invites (the operator asked for the field); adding a separate invite-redeem
 endpoint (the OAuth transaction already carries the hashed code); closing Forgejo self-registration
 (invitees would need hand-made provider accounts).
+
+---
+
+## D15 — Close Forgejo sign-up; the operator provisions provider accounts
+
+**Context.** D14 restored the gallery invite gate but left Forgejo self-registration open, so anyone
+could still create a provider account — and use Forgejo itself — without an invite. The operator asked
+to close sign-up as well.
+
+**Decision.** Set `FORGEJO_DISABLE_REGISTRATION=true` on the drun.net deployment. Every Forgejo
+account is created by the operator (Forgejo admin UI or `forgejo admin user create`) and paired with a
+gallery invite code. The sign-in page hides the "Create a Forgejo account" link and states that an
+operator-created account is required; the invite code field and `?invite=` links remain the
+self-service step.
+
+**Consequences.** There is no self-registration anywhere: onboarding is manual, and a Forgejo account
+alone is not enough to enter the gallery. Reopening provider sign-up is a one-variable change and does
+not affect the gallery gate. The invite field is now the only thing an invitee can do alone.
+
+**Rejected.** Keeping Forgejo sign-up open (the operator asked to close it); removing the invite field
+(it is the only self-service step left); adding an invite-driven Forgejo sign-up (no such feature in
+Forgejo 9).

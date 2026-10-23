@@ -188,6 +188,8 @@ export const en = {
   'login.inviteRequiredHint': '(required for new accounts)',
   'login.inviteOptionalHint': '(optional)',
   'login.invitePlaceholder': 'Paste your beta invite',
+  'login.operatorAccounts':
+    'Beta access needs an operator-created account and an invite code. Ask an administrator if you are missing either.',
   'login.continueWith': 'Continue with {provider}',
   'login.notConfigured': '{provider} sign-in is not configured',
   'login.oauthNote': 'Sign-in uses OAuth with PKCE. You stay signed in on this browser.',

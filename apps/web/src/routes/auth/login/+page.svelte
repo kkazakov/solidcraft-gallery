@@ -21,6 +21,10 @@
     <p class="notice">{t('login.inviteOnly')}</p>
   {/if}
 
+  {#if data.inviteRequired && !data.registrationUrl}
+    <p class="auth-note">{t('login.operatorAccounts')}</p>
+  {/if}
+
   <form method="GET" action={formAction} class="form-stack">
     <input type="hidden" name="redirect" value={data.redirect} />
 

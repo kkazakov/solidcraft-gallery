@@ -187,6 +187,8 @@ export const bg: Dictionary = {
   'login.inviteRequiredHint': '(задължителен за нови акаунти)',
   'login.inviteOptionalHint': '(по избор)',
   'login.invitePlaceholder': 'Поставете кода от поканата',
+  'login.operatorAccounts':
+    'Достъпът до бетата изисква акаунт, създаден от оператора, и код за покана. Поискайте от администратор, ако ви липсва нещо.',
   'login.continueWith': 'Продължи с {provider}',
   'login.notConfigured': 'Входът с {provider} не е конфигуриран',
   'login.oauthNote': 'Входът използва OAuth с PKCE. Оставате влезли в този браузър.',
