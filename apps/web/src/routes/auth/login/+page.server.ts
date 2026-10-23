@@ -3,7 +3,9 @@ import { currentViewer } from '../../../lib/server/auth.js';
 import { providerConfig, providerConfigured, safeRedirect } from '../../../lib/server/oauth.js';
 
 export async function load(event: RequestEvent) {
-  const target = safeRedirect(event.url.searchParams.get('redirect'));
+  const requested = safeRedirect(event.url.searchParams.get('redirect'));
+  // Never bounce a signed-in visitor back into the auth routes.
+  const target = requested.startsWith('/auth/') ? '/dashboard' : requested;
 
   let viewer = null;
   try {

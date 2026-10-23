@@ -23,6 +23,8 @@ Taken from the local staging stack: real Forgejo, real `solidcraft-cli`, nsjail 
 | ![Gallery home](docs/screenshots/home.png) | ![Project page](docs/screenshots/project.png) |
 | **Search** | **Git-backed source in Forgejo** |
 | ![Search results](docs/screenshots/search.png) | ![Forgejo repository](docs/screenshots/forgejo.png) |
+| **Gallery in dark mode** | **Project page in dark mode** |
+| ![Gallery home in dark mode](docs/screenshots/home-dark.png) | ![Project page in dark mode](docs/screenshots/project-dark.png) |
 
 Despite the folder name, this is **not a SolidCraft plugin**. SolidCraft's plugin boundary is an
 in-document command executor with no storage, accounts, background sync or UI; a gallery needs all
