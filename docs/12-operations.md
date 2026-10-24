@@ -25,7 +25,9 @@ Volumes: `pgdata`, `forgejo_data`, `gallery_data`, `caddy_data`, `caddy_config`.
 One default Compose network; no service except Caddy publishes an application port.
 
 The worker has no inbound ports. The worker container needs `SYS_ADMIN` and `seccomp=unconfined` so
-nsjail can create namespaces; the pinned CLI is bind-mounted at `/usr/local/bin/solidcraft-cli`.
+nsjail can create namespaces; the managed CLI directory is bind-mounted read-only at
+`/opt/solidcraft`, and the worker uses `/opt/solidcraft/current/solidcraft-cli`. The production-only
+update job swaps `current` without restarting the worker.
 Forgejo is reachable as `forgejo.drun.net` on the Forgejo port (and HTTPS when enabled); its admin
 UI is restricted by Forgejo itself and optionally by Caddy IP rules.
 
@@ -57,10 +59,14 @@ playbook uploads it to the host with mode `0600`; Compose builds the internal `D
 | `ARTIFACT_DIR` | yes | `/var/lib/gallery/artifacts` | local driver |
 | `STORAGE_DRIVER` | no | `local` | `local` or `s3` |
 | `S3_ENDPOINT` / `_BUCKET` / `_KEY` / `_SECRET` | if s3 | — | MinIO/B2 |
-| `SOLIDCRAFT_CLI` | yes | `/usr/local/bin/solidcraft-cli` | path inside the worker |
-| `SOLIDCRAFT_CLI_PATH` | yes | `/opt/solidcraft-gallery/bin/solidcraft-cli` | host path bind-mounted into the worker |
-| `SOLIDCRAFT_CLI_SOURCE` | first deploy | — | controller path Ansible uploads |
-| `SOLIDCRAFT_CLI_VERSION` | yes | `0.21.0` | checked after deployment |
+| `SOLIDCRAFT_CLI` | yes | `/opt/solidcraft/current/solidcraft-cli` | path inside the worker |
+| `SOLIDCRAFT_CLI_DIR` | yes | `/opt/solidcraft-gallery/cli` | host directory managed by the update job |
+| `SOLIDCRAFT_CLI_AUTO_UPDATE` | no | `0` | `1` only on prod; installs the daily cron job |
+| `SOLIDCRAFT_CLI_UPDATE_HOUR` / `_MINUTE` | no | `2` / `17` | server-local daily check |
+| `SOLIDCRAFT_CLI_KEEP_VERSIONS` | no | `5` | versions retained before pruning |
+| `SOLIDCRAFT_CLI_PRUNE_MIN_AGE_HOURS` | no | `168` | minimum age before pruning |
+| `SOLIDCRAFT_RELEASE_REPO` | no | `tangency-labs/solidcraft` | release source; no version pin |
+| `SOLIDCRAFT_RELEASE_TOKEN` | no | — | optional GitHub API token |
 | `MAX_DESIGN_BYTES` | no | `26214400` | 25 MB |
 | `MAX_REPO_BYTES` | no | `1073741824` | 1 GB |
 | `RENDER_TIMEOUT_SECONDS` | no | `60` | sandbox wall clock |
@@ -76,8 +82,9 @@ playbook uploads it to the host with mode `0600`; Compose builds the internal `D
 | `SENTRY_DSN` | no | — | scrubbed errors |
 | `SMTP_URL` | no | — | notifications, later |
 
-Boot checks: required variables present, CLI executable and `--version` matches the pin, artifact
-directory writable, database reachable, migration state current. Fail fast, exit non-zero.
+Boot checks: required variables present, CLI executable, artifact directory writable, database
+reachable, migration state current. The CLI version is not compared with a constant; the deploy
+verifies that it runs and reports a version. Fail fast, exit non-zero.
 
 ## Deploy
 
@@ -92,12 +99,38 @@ uv venv .venv && uv pip install -r infra/ansible/requirements.txt
 ```
 
 1. The controller builds `web` and `worker`, saves them, and uploads the archive to the host.
-2. The host keeps the previous image tags, loads the new images and starts PostgreSQL.
+2. The host keeps the previous image tags, loads the new images, and adopts the existing CLI into the
+   managed directory (or installs the latest release when none exists).
 3. A `pg_dump` is written under `/opt/solidcraft-gallery/backups` when the schema exists.
 4. Migrations run in a one-shot web container.
 5. Compose starts the stack; the playbook waits for `/healthz`, `/readyz`, the home page and
    Forgejo `/api/healthz`, including the domain `Host` headers.
-6. The pinned CLI is verified inside the worker and the first Forgejo admin is created if needed.
+6. The actual CLI version is verified inside the worker and the first Forgejo admin is created if
+   needed.
+7. On production with `SOLIDCRAFT_CLI_AUTO_UPDATE=1`, the daily CLI update cron is installed.
+
+### CLI updates
+
+The CLI is not baked into the images and is not a deploy artifact. The host keeps versioned binaries
+under `SOLIDCRAFT_CLI_DIR`:
+
+```text
+current  -> versions/<version>
+previous -> versions/<old-version>
+```
+
+A root cron job runs `update-cli --scheduled` daily at `SOLIDCRAFT_CLI_UPDATE_HOUR`:`MINUTE`
+(server time; 02:17 UTC by default). It fetches the latest stable GitHub release, verifies the asset
+digest and `SHA256SUMS.txt`, checks `--version` and the command table, runs a trusted-fixture canary
+render in a separate network-less container, and only then swaps `current`. The worker resolves
+`current` once per render job, so no web/worker restart is needed and an in-flight job keeps the CLI
+it started with.
+
+The job is enabled only when `DEPLOY_ENV=prod` and `SOLIDCRAFT_CLI_AUTO_UPDATE=1`; the wrapper also
+checks both values at runtime. Set `SOLIDCRAFT_CLI_AUTO_UPDATE=0` as the kill switch. Operators can
+run `update-cli --check`, `--stage`, `--rollback`, `--commit`, `--discard`, `--bootstrap` or
+`--adopt <deploy_dir>/bin/<binary>` manually. State and the last error are in
+`SOLIDCRAFT_CLI_DIR/state.json`; summaries go to syslog with tag `solidcraft-cli-update`.
 
 Rollback: retag `*-previous` and `docker compose up -d --no-deps web worker`. Schema migrations are
 forward-only; a destructive migration still requires an explicit restore plan.
@@ -192,10 +225,11 @@ compute, at beta scale.
 | Cadence | Task |
 |---|---|
 | Daily | Backup status, alerts, queue check (automated) |
+| Daily | CLI update check at 02:17 server time (automated; production only) |
 | Weekly | Dependency PRs, zero-result search review, report queue |
 | Monthly | Restore drill, access review, certificate check, cost review |
 | Quarterly | Secret rotation (session/signed-url), Forgejo upgrade, load test |
-| Per CLI release | Pin bump in staging, golden-image diff, staged re-render |
+| Per CLI regression | `update-cli --rollback`, requeue failed versions, report upstream |
 
 ## Runbooks
 
@@ -210,18 +244,20 @@ compute, at beta scale.
 ### R2 — Renders fail for one design
 
 1. Fetch the version's `error_code` and `error_detail`. `renderer_outdated` means the design's
-   `document.json` format is newer than the pinned CLI; the design is fine. `render_timeout`,
+   `document.json` format is newer than the installed CLI; the design is fine. `render_timeout`,
    `render_failed` and `design_unreadable` are other branches.
-2. Reproduce locally with the same CLI version and the committed bytes. For format skew, compare
-   `document.json`'s `format` with the CLI's "reads formats up to" number; the CLI error line is in
-   `error_detail` and the full stderr is in the worker log.
-3. Upgrade the pinned CLI to a release that writes at least that format (for example 0.21.0 reads
-   format 34), then restart the worker and verify `solidcraft-cli --version`. Requeue the failed
-   version with **Retry render** in the dashboard or `POST /api/v1/projects/:id/retry`.
+2. Reproduce locally with the CLI version recorded in `SOLIDCRAFT_CLI_DIR/state.json` and the
+   committed bytes. For format skew, compare `document.json`'s `format` with the CLI's "reads
+   formats up to" number; the CLI error line is in `error_detail` and the full stderr is in the
+   worker log.
+3. Check `update-cli --check`. The daily job normally catches up; if it has not, run
+   `update-cli --scheduled` (or `--bootstrap` when no CLI is installed) and requeue the failed
+   version with **Retry render** in the dashboard or `POST /api/v1/projects/:id/retry`. No worker
+   restart is required.
 4. If the design is valid but slow, raise the timeout for that job only; do not raise the global
    default without a load test.
-5. If the CLI crashes, pin the previous CLI version, requeue, and report upstream with a minimal
-   file.
+5. If the CLI crashes, run `update-cli --rollback`, requeue the version, and report upstream with a
+   minimal file.
 
 ### R3 — Disk almost full
 

@@ -67,8 +67,7 @@ Full:
   "links": {
     "website": "https://example.com/pi-case",
     "video": "https://example.com/pi-case.mp4"
-  },
-  "solidcraft": ">=0.18"
+  }
 }
 ```
 

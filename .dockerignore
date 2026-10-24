@@ -16,3 +16,4 @@ fixtures
 .ansible
 deploy.lock
 infra
+.scratch

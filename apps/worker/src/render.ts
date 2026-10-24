@@ -1,5 +1,5 @@
 import { constants } from 'node:fs';
-import { access, chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, chmod, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve, sep } from 'node:path';
 import {
@@ -79,6 +79,21 @@ function planFor(config: WorkerConfig, designPath: string, outDir: string): { na
   return directRenderPlan({ cli: config.cli, designPath, outDir });
 }
 
+/**
+ * Resolve the `current` symlink once for the whole job. The updater can swap
+ * the link at any time; a job that already started must keep using the binary
+ * it began with so its snapshots, metrics and exports cannot come from two
+ * different CLI versions.
+ */
+export async function resolveCliPath(cli: string): Promise<string> {
+  try {
+    return await realpath(cli);
+  } catch {
+    // Let ensureCli report the missing path with its normal error.
+    return cli;
+  }
+}
+
 async function ensureCli(config: WorkerConfig): Promise<void> {
   try {
     await access(config.cli, constants.X_OK);
@@ -128,8 +143,9 @@ export async function renderVersion(versionId: string, ctx: RenderContext): Prom
       throw new RenderFailure('design_hash_mismatch', 'committed design does not match the recorded hash');
     }
 
-    await ensureCli(ctx.config);
-    if (ctx.config.sandboxMode === 'nsjail') await ensureSandbox();
+    const jobConfig = { ...ctx.config, cli: await resolveCliPath(ctx.config.cli) };
+    await ensureCli(jobConfig);
+    if (jobConfig.sandboxMode === 'nsjail') await ensureSandbox();
     work = await mkdtemp(join(tmpdir(), `gallery-render-${versionId.slice(0, 8)}-`));
     const designFile = join(work, 'design.solidcraft');
     const outDir = join(work, 'out');
@@ -137,7 +153,7 @@ export async function renderVersion(versionId: string, ctx: RenderContext): Prom
     await chmod(outDir, 0o777);
     await writeFile(designFile, designBytes);
 
-    const plan = planFor(ctx.config, designFile, outDir);
+    const plan = planFor(jobConfig, designFile, outDir);
     // Previews and measurements are required; derivatives are best-effort.
     const required = plan.slice(0, 4);
     const derivatives = plan.slice(4);

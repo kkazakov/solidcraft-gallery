@@ -231,7 +231,7 @@ A render failure is isolated: the job fails, the version is marked `failed` with
 | `manifest_invalid` | `project.json` has invalid fields | no |
 | `license_missing` | Public project without a license | no |
 | `render_timeout` | Preview took longer than 60 s | yes, smaller views |
-| `renderer_outdated` | The design was saved by a newer SolidCraft than the pinned CLI reads | no; upgrade `solidcraft-cli` |
+| `renderer_outdated` | The design was saved by a newer SolidCraft than the installed CLI reads | no; the daily updater catches up; retry after it updates |
 | `render_failed` | The CLI could not render this design | yes (3×) |
 | `dependencies_missing` | Linked components are outside the repository | warning |
 | `repo_too_large` | Repository over 1 GB | no |

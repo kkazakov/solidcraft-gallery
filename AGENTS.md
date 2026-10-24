@@ -131,8 +131,13 @@ and `design` may import `core`; no package imports an app.
 - `.solidcraft` bytes are untrusted. Never spawn the CLI directly; use `packages/render` so the
   design runs in nsjail with no network. No shell strings, no user paths in argv.
 - The worker image builds nsjail 3.4. `SANDBOX_MODE=direct` is development-only; production/compose
-  uses `nsjail`, which needs `SYS_ADMIN` + `seccomp=unconfined` on the container and a CLI mounted at
-  `/usr/local/bin/solidcraft-cli`.
+  uses `nsjail`, which needs `SYS_ADMIN` + `seccomp=unconfined` on the container and a managed CLI
+  directory mounted at `/opt/solidcraft`; the worker uses
+  `/opt/solidcraft/current/solidcraft-cli`.
+- The CLI is not pinned in code or deploy configuration. Production runs a daily `update-cli` job;
+  it verifies a release, runs a trusted-fixture canary, then swaps the `current` symlink without
+  restarting the worker. Never add a version default, an expected-version assertion, or a
+  `SOLIDCRAFT_CLI_VERSION` variable.
 - SQL belongs in `packages/db`; migrations are append-only (`000N_name.sql`) and need a test.
 - Tests are `*.test.ts` next to the code. DB integration tests are `describe.skip` without
   `DATABASE_URL`.

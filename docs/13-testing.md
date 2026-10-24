@@ -7,14 +7,14 @@ the pipeline's asynchronous state. Tests are weighted accordingly.
 
 | Layer | Tool | Scope | Runs |
 |---|---|---|---|
-| Unit | Vitest | validators, slugs, cursors, ACL function, Markdown sanitizer, URL/SSRF checks, manifest fallbacks | every commit |
-| Integration | Vitest + Postgres + Forgejo (container) | migrations, ingest, render (fixture CLI), search, webhooks, signed URLs, jobs | every PR |
+| Unit | Vitest | validators, slugs, cursors, ACL function, Markdown sanitizer, URL/SSRF checks, manifest fallbacks, CLI updater logic | every commit |
+| Integration | Vitest + Postgres + Forgejo (container) | migrations, ingest, render (fixture CLI), search, webhooks, signed URLs, jobs, CLI updater with a fake release server | every PR |
 | End-to-end | Playwright | public browse/search/download, sign-in, create, publish, visibility, admin | every PR (preview), nightly |
-| Contract | Vitest + pinned CLI | `snapshot`, `eval`, `run --out`, exit codes, output formats | every PR |
+| Contract | Vitest + installed CLI | `snapshot`, `eval`, `run --out`, exit codes, output formats | every PR |
 | Load | k6 | browse/search/publish/download | weekly, before release |
 | Security | Vitest + Playwright + ZAP | authz matrix, SSRF, XSS, CSRF, zip bombs, sandbox | every PR + weekly |
 
-No test requires network access except the pinned provider mocks; Forgejo and GitHub/GitLab are
+No test requires network access except the recorded provider mocks; Forgejo and GitHub/GitLab are
 stubbed at the HTTP boundary with recorded fixtures.
 
 ## Fixtures
@@ -39,7 +39,7 @@ stubbed at the HTTP boundary with recorded fixtures.
 | `unicode-title.solidcraft` | i18n, slug generation |
 
 Expectations live in `fixtures/manifest.json`: SHA-256, size, expected title, body count, render
-success, error code. The CLI version is recorded; updating the CLI requires re-recording.
+success, error code. The CLI version is recorded; output changes require re-recording the fixtures.
 
 ## Unit tests
 
@@ -63,8 +63,9 @@ Each test gets a transaction or a schema-isolated database; migrations run once 
    in CI.
 2. **Ingest**: each fixture through `version.ingest`, asserting version status, metadata, warnings
    and stored bytes.
-3. **Render**: with a fake CLI (shell script) for speed, and a nightly run with the real pinned CLI;
-   assert artifacts, metrics, placeholder and failure codes.
+3. **Render**: with a fake CLI (shell script) for speed, and a nightly run with the real installed CLI;
+   assert artifacts, metrics, placeholder and failure codes. The updater also renders a trusted
+   fixture under nsjail before switching versions; that canary is skipped when nsjail is absent.
 4. **Jobs**: claim with `SKIP LOCKED`, lease expiry, retry/backoff, dead-letter, duplicate delivery.
 5. **Webhooks**: valid/invalid HMAC, replayed delivery, unknown repo, oversized body, ping.
 6. **Search**: trigger updates, ranking order for a known corpus, tag/license filters, cursor
@@ -131,7 +132,7 @@ lint (eslint, prettier, svelte-check)
 typecheck
 unit
 integration (postgres service, forgejo service)
-contract (pinned CLI)
+contract (installed CLI)
 build (web, worker)
 e2e (preview container)
 docker build + scan (trivy)

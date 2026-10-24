@@ -15,7 +15,7 @@ Likelihood/impact: L/M/H. Score is the product; anything ≥ 12 needs an owner a
 | R7 | Search quality is poor; gallery feels empty | M | M | 9 | Keywords from documents, tags guidance, zero-result review, seed content | Zero-result rate > 15% |
 | R8 | Repository bloat from cached containers | L | M | 6 | Lean policy, hook, 25 MB cap, monitor repo sizes | Repo > 800 MB |
 | R9 | Single-maintainer burnout / key person | M | H | 12 | Documented runbooks, one-click deploy, backups, narrow scope | Two consecutive missed weeks |
-| R10 | CLI output/format changes break ingest | M | M | 9 | Pin version, contract tests, golden images, staged upgrades | New CLI release |
+| R10 | CLI output/format changes break ingest | M | M | 9 | Latest stable CLI with checksum, canary, previous-version rollback, contract tests and staged re-render | New CLI release |
 | R11 | Private project leaks through a query or cache | L | H | 12 | `public_projects` view, central authz, tests, signed private media | Any 200 for a non-owner |
 | R12 | Provider API changes or rate limits | M | M | 9 | Adapter boundary, backoff, polling fallback, recorded fixtures | 429/410 spike |
 | R13 | Spam, malware, or illegal content in public projects | M | H | 12 | Invite gate, report queue, quarantine, license requirement, download warning | First report |

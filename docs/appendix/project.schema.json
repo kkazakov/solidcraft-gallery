@@ -89,7 +89,7 @@
       "type": "string",
       "maxLength": 32,
       "pattern": "^[0-9A-Za-z.<>=~^*+ -]+$",
-      "description": "Informational minimum SolidCraft version, for example \">=0.18\"."
+      "description": "Informational minimum SolidCraft version."
     }
   },
   "$defs": {

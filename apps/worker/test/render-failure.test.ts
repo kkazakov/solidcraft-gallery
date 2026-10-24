@@ -24,6 +24,7 @@ describe('describeRenderFailure', () => {
     expect(failure.detail).toContain('format 34');
     expect(failure.detail).toContain('up to 30');
     expect(failure.detail).toContain('design is fine');
+    expect(failure.detail).toContain('updates its renderer');
     expect(failure.detail).not.toContain('/work');
   });
 

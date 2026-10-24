@@ -105,7 +105,7 @@ export const bg: Dictionary = {
   'project.altFront': 'Изглед отпред на {title}',
   'project.noPreview': 'Няма преглед',
   'project.download': 'Изтегляне',
-  'project.openWith': 'Отворете дизайна със SolidCraft 0.18 или по-нова версия.',
+  'project.openWith': 'Отворете дизайна със SolidCraft.',
   'project.sourceRepository': 'Изходно хранилище',
   'project.measurements': 'Размери',
   'project.boundingBox': 'Ограждаща кутия',

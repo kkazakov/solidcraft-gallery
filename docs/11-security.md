@@ -49,7 +49,7 @@ file is hostile, the repository is hostile, and the network is hostile.
 | T17 | Admin account takeover | Full control | No passwords, short sessions, audit, fresh-auth for destructive actions (later) |
 | T18 | Enumeration of private projects | Metadata leak | 404, no timing difference, no search suggestions, no counters |
 | T19 | Malicious image in container | Browser exploit / tracking | Embedded images are never served as site images; covers re-encoded |
-| T20 | Dependency/CLI drift | Unexpected behavior | Pinned CLI, contract tests, checksums |
+| T20 | Dependency/CLI drift | Unexpected behavior | Checksum + canary + previous-version rollback; contract tests |
 
 ## Untrusted design handling
 

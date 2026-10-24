@@ -50,7 +50,8 @@ export function describeRenderFailure(step: string, result: RunResult): RenderFa
       code: 'renderer_outdated',
       detail:
         `This design uses SolidCraft file format ${format}, but the gallery renderer reads formats ` +
-        `up to ${supported}. The design is fine; update the gallery's solidcraft-cli.`,
+        `up to ${supported}. The design is fine; the gallery updates its renderer from the latest ` +
+        `stable SolidCraft release, so retry after it catches up.`,
     };
   }
 

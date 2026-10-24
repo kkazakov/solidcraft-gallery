@@ -10,7 +10,7 @@ controller                                  host (root@192.168.88.222)
 │ .env                    │ ───────► │ /opt/solidcraft-gallery                  │
 │ git checkout            │          │   .env  compose.yaml  compose.tls.yaml   │
 │ docker build web/worker │          │   caddy/Caddyfile  postgres/init.sh      │
-│ docker save | gzip      │ ───────► │   bin/solidcraft-cli  backups/           │
+│ docker save | gzip      │ ───────► │   cli/versions/...  backups/             │
 └─────────────────────────┘          │                                          │
                                      │ caddy :8080 -> web:3000                  │
                                      │        :8081 -> forgejo:3000             │
@@ -36,7 +36,8 @@ Controller (where you run `deploy.sh`):
 - Docker Engine with `docker compose` (the images are built locally and transferred).
 - `ssh` access to `root@192.168.88.222` with a key, or `DEPLOY_SSH_KEY` pointing at one.
 - Python 3.10+ and either `uv` or `pip` to install Ansible.
-- The pinned `solidcraft-cli` binary on disk. It is **not** in git.
+- No CLI binary is needed on the controller. The first deploy adopts the existing host binary, or
+  installs the latest stable release when none exists.
 
 Host:
 
@@ -68,11 +69,17 @@ openssl rand -hex 24      # FORGEJO_DB_PASSWORD
 openssl rand -base64 24   # FORGEJO_ADMIN_PASSWORD (or any strong password)
 ```
 
-Set `SOLIDCRAFT_CLI_SOURCE` to the CLI on the controller, for example:
+The deployment manages the CLI itself. Set the production-only update values in `.env`:
 
 ```dotenv
-SOLIDCRAFT_CLI_SOURCE=/tmp/solidcraft-bin/solidcraft-0.21.0-linux-x86_64/bin/solidcraft-cli
+DEPLOY_ENV=prod
+SOLIDCRAFT_CLI_DIR=/opt/solidcraft-gallery/cli
+SOLIDCRAFT_CLI_AUTO_UPDATE=1
 ```
+
+`SOLIDCRAFT_CLI_AUTO_UPDATE=1` requires `DEPLOY_ENV=prod`; staging and development keep automatic
+updates disabled. The first deploy adopts `/opt/solidcraft-gallery/bin/solidcraft-cli` when it
+exists, otherwise it installs the latest stable release. No CLI version is written anywhere.
 
 Important values:
 
@@ -80,14 +87,18 @@ Important values:
 |---|---|
 | `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_PORT`, `DEPLOY_SSH_KEY` | SSH target |
 | `DEPLOY_DIR` | Remote directory, default `/opt/solidcraft-gallery` |
+| `DEPLOY_ENV` | `dev`, `staging` or `prod`; only `prod` installs the update cron |
 | `WEB_DOMAIN`, `FORGEJO_DOMAIN` | Hostnames without a scheme |
 | `PUBLIC_ORIGIN`, `FORGEJO_PUBLIC_URL` | Absolute public URLs used by OAuth and links |
 | `WEB_PORT`, `FORGEJO_PORT` | Host ports, default `8080`/`8081` |
 | `CADDY_AUTO_HTTPS` | `off` for high ports only, `on` for 80/443 + certificates |
 | `POSTGRES_*`, `FORGEJO_DB_*` | Database credentials; Compose builds the internal URL |
 | `SESSION_SECRET`, `TOKEN_ENC_KEY`, `SIGNED_URL_SECRET` | Application secrets |
-| `SOLIDCRAFT_CLI_PATH` | Remote path of the CLI bind-mounted into the worker |
-| `SOLIDCRAFT_CLI_SOURCE` | Controller path uploaded to `SOLIDCRAFT_CLI_PATH` |
+| `SOLIDCRAFT_CLI_DIR` | Host directory managed by the update job and mounted into the worker |
+| `SOLIDCRAFT_CLI_AUTO_UPDATE` | `1` only on prod; installs the daily cron job |
+| `SOLIDCRAFT_CLI_UPDATE_HOUR` / `_MINUTE` | Daily check time, server-local (default `2`/`17`) |
+| `SOLIDCRAFT_RELEASE_REPO` | Release source; no version pin |
+| `SOLIDCRAFT_RELEASE_TOKEN` | Optional GitHub token for release lookups |
 | `FORGEJO_ADMIN_*` | First-boot Forgejo admin created by the playbook |
 
 `PUBLIC_ORIGIN` and `FORGEJO_PUBLIC_URL` are deliberately `https://` even while Caddy is on HTTP:
@@ -116,15 +127,19 @@ check. It does not connect to the host.
 The deployment runs these steps:
 
 1. Installs Python 3 on the host if needed and checks Docker, Compose and free disk.
-2. Creates `/opt/solidcraft-gallery` with the config, the Caddyfile and the pinned CLI (mode 0755).
+2. Creates `/opt/solidcraft-gallery` with the config, the Caddyfile, the managed CLI directory and
+   the update wrapper.
 3. Builds `gallery-web` and `gallery-worker` on the controller, saves them to a gzip archive and
    uploads it. The previous image tags are kept as `*-previous` before the new images are loaded.
-4. Starts PostgreSQL, waits for its health check, takes a `pg_dump` when the schema already exists,
+4. Adopts the existing CLI into the managed directory, or installs the latest stable release when
+   none exists.
+5. Starts PostgreSQL, waits for its health check, takes a `pg_dump` when the schema already exists,
    then runs `pnpm --filter @gallery/db migrate` in a one-shot web container.
-5. Starts the full stack, reloads Caddy if the Caddyfile changed, and waits for `/healthz`,
+6. Starts the full stack, reloads Caddy if the Caddyfile changed, and waits for `/healthz`,
    `/readyz`, `/`, Forgejo's `/api/healthz` and the domain `Host` headers.
-6. Verifies `solidcraft-cli --version` inside the worker and creates the first Forgejo admin if it
-   does not exist.
+7. Verifies the actual CLI version inside the worker and creates the first Forgejo admin if it does
+   not exist.
+8. Installs the daily CLI update cron only on production when `SOLIDCRAFT_CLI_AUTO_UPDATE=1`.
 
 The default `.env` keeps `FORGEJO_BOOTSTRAP_ADMIN=1`, so the first deploy creates
 `FORGEJO_ADMIN_USERNAME` with `FORGEJO_ADMIN_PASSWORD`. Change the password before the first deploy.
@@ -150,6 +165,8 @@ ssh root@192.168.88.222
 cd /opt/solidcraft-gallery
 docker compose -f compose.yaml --env-file .env ps
 docker compose -f compose.yaml --env-file .env logs -f --tail=100
+docker compose -f compose.yaml --env-file .env exec -T worker /opt/solidcraft/current/solidcraft-cli --version
+./bin/update-cli --check
 ```
 
 Containers should be `running`/`healthy`; `caddy`, `web`, `forgejo` and `postgres` have health
@@ -350,6 +367,16 @@ docker compose -f compose.yaml --env-file .env up -d --no-deps web worker
 This rolls back code only. Schema migrations are not reversible; if the previous code cannot read
 the new schema, restore the pre-deploy dump instead.
 
+The CLI is independent of the images. If a new CLI release renders badly:
+
+```sh
+ssh root@192.168.88.222 /opt/solidcraft-gallery/bin/update-cli --rollback
+```
+
+The worker picks up the previous version for new jobs; no restart is needed. In-flight jobs keep the
+version they resolved when they started. Check `cli/state.json` and `logger` output with tag
+`solidcraft-cli-update` for the last update result.
+
 ### Secret rotation
 
 - Change the value in `.env`, then `./scripts/deploy.sh`; Compose recreates the affected services.
@@ -370,8 +397,10 @@ the `*-previous` tags you need.
 |---|---|
 | `required variable … is missing a value` from Compose | `.env` is incomplete; run `./scripts/deploy.sh --check` |
 | Caddy returns 502 | `web`/`forgejo` unhealthy: `docker compose ps`, then logs |
-| `bind source path does not exist` | `SOLIDCRAFT_CLI_PATH` missing; set `SOLIDCRAFT_CLI_SOURCE` and redeploy |
-| Worker job fails with CLI error | `docker compose exec worker solidcraft-cli --version`; check binary architecture and mode |
+| `bind source path does not exist` | `SOLIDCRAFT_CLI_DIR` is missing or empty; check `.env` and redeploy |
+| Worker job fails with CLI error | `docker compose exec worker /opt/solidcraft/current/solidcraft-cli --version`; check the update job log and `cli/state.json` |
+| CLI update job does not run | Confirm `DEPLOY_ENV=prod` and `SOLIDCRAFT_CLI_AUTO_UPDATE=1`, then check `crontab -l` and syslog tag `solidcraft-cli-update` |
+| CLI update canary fails | The previous CLI stays active; read the syslog line, then run `./bin/update-cli --discard` and investigate the release |
 | Forgejo 500/database errors | The init script only runs on an empty `pgdata`. Passwords must match `FORGEJO_DB_*`; recreate the volume only on a fresh install |
 | `port is already allocated` | Change `WEB_PORT`/`FORGEJO_PORT`, or free the port |
 | Certificate issuance fails | DNS must point at the host, 80/443 must be reachable, `CADDY_AUTO_HTTPS=on`; check Caddy logs |

@@ -36,7 +36,7 @@
 | **PostgreSQL** | Users, repos, projects, versions, artifacts, jobs, reports, audit, FTS | primary data |
 | **Forgejo** | Hosted git: users, repos, HTTP/SSH, webhooks, OAuth2 provider, quotas | repos + its DB |
 | **Artifacts** | Thumbnails, renders, Open Graph images, STEP/STL, downloaded archives | local volume (S3 later) |
-| **`solidcraft-cli`** | Parse, evaluate, render, export; pinned version | binary in worker image |
+| **`solidcraft-cli`** | Parse, evaluate, render, export; managed version | host directory mounted into the worker |
 
 The web tier never runs the CLI. The worker never serves HTTP. Forgejo never holds site sessions.
 Each boundary is deliberate: a compromise of the renderer does not yield sessions or OAuth tokens.
@@ -61,7 +61,7 @@ Each boundary is deliberate: a compromise of the renderer does not yield session
 | Git host | Forgejo | current stable |
 | Reverse proxy | Caddy | 2.x |
 | Sandbox | `nsjail` (preferred) or `bubblewrap` | distro package |
-| CLI | `solidcraft-cli` | pinned per release |
+| CLI | `solidcraft-cli` | managed by the production update job; no app pin |
 
 ## Repository layout (the application)
 

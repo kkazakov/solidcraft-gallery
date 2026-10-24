@@ -98,8 +98,10 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER:?POSTGRES_USER is required}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:?POSTGRES_DB is required}
       WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-2}
       WORKER_PAUSED: ${WORKER_PAUSED:-0}
-      SOLIDCRAFT_CLI: /usr/local/bin/solidcraft-cli
-      SOLIDCRAFT_CLI_VERSION: ${SOLIDCRAFT_CLI_VERSION:-0.21.0}
+      # The directory is mounted read-only and managed by the CLI update job.
+      # The worker resolves `current` once per render job, so a symlink swap
+      # never changes the CLI halfway through a render.
+      SOLIDCRAFT_CLI: /opt/solidcraft/current/solidcraft-cli
       DATA_DIR: /var/lib/gallery
       SANDBOX_MODE: ${SANDBOX_MODE:-nsjail}
       ALLOW_UNSANDBOXED_RENDER: ${ALLOW_UNSANDBOXED_RENDER:-0}
@@ -107,14 +109,15 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
       NODE_ENV: production
     # nsjail creates namespaces and mounts; the CLI inside the jail is still
-    # unprivileged and has no network. The CLI binary is bind-mounted read-only.
+    # unprivileged and has no network. The managed CLI directory is bind-mounted
+    # read-only and the worker resolves `current` once per job.
     cap_add:
       - SYS_ADMIN
     security_opt:
       - seccomp:unconfined
     volumes:
       - gallery_data:/var/lib/gallery
-      - ${SOLIDCRAFT_CLI_PATH:?SOLIDCRAFT_CLI_PATH is required}:/usr/local/bin/solidcraft-cli:ro
+      - ${SOLIDCRAFT_CLI_DIR:-./cli}:/opt/solidcraft:ro
     depends_on:
       postgres:
         condition: service_healthy

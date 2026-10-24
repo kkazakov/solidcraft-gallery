@@ -102,7 +102,7 @@ Details:
   neutral placeholder with “Preview unavailable”.
 - Measurements displayed with units and rounding: `120 × 80 × 32.5 mm`, `41.2 cm³`, `3 bodies`.
 - Download menu: primary `.solidcraft`, secondary STEP/STL; each with size and a short explanation
-  (“Open with SolidCraft 0.18 or newer”).
+  (“Open with SolidCraft”).
 - “Open in SolidCraft” expands to instructions; no custom protocol handler in v1.
 - Description: escaped plain text; absolute `http://` and `https://` URLs become links that open in
   a new tab. No raw HTML is rendered.

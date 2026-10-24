@@ -6,7 +6,7 @@ import { isLean, leanDesign, readDesign } from '../src/index.js';
 const fixture = fileURLToPath(new URL('../../../fixtures/real/box.solidcraft', import.meta.url));
 
 describe('real SolidCraft fixture', () => {
-  it('reads a container written by solidcraft-cli 0.19.0', async () => {
+  it('reads a real SolidCraft container', async () => {
     const bytes = new Uint8Array(await readFile(fixture));
     const read = readDesign(bytes);
     expect(read.kind).toBe('container');
