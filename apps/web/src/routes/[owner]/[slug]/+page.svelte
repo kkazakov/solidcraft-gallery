@@ -1,10 +1,12 @@
 <script lang="ts">
+  import { linkifyDescription } from '../../../lib/description-links';
   import { getI18n } from '../../../lib/i18n/context';
 
   let { data } = $props();
   const { t, enumLabel, formatDate, formatNumber } = getI18n();
 
   const numberOptions: Intl.NumberFormatOptions = { maximumFractionDigits: 1 };
+  const descriptionSegments = $derived(data.project.description ? linkifyDescription(data.project.description) : []);
 </script>
 
 <svelte:head>
@@ -40,8 +42,14 @@
 
   <header class="project-head">
     <h1>{data.project.title}</h1>
-    {#if data.project.description}
-      <p class="project-summary">{data.project.description}</p>
+    {#if descriptionSegments.length > 0}
+      <p class="project-summary">
+        {#each descriptionSegments as segment, index (index)}
+          {#if segment.type === 'link'}
+            <a class="wrap-anywhere" href={segment.href} target="_blank" rel="noopener noreferrer">{segment.text}</a>
+          {:else}{segment.text}{/if}
+        {/each}
+      </p>
     {/if}
   </header>
 
