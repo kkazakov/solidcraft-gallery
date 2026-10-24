@@ -78,6 +78,16 @@ and `design` may import `core`; no package imports an app.
 ### Git workflow
 
 - `main` is integration only. **Never commit directly to `main`.**
+- Before starting a feature or fix, check whether another agent is already running or has work in
+  flight in this checkout: `git status --short --branch`, `git worktree list`, and running
+  `pnpm dev:*`, `deploy.sh` or test processes. Uncommitted changes you did not make, another worktree
+  or a busy dev server mean another agent is active.
+- If one is, **do not share its working tree**. Fetch first (`git fetch origin`), then create a
+  separate work folder with `git worktree add ../solidcraft-<task> -b <type>/<short-name> main` and
+  do all work there. A sibling folder outside the primary checkout is ideal; remove the worktree once
+  its branch is pushed (`git worktree remove ../solidcraft-<task>`).
+- Never `git stash`, `reset`, `clean` or switch branches in a tree you do not own, and ask the user
+  if it is unclear whether a tree is in use.
 - Start every change from `main` on a new branch: `feat/…`, `fix/…`, `docs/…` or `chore/…`.
 - Commit and push branches to `origin` (the public repository) freely.
 - **Never open or merge a pull request into `main` unless the user explicitly asks for it.** No
