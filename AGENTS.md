@@ -120,7 +120,8 @@ and `design` may import `core`; no package imports an app.
    package and `DATABASE_URL=… pnpm --filter @gallery/db test` when SQL changed.
 3. `pnpm check` and `pnpm lint` pass.
 4. Visual changes refreshed `docs/screenshots/` and their README embeds.
-5. The local app is running and the clickable URL is in the response (see “Local run and hand-off”).
+5. For visual changes, the local app is running and the clickable URL is in the response (see
+   “Local run and hand-off”).
 6. The branch is pushed and the board item is `Done` with the verification comment.
 
 ### Code
@@ -185,9 +186,13 @@ if (!can(project, viewer, 'view')) throw new AppError('not_found', 'No such proj
 
 ### Local run and hand-off
 
-- After every implemented feature or bug-fix, leave the local app **running** and end the response
-  with the URL the user can click. Do not wait to be asked, and never report "done" against a server
-  that is stopped, stale, or returning errors.
+This section applies only when something is visible in the browser: pages, layout, styling, copy,
+images, theme, admin screens or other UI. For backend, CLI, configuration or documentation changes,
+do not append a browser URL.
+
+- After a visual change, leave the local app **running** and end the response with exactly one URL
+  the user can click. Do not wait to be asked, and never report "done" against a server that is
+  stopped, stale, or returning errors.
 - Dev server: `pnpm dev:web` → <http://localhost:5173/>. If it is already up
   (`curl -fsS -o /dev/null -w '%{http_code}\n' http://localhost:5173/` prints `200`), let Vite HMR
   pick the change up. Restart it only when the change requires one: `package.json`/lockfile,
@@ -198,7 +203,7 @@ if (!can(project, viewer, 'view')) throw new AppError('not_found', 'No such proj
 - Verify before quoting: the same `curl` against the chosen URL must print `200`. If it does not,
   fix the server and report that, rather than a dead link.
 - Print exactly one working URL on its own final line, e.g. `Open: http://localhost:5173/`, so it is
-  clickable in chat.
+  clickable in chat. Only do this for visual changes.
 - For admin UI work, run with `DEV_LOGIN=1` and sign in at `/auth/dev?username=<admin>`;
   `ADMIN_USERNAMES` promotes that account on sign-in. The admin area is `/admin`.
 
@@ -216,8 +221,9 @@ if (!can(project, viewer, 'view')) throw new AppError('not_found', 'No such proj
   fails.
 - NEVER report a successful task without updating project `3`; a task is only complete when the board
   says `Done`.
-- NEVER hand back a feature or bug-fix without a running local server and its clickable URL; if the
-  server cannot start, say so explicitly instead of reporting success.
+- NEVER hand back a visual change without a running local server and its clickable URL; if the
+  server cannot start, say so explicitly instead of reporting success. Non-visual changes do not
+  require a browser URL.
 - REQUIRE HUMAN CONFIRMATION for: rotating secrets, changing the GitHub repository visibility,
   deleting data, major dependency upgrades, and editing `.github/workflows`.
 
