@@ -10,11 +10,14 @@ SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 DEPLOY_DIR=${DEPLOY_DIR:-$(dirname "$SCRIPT_DIR")}
 ENV_FILE=${ENV_FILE:-$DEPLOY_DIR/.env}
 LOG_TAG=solidcraft-cli-update
+ECHO_OUTPUT=0
+CAPTURING=0
 
 log() {
   if command -v logger >/dev/null 2>&1; then
-    logger -t "$LOG_TAG" -- "$*" 2>/dev/null || printf '%s\n' "$*" >&2
-  else
+    logger -t "$LOG_TAG" -- "$*" 2>/dev/null || true
+  fi
+  if [ "$ECHO_OUTPUT" = "1" ] && [ "$CAPTURING" = "0" ]; then
     printf '%s\n' "$*" >&2
   fi
 }
@@ -103,8 +106,13 @@ capture() {
   output=$("$@" 2>&1)
   status=$?
   set -e
+  CAPTURING=1
   if [ -n "$output" ]; then
     log "$label: $output"
+  fi
+  CAPTURING=0
+  if [ "$ECHO_OUTPUT" = "1" ] && [ -n "$output" ]; then
+    printf '%s\n' "$output"
   fi
   return "$status"
 }
@@ -153,8 +161,10 @@ fi
 command=$1
 shift
 
+ECHO_OUTPUT=1
 case "$command" in
   --scheduled)
+    ECHO_OUTPUT=0
     if [ "$DEPLOY_ENV" != "prod" ] || [ "$AUTO_UPDATE" != "1" ]; then
       log "automatic solidcraft-cli updates are disabled (DEPLOY_ENV=$DEPLOY_ENV, AUTO_UPDATE=$AUTO_UPDATE)"
       exit 0
