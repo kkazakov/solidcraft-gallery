@@ -46,9 +46,14 @@
     caddy_auto_https: "{{ lookup('env', 'CADDY_AUTO_HTTPS') | default('off', true) | lower }}"
     web_image: "{{ lookup('env', 'WEB_IMAGE') | default('gallery-web:local', true) }}"
     worker_image: "{{ lookup('env', 'WORKER_IMAGE') | default('gallery-worker:local', true) }}"
-    solidcraft_cli_source: "{{ lookup('env', 'SOLIDCRAFT_CLI_SOURCE') | default('', true) }}"
-    solidcraft_cli_path: "{{ lookup('env', 'SOLIDCRAFT_CLI_PATH') | default(deploy_dir ~ '/bin/solidcraft-cli', true) }}"
-    solidcraft_cli_version: "{{ lookup('env', 'SOLIDCRAFT_CLI_VERSION') | default('0.21.0', true) }}"
+    deploy_env: "{{ lookup('env', 'DEPLOY_ENV') | default('dev', true) }}"
+    solidcraft_cli_dir: "{{ lookup('env', 'SOLIDCRAFT_CLI_DIR') | default(deploy_dir ~ '/cli', true) }}"
+    solidcraft_cli_auto_update: "{{ (lookup('env', 'SOLIDCRAFT_CLI_AUTO_UPDATE') | default('0', true)) == '1' }}"
+    solidcraft_cli_update_hour: "{{ lookup('env', 'SOLIDCRAFT_CLI_UPDATE_HOUR') | default('2', true) }}"
+    solidcraft_cli_update_minute: "{{ lookup('env', 'SOLIDCRAFT_CLI_UPDATE_MINUTE') | default('17', true) }}"
+    solidcraft_release_repo: "{{ lookup('env', 'SOLIDCRAFT_RELEASE_REPO') | default('tangency-labs/solidcraft', true) }}"
+    solidcraft_cli_keep_versions: "{{ lookup('env', 'SOLIDCRAFT_CLI_KEEP_VERSIONS') | default('5', true) }}"
+    solidcraft_cli_prune_hours: "{{ lookup('env', 'SOLIDCRAFT_CLI_PRUNE_MIN_AGE_HOURS') | default('168', true) }}"
     keep_backups: "{{ lookup('env', 'DEPLOY_KEEP_BACKUPS') | default('5', true) | int }}"
     backup_before_deploy: "{{ (lookup('env', 'DEPLOY_BACKUP_BEFORE_DEPLOY') | default('1', true)) == '1' }}"
     forgejo_bootstrap_admin: "{{ (lookup('env', 'FORGEJO_BOOTSTRAP_ADMIN') | default('0', true)) == '1' }}"
@@ -107,33 +112,15 @@
           - caddy_auto_https in ['on', 'off']
           - web_domain | length > 0
           - forgejo_domain | length > 0
+          - deploy_env in ['dev', 'staging', 'prod']
+          - solidcraft_cli_dir is match('^/')
+          - solidcraft_cli_dir is match('^' ~ (deploy_dir | regex_escape) ~ '/')
+          - solidcraft_cli_update_hour is match('^([01]?[0-9]|2[0-3])$')
+          - solidcraft_cli_update_minute is match('^([0-5]?[0-9])$')
+          - solidcraft_cli_keep_versions is match('^[0-9]+$')
+          - solidcraft_cli_prune_hours is match('^[0-9]+$')
+          - not (solidcraft_cli_auto_update | bool) or deploy_env == 'prod'
         fail_msg: 'Refusing to deploy: check .env (see .env.example) and run scripts/deploy.sh.'
-        quiet: true
-
-    - name: Check the pinned CLI on the controller
-      ansible.builtin.stat:
-        path: '{{ solidcraft_cli_source }}'
-      delegate_to: localhost
-      register: gallery_cli_source_stat
-      when: solidcraft_cli_source | length > 0
-
-    - name: Validate the pinned CLI source
-      ansible.builtin.assert:
-        that:
-          - gallery_cli_source_stat is not defined or gallery_cli_source_stat.stat.isreg
-        fail_msg: 'SOLIDCRAFT_CLI_SOURCE must point at a regular file.'
-        quiet: true
-
-    - name: Check for an already installed CLI on the host
-      ansible.builtin.stat:
-        path: '{{ solidcraft_cli_path }}'
-      register: gallery_cli_remote_stat
-
-    - name: Require a usable solidcraft-cli
-      ansible.builtin.assert:
-        that:
-          - (gallery_cli_source_stat is defined and gallery_cli_source_stat.stat.isreg) or gallery_cli_remote_stat.stat.exists
-        fail_msg: 'No solidcraft-cli found. Set SOLIDCRAFT_CLI_SOURCE in .env for the first deploy.'
         quiet: true
 
     - name: Check free disk space

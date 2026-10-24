@@ -62,14 +62,18 @@ DEPLOY_ALLOW_DIRTY="${DEPLOY_ALLOW_DIRTY:-0}"
 WEB_PORT="${WEB_PORT:-8080}"
 FORGEJO_PORT="${FORGEJO_PORT:-8081}"
 CADDY_AUTO_HTTPS="${CADDY_AUTO_HTTPS:-off}"
-SOLIDCRAFT_CLI_PATH="${SOLIDCRAFT_CLI_PATH:-$DEPLOY_DIR/bin/solidcraft-cli}"
-SOLIDCRAFT_CLI_SOURCE="${SOLIDCRAFT_CLI_SOURCE:-}"
+DEPLOY_ENV="${DEPLOY_ENV:-dev}"
+SOLIDCRAFT_CLI_DIR="${SOLIDCRAFT_CLI_DIR:-$DEPLOY_DIR/cli}"
+SOLIDCRAFT_CLI_AUTO_UPDATE="${SOLIDCRAFT_CLI_AUTO_UPDATE:-0}"
+SOLIDCRAFT_CLI_UPDATE_HOUR="${SOLIDCRAFT_CLI_UPDATE_HOUR:-2}"
+SOLIDCRAFT_CLI_UPDATE_MINUTE="${SOLIDCRAFT_CLI_UPDATE_MINUTE:-17}"
 
 export DEPLOY_REPO_ROOT="$ROOT_DIR"
 export DEPLOY_ENV_FILE="$ENV_FILE"
 export DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_PORT DEPLOY_DIR DEPLOY_ALLOW_DIRTY
 export WEB_PORT FORGEJO_PORT CADDY_AUTO_HTTPS
-export SOLIDCRAFT_CLI_PATH SOLIDCRAFT_CLI_SOURCE
+export DEPLOY_ENV SOLIDCRAFT_CLI_DIR SOLIDCRAFT_CLI_AUTO_UPDATE
+export SOLIDCRAFT_CLI_UPDATE_HOUR SOLIDCRAFT_CLI_UPDATE_MINUTE
 
 require_value() {
   local name="$1"
@@ -91,14 +95,19 @@ for name in SESSION_SECRET TOKEN_ENC_KEY SIGNED_URL_SECRET POSTGRES_PASSWORD FOR
 done
 
 [[ "$CADDY_AUTO_HTTPS" == "on" || "$CADDY_AUTO_HTTPS" == "off" ]] || fail "CADDY_AUTO_HTTPS must be on or off"
+[[ "$DEPLOY_ENV" == "dev" || "$DEPLOY_ENV" == "staging" || "$DEPLOY_ENV" == "prod" ]] ||
+  fail "DEPLOY_ENV must be dev, staging or prod"
 [[ "$WEB_PORT" =~ ^[0-9]+$ ]] || fail "WEB_PORT must be numeric"
 [[ "$FORGEJO_PORT" =~ ^[0-9]+$ ]] || fail "FORGEJO_PORT must be numeric"
+[[ "$SOLIDCRAFT_CLI_UPDATE_HOUR" =~ ^([01]?[0-9]|2[0-3])$ ]] || fail "SOLIDCRAFT_CLI_UPDATE_HOUR must be 0-23"
+[[ "$SOLIDCRAFT_CLI_UPDATE_MINUTE" =~ ^([0-5]?[0-9])$ ]] || fail "SOLIDCRAFT_CLI_UPDATE_MINUTE must be 0-59"
+[[ "$SOLIDCRAFT_CLI_AUTO_UPDATE" == "0" || "$SOLIDCRAFT_CLI_AUTO_UPDATE" == "1" ]] ||
+  fail "SOLIDCRAFT_CLI_AUTO_UPDATE must be 0 or 1"
 [[ "$DEPLOY_DIR" == /* ]] || fail "DEPLOY_DIR must be absolute"
-[[ "$SOLIDCRAFT_CLI_PATH" == /* ]] || fail "SOLIDCRAFT_CLI_PATH must be absolute"
-[[ "$SOLIDCRAFT_CLI_PATH" == "$DEPLOY_DIR"/* ]] || fail "SOLIDCRAFT_CLI_PATH must live under DEPLOY_DIR"
-
-if [[ -n "$SOLIDCRAFT_CLI_SOURCE" && ! -f "$SOLIDCRAFT_CLI_SOURCE" ]]; then
-  fail "SOLIDCRAFT_CLI_SOURCE does not exist: $SOLIDCRAFT_CLI_SOURCE"
+[[ "$SOLIDCRAFT_CLI_DIR" == /* ]] || fail "SOLIDCRAFT_CLI_DIR must be absolute"
+[[ "$SOLIDCRAFT_CLI_DIR" == "$DEPLOY_DIR"/* ]] || fail "SOLIDCRAFT_CLI_DIR must live under DEPLOY_DIR"
+if [[ "$SOLIDCRAFT_CLI_AUTO_UPDATE" == "1" && "$DEPLOY_ENV" != "prod" ]]; then
+  fail "SOLIDCRAFT_CLI_AUTO_UPDATE=1 is only allowed with DEPLOY_ENV=prod"
 fi
 if [[ -n "$DEPLOY_SSH_KEY" && ! -f "$DEPLOY_SSH_KEY" ]]; then
   fail "DEPLOY_SSH_KEY does not exist: $DEPLOY_SSH_KEY"
@@ -116,6 +125,7 @@ if [[ "$CADDY_AUTO_HTTPS" == "on" ]]; then
 fi
 
 sh -n "$ROOT_DIR/infra/postgres/init.sh" || fail "infra/postgres/init.sh has a syntax error"
+sh -n "$ROOT_DIR/infra/cli/update-cli.sh" || fail "infra/cli/update-cli.sh has a syntax error"
 
 if command -v docker >/dev/null 2>&1; then
   docker compose "${compose_args[@]}" --env-file "$ENV_FILE" config --quiet ||

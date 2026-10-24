@@ -108,7 +108,7 @@ export const es: Dictionary = {
   'project.altFront': 'Vista frontal de {title}',
   'project.noPreview': 'Sin vista previa',
   'project.download': 'Descargar',
-  'project.openWith': 'Abre el diseño con SolidCraft 0.18 o más reciente.',
+  'project.openWith': 'Abre el diseño con SolidCraft.',
   'project.sourceRepository': 'Repositorio fuente',
   'project.measurements': 'Medidas',
   'project.boundingBox': 'Caja envolvente',

@@ -107,7 +107,7 @@ export const en = {
   'project.altFront': 'Front view of {title}',
   'project.noPreview': 'No preview',
   'project.download': 'Download',
-  'project.openWith': 'Open the design with SolidCraft 0.18 or newer.',
+  'project.openWith': 'Open the design with SolidCraft.',
   'project.sourceRepository': 'Source repository',
   'project.measurements': 'Measurements',
   'project.boundingBox': 'Bounding box',

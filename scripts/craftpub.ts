@@ -7,7 +7,7 @@
  *   craftpub inspect <file> [--json]      print what the site will index
  *
  * Geometry evaluation and rendering are deliberately not here: they belong to
- * the pinned solidcraft-cli in the worker sandbox.
+ * the installed solidcraft-cli in the worker sandbox.
  */
 import { readFile, writeFile } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';

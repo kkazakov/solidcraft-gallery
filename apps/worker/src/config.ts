@@ -12,7 +12,6 @@ export interface WorkerConfig {
   artifactDir: string;
   repoDir: string;
   cli: string;
-  cliVersion: string;
   sandboxMode: SandboxMode;
   allowUnsandboxed: boolean;
   timeoutSeconds: number;
@@ -43,8 +42,7 @@ export function loadConfig(env: Env = process.env): WorkerConfig {
     dataDir,
     artifactDir: env.ARTIFACT_DIR ?? join(dataDir, 'artifacts'),
     repoDir: env.REPO_DIR ?? join(dataDir, 'repos'),
-    cli: env.SOLIDCRAFT_CLI ?? '/usr/local/bin/solidcraft-cli',
-    cliVersion: env.SOLIDCRAFT_CLI_VERSION ?? 'unknown',
+    cli: env.SOLIDCRAFT_CLI ?? '/opt/solidcraft/current/solidcraft-cli',
     sandboxMode,
     allowUnsandboxed: env.ALLOW_UNSANDBOXED_RENDER === '1',
     timeoutSeconds: positiveInt(env.RENDER_TIMEOUT_SECONDS, 60),

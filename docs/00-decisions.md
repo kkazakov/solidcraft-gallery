@@ -348,3 +348,32 @@ are unaffected. Audit entries are still not written.
 
 **Rejected.** Read-only lists (the operator asked for delete and create); soft-revoke only in the UI
 (the operator asked for delete); storing raw codes (hashes remain the only stored form).
+
+---
+
+## D18 — Production tracks the latest stable `solidcraft-cli`
+
+**Context.** D0 described the service as consuming a pinned CLI, and every CLI upgrade required a
+code change, a full image rebuild and a deploy. A design saved by a newer SolidCraft then failed with
+`renderer_outdated` until an operator bumped the pin. The operator asked for a production-only job
+that updates only the CLI and for no hardcoded SolidCraft version anywhere.
+
+**Decision.** The CLI is not baked into the images and has no version constant. It lives in a managed
+directory with `current` and `previous` symlinks; the worker mounts that directory read-only and
+resolves `current` once per render job. A daily, production-only cron job fetches the latest stable
+GitHub release, verifies the asset digest and `SHA256SUMS.txt`, checks `--version` and the command
+table, renders a trusted fixture under nsjail in a separate network-less container, and only then
+swaps `current`. A failed check or canary leaves the previous CLI active. `update-cli --rollback`
+swaps back without restarting the worker. Automatic updates require `DEPLOY_ENV=prod` and
+`SOLIDCRAFT_CLI_AUTO_UPDATE=1`; staging and development have no schedule. This supersedes D0's
+"pinned `solidcraft-cli`" clause and the pinning language in the deployment docs.
+
+**Consequences.** App deploys and CLI releases are decoupled; format skew is corrected on the next
+daily run; in-flight jobs keep the binary they started with. The updater trusts GitHub release
+integrity plus the canary, not a version allowlist. A compromised upstream release is the remaining
+supply-chain risk, mitigated by the checksum, canary, previous-version retention and rollback.
+
+**Rejected.** Keeping the pin (the original problem); auto-updating on every environment (staging and
+development need reproducible binaries); rebuilding the worker image for each CLI release (slow and
+unnecessary); installing an unverified release without a canary (a bad release would reach users
+before anyone noticed).

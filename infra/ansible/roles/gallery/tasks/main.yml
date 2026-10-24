@@ -8,10 +8,13 @@
     mode: '0755'
   loop:
     - '{{ deploy_dir }}'
+    - '{{ deploy_dir }}/bin'
     - '{{ deploy_dir }}/caddy'
     - '{{ deploy_dir }}/postgres'
     - '{{ deploy_dir }}/backups'
-    - '{{ solidcraft_cli_path | dirname }}'
+    - '{{ solidcraft_cli_dir }}'
+    - '{{ solidcraft_cli_dir }}/versions'
+    - '{{ solidcraft_cli_dir }}/smoke'
 
 - name: Install the deployment environment file
   ansible.builtin.copy:
@@ -70,14 +73,21 @@
     mode: '0755'
   register: gallery_pg_init
 
-- name: Upload the pinned solidcraft-cli
+- name: Install the CLI update job
   ansible.builtin.copy:
-    src: '{{ solidcraft_cli_source }}'
-    dest: '{{ solidcraft_cli_path }}'
+    src: '{{ repo_root }}/infra/cli/update-cli.sh'
+    dest: '{{ deploy_dir }}/bin/update-cli'
     owner: root
     group: root
     mode: '0755'
-  when: solidcraft_cli_source | length > 0
+
+- name: Install the trusted canary fixture
+  ansible.builtin.copy:
+    src: '{{ repo_root }}/fixtures/real/box.lean.solidcraft'
+    dest: '{{ solidcraft_cli_dir }}/smoke/box.solidcraft'
+    owner: root
+    group: root
+    mode: '0644'
 
 - name: Build the web and worker images on the controller
   ansible.builtin.command:
@@ -186,6 +196,37 @@
   register: gallery_images_load
   changed_when: true
   when: gallery_images_changed | bool
+
+- name: Check whether the managed CLI is already installed
+  ansible.builtin.stat:
+    path: '{{ solidcraft_cli_dir }}/current/solidcraft-cli'
+  register: gallery_cli_current
+
+- name: Check for the legacy CLI binary
+  ansible.builtin.stat:
+    path: '{{ deploy_dir }}/bin/solidcraft-cli'
+  register: gallery_cli_legacy
+
+- name: Adopt the existing CLI on the first managed deploy
+  ansible.builtin.command:
+    argv:
+      - '{{ deploy_dir }}/bin/update-cli'
+      - --adopt
+      - '{{ deploy_dir }}/bin/solidcraft-cli'
+  when:
+    - not gallery_cli_current.stat.exists
+    - gallery_cli_legacy.stat.isreg
+  changed_when: true
+
+- name: Install the latest CLI when no managed CLI or legacy binary exists
+  ansible.builtin.command:
+    argv:
+      - '{{ deploy_dir }}/bin/update-cli'
+      - --bootstrap
+  when:
+    - not gallery_cli_current.stat.exists
+    - not gallery_cli_legacy.stat.isreg
+  changed_when: true
 
 - name: Remove the transferred image archive
   ansible.builtin.file:
@@ -355,18 +396,19 @@
   retries: 15
   delay: 2
 
-- name: Verify the pinned CLI inside the worker
+- name: Verify the managed CLI inside the worker
   ansible.builtin.command:
-    argv: "{{ compose_prefix + ['exec', '-T', 'worker', 'solidcraft-cli', '--version'] }}"
+    argv: "{{ compose_prefix + ['exec', '-T', 'worker', '/opt/solidcraft/current/solidcraft-cli', '--version'] }}"
     chdir: '{{ deploy_dir }}'
   register: gallery_cli_verify
   changed_when: false
 
-- name: Require the expected CLI version
+- name: Require a runnable CLI
   ansible.builtin.assert:
     that:
-      - solidcraft_cli_version in gallery_cli_verify.stdout
-    fail_msg: 'The mounted solidcraft-cli does not report {{ solidcraft_cli_version }}.'
+      - gallery_cli_verify.rc == 0
+      - gallery_cli_verify.stdout is search('solidcraft-cli\s+\d+\.\d+\.\d+')
+    fail_msg: 'The managed solidcraft-cli is not runnable inside the worker.'
     quiet: true
 
 - name: List Forgejo users
@@ -389,6 +431,22 @@
   no_log: true
   changed_when: true
 
+- name: Ensure cron is running for CLI updates
+  ansible.builtin.service:
+    name: "{{ 'crond' if ansible_facts.os_family == 'Alpine' else 'cron' }}"
+    state: started
+    enabled: true
+  when: deploy_env == 'prod' and solidcraft_cli_auto_update | bool
+
+- name: Install or remove the production CLI update schedule
+  ansible.builtin.cron:
+    name: solidcraft-cli-update
+    user: root
+    minute: '{{ solidcraft_cli_update_minute }}'
+    hour: '{{ solidcraft_cli_update_hour }}'
+    job: '{{ deploy_dir }}/bin/update-cli --scheduled'
+    state: "{{ 'present' if (deploy_env == 'prod' and solidcraft_cli_auto_update | bool) else 'absent' }}"
+
 - name: Show the running services
   ansible.builtin.command:
     argv: "{{ compose_prefix + ['ps'] }}"
@@ -403,4 +461,6 @@
       - 'Forgejo: http://{{ deploy_host }}:{{ forgejo_port }} ({{ forgejo_domain }})'
       - 'TLS:     {{ "enabled on 80/443" if caddy_auto_https == "on" else "off (high ports only)" }}'
       - 'Images:  {{ web_image }}, {{ worker_image }}'
+      - 'CLI:     {{ gallery_cli_verify.stdout | trim }}'
+      - 'Update:  {{ "daily at " ~ solidcraft_cli_update_hour ~ ":" ~ solidcraft_cli_update_minute ~ " (prod)" if (deploy_env == "prod" and solidcraft_cli_auto_update | bool) else "automatic updates disabled" }}'
       - '{{ gallery_ps.stdout_lines }}'

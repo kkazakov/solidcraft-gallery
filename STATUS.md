@@ -29,7 +29,7 @@ This file records what actually runs, not what is planned. The plan remains in
 
 ## The vertical slice, end to end
 
-Verified with a real `solidcraft-cli 0.21.0` and `fixtures/real/box.solidcraft`:
+Verified with the installed `solidcraft-cli` and `fixtures/real/box.solidcraft`:
 
 1. `GET /auth/dev?username=alice` creates a hashed session; `/api/v1/me` returns `alice`.
 2. `POST /api/v1/projects` creates a real git repository at `DATA_DIR/repos/alice/e2e-box`.
@@ -97,7 +97,7 @@ A real Forgejo stack is running locally via Compose (not a mock):
   the hosted `project.json` is committed in the same operation. Slugs are derived from the title at
   creation and repository names remain immutable.
 - The create and edit pages publish the first/new version with the metadata. A ready version can be
-  pinned as active; the public page and downloads follow it. A public project may be created while
+  set as active; the public page and downloads follow it. A public project may be created while
   its first render is pending, but stays out of listings and 404s for visitors until that render is
   ready.
 - Visibility saves now update the project row and `repos.is_private` in one transaction, roll the
@@ -126,7 +126,7 @@ The single-host stack is deployed with Ansible to `root@192.168.88.222` (see
   `https://solidcraft.drun.net/auth/callback/forgejo`); `FORGEJO_CLIENT_ID`/`_SECRET` are set and the
   web container was redeployed. The first OAuth consent was completed for `gallery-admin`; the user
   row is `admin` with a `forgejo` identity.
-- `solidcraft-cli 0.21.0` runs inside the worker; the Forgejo admin `gallery-admin` exists and is
+- `solidcraft-cli` runs inside the worker; the Forgejo admin `gallery-admin` exists and is
   active; pre-migration `pg_dump` files land in `/opt/solidcraft-gallery/backups`.
 - A second deploy skips the image transfer when the local and remote image IDs match, runs the
   backup and migration steps, and leaves the data volumes intact.
@@ -170,8 +170,8 @@ DATABASE_URL=postgres://gallery:gallery@localhost:5432/gallery pnpm db:migrate
 DATABASE_URL=postgres://gallery:gallery@localhost:5432/gallery pnpm --filter @gallery/db test
 ```
 
-Compose note: the worker image builds nsjail; mount the CLI at
-`/usr/local/bin/solidcraft-cli` and keep `SANDBOX_MODE=nsjail`. For a quick local flow without nsjail,
+Compose note: the worker image builds nsjail; mount the managed CLI directory at
+`/opt/solidcraft` and keep `SANDBOX_MODE=nsjail`. For a quick local flow without nsjail,
 use `SANDBOX_MODE=direct ALLOW_UNSANDBOXED_RENDER=1` and `pnpm dev:worker`.
 
 Local end-to-end (needs a `solidcraft-cli` binary):
@@ -192,8 +192,9 @@ design, wait for the preview, and use the visibility form.
 - Fixtures include one real design (`fixtures/real/box.solidcraft`); the synthetic ones remain for
   malformed-input tests.
 - `SANDBOX_MODE=nsjail` is the compose default. The worker image contains nsjail 3.4 but not the
-  `solidcraft-cli` binary; mount the pinned CLI at `/usr/local/bin/solidcraft-cli`. The direct renderer
-  remains available only for development (`SANDBOX_MODE=direct`, explicit flag).
+  `solidcraft-cli` binary; the managed CLI directory is mounted at `/opt/solidcraft` and the worker
+  uses `/opt/solidcraft/current/solidcraft-cli`. The direct renderer remains available only for
+  development (`SANDBOX_MODE=direct`, explicit flag).
 - nsjail needs Docker `SYS_ADMIN` and `seccomp=unconfined`; the jailed process itself has no
   capabilities, no network and a read-only root. A dedicated rootfs and seccomp profile are next.
 - Forgejo is pinned to major tag `9`; confirm the current stable tag before the first deployment.

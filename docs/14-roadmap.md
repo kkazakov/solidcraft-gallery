@@ -3,7 +3,7 @@
 ## Assumptions
 
 - One full-stack developer, full time; part-time design and operations review.
-- SolidCraft desktop and `solidcraft-cli` are available and stable enough to pin.
+- SolidCraft desktop and `solidcraft-cli` are available and stable enough to track automatically.
 - Designs are under 5 MB; no LFS, no object storage, no live editing.
 - The beta is invite-only and English-only.
 
@@ -156,7 +156,7 @@ Tasks:
 - Monitoring, alerts, dashboards, status page, request ids, log redaction.
 - Load test: browse/search/download/publish; fix the top three bottlenecks.
 - Runbooks (R1–R7) rehearsed by someone who did not write them.
-- Dependency audit, image scan, pinned CLI checksum.
+- Dependency audit, image scan, CLI release checksum and canary.
 
 Acceptance:
 

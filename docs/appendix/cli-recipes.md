@@ -1,6 +1,6 @@
 # Appendix C — `solidcraft-cli` recipes
 
-Every command below uses the pinned CLI version. Check it first:
+Every command below uses the installed CLI. Check it first:
 
 ```sh
 solidcraft-cli --version
@@ -207,13 +207,20 @@ fallback if `nsjail` is unavailable.
 | Blank images | sketch-only design, no bodies | `eval` body count; use placeholder |
 | `eval` non-zero | invalid timeline, missing plugin feature | open in the desktop app, inspect errors |
 
-## Version pinning
+## Version tracking
 
-Record the CLI version in the deployment (`SOLIDCRAFT_CLI_VERSION`) and in every fixture's expected
-output. Upgrade procedure:
+The managed CLI directory records the current and previous versions in `state.json`; ask the binary
+directly with `solidcraft-cli --version`. There is no version constant in the application.
 
-1. Build a worker image with the new CLI.
-2. Run the contract and golden-image suites.
-3. Bump `render-vN` if output changed.
+Production updates the CLI daily from the latest stable release. The job verifies the release
+checksum, checks `--version` and `commands`, renders a trusted fixture under nsjail, and only then
+swaps the `current` symlink. `update-cli --rollback` restores the previous version without a worker
+restart.
+
+When a new release changes output:
+
+1. Let the production job install it, or run `update-cli --stage` manually on a host that is not scheduled.
+2. Run the contract and golden-image suites against that binary.
+3. Bump `render-vN` if the artifact schema changed.
 4. Re-render a sample of projects; compare visually.
-5. Roll out; keep the previous image for one week.
+5. If the release is bad, run `update-cli --rollback`, requeue failed versions and report upstream.
