@@ -48,7 +48,7 @@
     worker_image: "{{ lookup('env', 'WORKER_IMAGE') | default('gallery-worker:local', true) }}"
     solidcraft_cli_source: "{{ lookup('env', 'SOLIDCRAFT_CLI_SOURCE') | default('', true) }}"
     solidcraft_cli_path: "{{ lookup('env', 'SOLIDCRAFT_CLI_PATH') | default(deploy_dir ~ '/bin/solidcraft-cli', true) }}"
-    solidcraft_cli_version: "{{ lookup('env', 'SOLIDCRAFT_CLI_VERSION') | default('0.19.0', true) }}"
+    solidcraft_cli_version: "{{ lookup('env', 'SOLIDCRAFT_CLI_VERSION') | default('0.21.0', true) }}"
     keep_backups: "{{ lookup('env', 'DEPLOY_KEEP_BACKUPS') | default('5', true) | int }}"
     backup_before_deploy: "{{ (lookup('env', 'DEPLOY_BACKUP_BEFORE_DEPLOY') | default('1', true)) == '1' }}"
     forgejo_bootstrap_admin: "{{ (lookup('env', 'FORGEJO_BOOTSTRAP_ADMIN') | default('0', true)) == '1' }}"
