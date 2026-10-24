@@ -1,6 +1,6 @@
 # Implementation status
 
-**Updated:** 2026-10-23 · **Milestone:** M0 complete; M1 slice, gallery, GitHub sources, OAuth, hosted Forgejo, nsjail, **admin, Ansible deployment, HTTPS, Forgejo OAuth + hosted-repo token, invite-gated beta, English/Bulgarian UI** · **Next:** hosted-project smoke test, off-host backups, monitoring, Bulgarian copy
+**Updated:** 2026-10-24 · **Milestone:** M0 complete; M1 slice, gallery, GitHub sources, OAuth, hosted Forgejo, nsjail, admin, Ansible deployment, HTTPS, Forgejo OAuth + hosted-repo token, invite-gated beta, English/Bulgarian UI, **managed CLI auto-update** · **Next:** hosted-project smoke test, off-host backups, monitoring, Bulgarian copy
 
 This file records what actually runs, not what is planned. The plan remains in
 [README.md](README.md) and [docs/14-roadmap.md](docs/14-roadmap.md).
@@ -24,6 +24,7 @@ This file records what actually runs, not what is planned. The plan remains in
 | `craftpub` — `lean`, `validate`, `inspect` | done | fixtures and failure exits exercised |
 | Compose (Caddy, web, worker, Postgres, Forgejo, Mailpit) | config valid | web/worker images build |
 | Ansible deployment to `root@192.168.88.222` | done | `./scripts/deploy.sh`; health checks on 8080/8081 |
+| Managed CLI — versioned directory, daily production updater, canary, rollback | done | `update-cli --check`/`--scheduled`; canary render; rollback drill passed; cron `17 2 * * *` |
 | CI — lint, check, test, build, migrate, DB tests | done | workflow; first push run |
 | `AGENTS.md` | done | reviewed against the repository |
 
