@@ -47,6 +47,8 @@
     <p class="notice notice-ok">{t('manage.noticeVersion')}</p>
   {:else if data.saved === 'active'}
     <p class="notice notice-ok">{t('manage.noticeActive')}</p>
+  {:else if data.saved === 'retry'}
+    <p class="notice notice-ok">{t('manage.noticeRetry')}</p>
   {/if}
 
   <div class="edit-grid">
@@ -184,6 +186,9 @@
         {#if form?.activate && form.message}
           <p class="form-message error">{form.message}</p>
         {/if}
+        {#if form?.retry && form.message}
+          <p class="form-message error">{form.message}</p>
+        {/if}
         <ul class="version-list">
           {#each data.versions as version (version.id)}
             <li>
@@ -204,7 +209,12 @@
                   <p class="form-message error">{version.errorDetail}</p>
                 {/if}
               </div>
-              {#if version.status === 'ready' && data.activeVersionId !== version.id}
+              {#if version.status === 'failed'}
+                <form method="POST" action="?/retry" class="version-action">
+                  <input type="hidden" name="versionId" value={version.id} />
+                  <button class="button small" type="submit">{t('manage.retryVersion')}</button>
+                </form>
+              {:else if version.status === 'ready' && data.activeVersionId !== version.id}
                 <form method="POST" action="?/activate" class="version-action">
                   <input type="hidden" name="versionId" value={version.id} />
                   <button class="button small" type="submit">{t('manage.setActive')}</button>

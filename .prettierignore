@@ -4,6 +4,7 @@ node_modules
 build
 dist
 coverage
+.scratch
 pnpm-lock.yaml
 docs
 README.md

@@ -297,7 +297,9 @@ disconnects (external), schedules artifact GC after 30 days.
 
 #### `POST /projects/:id/retry`
 
-Owner-only. Re-enqueues the latest failed version (`409` if it is not failed).
+Owner-only. Re-enqueues the latest failed version and returns `202` with `{ ok: true, versionId }`
+(`409` if it is not failed or is already queued). Implemented; the dashboard version list exposes
+the same action as **Retry render**.
 
 ### Repositories
 

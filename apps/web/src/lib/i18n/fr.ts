@@ -258,6 +258,8 @@ export const fr: Dictionary = {
   'manage.noVersions': 'Rien de publié pour l’instant.',
   'manage.active': 'active',
   'manage.setActive': 'Rendre active',
+  'manage.retryVersion': 'Relancer le rendu',
+  'manage.noticeRetry': 'Rendu remis en file d’attente.',
 
   'login.title': 'Connexion — SolidCraft Gallery',
   'login.heading': 'Connexion',
@@ -382,6 +384,7 @@ export const fr: Dictionary = {
   'error.githubReadOnly': 'Les projets GitHub sont en lecture seule ici. Poussez sur GitHub et synchronisez.',
   'error.publishDesign': 'Impossible de publier le design',
   'error.activateVersion': 'Impossible de changer la version active',
+  'error.retryVersion': 'Impossible de relancer cette version',
   'error.localProjects': 'Les projets locaux se publient depuis cette page',
   'error.syncRepository': 'Impossible de synchroniser le dépôt',
   'error.publicNeedsVersion': 'Un projet public a besoin d’une version publiée',

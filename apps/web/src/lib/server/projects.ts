@@ -11,7 +11,9 @@ import {
   findVersionById,
   getDatabase,
   insertVersion,
+  latestFailedVersion,
   listProjectSlugs,
+  requeueVersion,
   setActiveVersion,
   setProjectVisibilityAndRepo,
   updateProjectDetails as updateProjectDetailsRow,
@@ -366,4 +368,32 @@ export async function activateVersion(input: {
 
   const updated = await setActiveVersion(db, project.id, version.id);
   if (!updated) throw new AppError('validation_failed', 'Could not activate that version');
+}
+
+/**
+ * Put a failed version back in the render queue. Without a version id the
+ * latest failed version is retried, which is what the API contract promises.
+ */
+export async function retryVersion(input: {
+  viewer: SessionUser;
+  projectId: string;
+  versionId?: string;
+}): Promise<string> {
+  const db = getDatabase();
+  const project = await findProjectById(db, input.projectId);
+  if (!project || !can(project, input.viewer, 'publish')) throw new AppError('not_found', 'No such project');
+
+  const version = input.versionId
+    ? await findVersionById(db, input.versionId)
+    : await latestFailedVersion(db, project.id);
+  if (!version) {
+    if (input.versionId) throw new AppError('not_found', 'No such version');
+    throw new AppError('conflict', 'No failed version to retry');
+  }
+  if (version.projectId !== project.id) throw new AppError('not_found', 'No such version');
+  if (version.status !== 'failed') throw new AppError('conflict', 'Only a failed version can be retried');
+
+  const queued = await requeueVersion(db, version.id);
+  if (!queued) throw new AppError('conflict', 'That version is already queued');
+  return version.id;
 }

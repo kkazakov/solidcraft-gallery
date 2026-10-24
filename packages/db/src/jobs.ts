@@ -117,3 +117,26 @@ export async function recoverStaleJobs(db: Database, leaseSeconds = 600): Promis
   `;
   return rows.length;
 }
+
+/**
+ * Move a failed version back to `pending` and enqueue its render in one
+ * transaction. The conditional update is the claim: a second click finds the
+ * version already pending and does not create a duplicate job.
+ */
+export async function requeueVersion(db: Database, versionId: string): Promise<boolean> {
+  return db.begin(async (tx) => {
+    const rows = await tx<{ id: string }[]>`
+      update versions
+      set status = 'pending', error_code = null, error_detail = null
+      where id = ${versionId} and status = 'failed'
+      returning id
+    `;
+    if (!rows[0]) return false;
+
+    await tx`
+      insert into jobs (kind, payload, priority, run_at, max_attempts)
+      values ('version.render', ${tx.json({ versionId })}, 10, now(), 3)
+    `;
+    return true;
+  });
+}

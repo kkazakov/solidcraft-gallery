@@ -231,11 +231,14 @@ A render failure is isolated: the job fails, the version is marked `failed` with
 | `manifest_invalid` | `project.json` has invalid fields | no |
 | `license_missing` | Public project without a license | no |
 | `render_timeout` | Preview took longer than 60 s | yes, smaller views |
+| `renderer_outdated` | The design was saved by a newer SolidCraft than the pinned CLI reads | no; upgrade `solidcraft-cli` |
 | `render_failed` | The CLI could not render this design | yes (3×) |
 | `dependencies_missing` | Linked components are outside the repository | warning |
 | `repo_too_large` | Repository over 1 GB | no |
 
-Owner-visible errors are sanitized: no filesystem paths, no tokens, no stack traces. The full error
+Owner-visible errors are sanitized: no filesystem paths, no tokens, no stack traces. The CLI's own
+`error:` line is kept in `versions.error_detail` (with sandbox paths removed), so a format-skew
+failure names both the design format and the newest format the renderer understands. The full error
 goes to the worker log with the job id.
 
 ## Garbage collection

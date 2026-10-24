@@ -255,6 +255,8 @@ export const bg: Dictionary = {
   'manage.noVersions': 'Все още няма публикувани версии.',
   'manage.active': 'активна',
   'manage.setActive': 'Направи активна',
+  'manage.retryVersion': 'Опитай рендирането отново',
+  'manage.noticeRetry': 'Рендирането е поставено отново в опашката.',
 
   'login.title': 'Вход — SolidCraft Gallery',
   'login.heading': 'Вход',
@@ -379,6 +381,7 @@ export const bg: Dictionary = {
   'error.githubReadOnly': 'GitHub проектите са само за четене тук. Пуснете промените в GitHub и синхронизирайте.',
   'error.publishDesign': 'Дизайнът не можа да бъде публикуван',
   'error.activateVersion': 'Активната версия не можа да бъде сменена',
+  'error.retryVersion': 'Версията не можа да бъде рендирана отново',
   'error.localProjects': 'Локалните проекти се публикуват от тази страница',
   'error.syncRepository': 'Хранилището не можа да бъде синхронизирано',
   'error.publicNeedsVersion': 'Публичният проект се нуждае от публикувана версия',
