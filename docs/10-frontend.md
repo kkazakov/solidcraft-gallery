@@ -104,6 +104,8 @@ Details:
 - Download menu: primary `.solidcraft`, secondary STEP/STL; each with size and a short explanation
   (“Open with SolidCraft 0.18 or newer”).
 - “Open in SolidCraft” expands to instructions; no custom protocol handler in v1.
+- Description: escaped plain text; absolute `http://` and `https://` URLs become links that open in
+  a new tab. No raw HTML is rendered.
 - README rendered from sanitized HTML; headings get anchors; code blocks copyable.
 - Versions: releases (tags) first with dates; expand for full history; each links to a version page.
 - Report: dialog with reason and details; works signed out (rate-limited).
