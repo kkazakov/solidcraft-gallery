@@ -60,7 +60,7 @@ playbook uploads it to the host with mode `0600`; Compose builds the internal `D
 | `SOLIDCRAFT_CLI` | yes | `/usr/local/bin/solidcraft-cli` | path inside the worker |
 | `SOLIDCRAFT_CLI_PATH` | yes | `/opt/solidcraft-gallery/bin/solidcraft-cli` | host path bind-mounted into the worker |
 | `SOLIDCRAFT_CLI_SOURCE` | first deploy | — | controller path Ansible uploads |
-| `SOLIDCRAFT_CLI_VERSION` | yes | `0.19.0` | checked after deployment |
+| `SOLIDCRAFT_CLI_VERSION` | yes | `0.21.0` | checked after deployment |
 | `MAX_DESIGN_BYTES` | no | `26214400` | 25 MB |
 | `MAX_REPO_BYTES` | no | `1073741824` | 1 GB |
 | `RENDER_TIMEOUT_SECONDS` | no | `60` | sandbox wall clock |
@@ -209,11 +209,18 @@ compute, at beta scale.
 
 ### R2 — Renders fail for one design
 
-1. Fetch the job's `error_code`; `render_timeout` vs `render_failed` vs `design_unreadable`.
-2. Reproduce locally with the same CLI version and the committed bytes.
-3. If the design is valid but slow, raise the timeout for that job only; do not raise the global
+1. Fetch the version's `error_code` and `error_detail`. `renderer_outdated` means the design's
+   `document.json` format is newer than the pinned CLI; the design is fine. `render_timeout`,
+   `render_failed` and `design_unreadable` are other branches.
+2. Reproduce locally with the same CLI version and the committed bytes. For format skew, compare
+   `document.json`'s `format` with the CLI's "reads formats up to" number; the CLI error line is in
+   `error_detail` and the full stderr is in the worker log.
+3. Upgrade the pinned CLI to a release that writes at least that format (for example 0.21.0 reads
+   format 34), then restart the worker and verify `solidcraft-cli --version`. Requeue the failed
+   version with **Retry render** in the dashboard or `POST /api/v1/projects/:id/retry`.
+4. If the design is valid but slow, raise the timeout for that job only; do not raise the global
    default without a load test.
-4. If the CLI crashes, pin the previous CLI version, requeue, and report upstream with a minimal
+5. If the CLI crashes, pin the previous CLI version, requeue, and report upstream with a minimal
    file.
 
 ### R3 — Disk almost full

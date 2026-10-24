@@ -295,11 +295,12 @@ ready ──► quarantined ──► private (admin)
 ```text
 pending ──► fetching ──► rendering ──► indexing ──► ready
                  │            │            │
-                 └────────────┴────────────┴──► failed
+                 └────────────┴────────────┴──► failed ──► pending (owner retry)
 ```
 
-`failed` is retryable from the dashboard. A newer commit supersedes an older `failed` version; the
-UI shows the latest attempt.
+`failed` is retryable from the dashboard (and `POST /projects/:id/retry`). The retry claim is atomic:
+only a `failed` row moves to `pending`, and the render job is enqueued in the same transaction. A
+newer commit supersedes an older `failed` version; the UI shows the latest attempt.
 
 ### Job
 

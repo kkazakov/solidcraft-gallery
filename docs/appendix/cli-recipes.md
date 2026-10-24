@@ -201,6 +201,7 @@ fallback if `nsjail` is unavailable.
 | `design_unreadable` | truncated/corrupt ZIP, wrong file | `unzip -t`, `file` |
 | `design_too_large` | cache included, imports | `unzip -l`, size |
 | `render_timeout` | heavy assembly, cold CPU | run locally with `time`, raise only per job |
+| `renderer_outdated` | design format newer than the CLI | compare `document.json` `format` with the CLI's "up to" number; upgrade `solidcraft-cli` |
 | `render_failed` | CLI crash, unsupported geometry | run with `RUST_BACKTRACE=1`, capture version |
 | `dependencies_missing` | linked components outside repo | `component.links`, include the parts |
 | Blank images | sketch-only design, no bodies | `eval` body count; use placeholder |

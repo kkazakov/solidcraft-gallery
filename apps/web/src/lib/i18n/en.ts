@@ -256,6 +256,8 @@ export const en = {
   'manage.noVersions': 'Nothing published yet.',
   'manage.active': 'active',
   'manage.setActive': 'Set active',
+  'manage.retryVersion': 'Retry render',
+  'manage.noticeRetry': 'Render queued again.',
 
   'login.title': 'Sign in — SolidCraft Gallery',
   'login.heading': 'Sign in',
@@ -379,6 +381,7 @@ export const en = {
   'error.githubReadOnly': 'GitHub projects are read-only here. Push to GitHub and sync.',
   'error.publishDesign': 'Could not publish the design',
   'error.activateVersion': 'Could not change the active version',
+  'error.retryVersion': 'Could not retry that version',
   'error.localProjects': 'Local projects are published from this page',
   'error.syncRepository': 'Could not sync the repository',
   'error.publicNeedsVersion': 'A public project needs a published version',

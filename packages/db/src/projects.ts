@@ -268,6 +268,22 @@ export async function latestReadyVersion(db: Database, projectId: string): Promi
   return rows[0] ?? null;
 }
 
+export async function latestFailedVersion(db: Database, projectId: string): Promise<Version | null> {
+  const rows = await db<Version[]>`
+    select
+      v.id, v.project_id as "projectId", v.commit_sha as "commitSha", v.tag, v.message,
+      v.author_name as "authorName", v.authored_at as "authoredAt",
+      v.design_path as "designPath", v.design_key as "designKey", v.design_sha256 as "designSha256",
+      v.design_bytes as "designBytes", v.lean, v.status::text as status,
+      v.error_code as "errorCode", v.error_detail as "errorDetail", v.metrics, v.warnings
+    from versions v
+    where v.project_id = ${projectId} and v.status = 'failed'
+    order by v.authored_at desc, v.created_at desc
+    limit 1
+  `;
+  return rows[0] ?? null;
+}
+
 /**
  * Pin one ready version as the version shown on the public page. The guard
  * keeps a version from another project out of this column.

@@ -71,7 +71,7 @@ openssl rand -base64 24   # FORGEJO_ADMIN_PASSWORD (or any strong password)
 Set `SOLIDCRAFT_CLI_SOURCE` to the CLI on the controller, for example:
 
 ```dotenv
-SOLIDCRAFT_CLI_SOURCE=/tmp/solidcraft-bin/solidcraft-0.19.0-linux-x86_64/bin/solidcraft-cli
+SOLIDCRAFT_CLI_SOURCE=/tmp/solidcraft-bin/solidcraft-0.21.0-linux-x86_64/bin/solidcraft-cli
 ```
 
 Important values:

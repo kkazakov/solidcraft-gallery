@@ -29,7 +29,7 @@ This file records what actually runs, not what is planned. The plan remains in
 
 ## The vertical slice, end to end
 
-Verified with a real `solidcraft-cli 0.19.0` and `fixtures/real/box.solidcraft`:
+Verified with a real `solidcraft-cli 0.21.0` and `fixtures/real/box.solidcraft`:
 
 1. `GET /auth/dev?username=alice` creates a hashed session; `/api/v1/me` returns `alice`.
 2. `POST /api/v1/projects` creates a real git repository at `DATA_DIR/repos/alice/e2e-box`.
@@ -126,7 +126,7 @@ The single-host stack is deployed with Ansible to `root@192.168.88.222` (see
   `https://solidcraft.drun.net/auth/callback/forgejo`); `FORGEJO_CLIENT_ID`/`_SECRET` are set and the
   web container was redeployed. The first OAuth consent was completed for `gallery-admin`; the user
   row is `admin` with a `forgejo` identity.
-- `solidcraft-cli 0.19.0` runs inside the worker; the Forgejo admin `gallery-admin` exists and is
+- `solidcraft-cli 0.21.0` runs inside the worker; the Forgejo admin `gallery-admin` exists and is
   active; pre-migration `pg_dump` files land in `/opt/solidcraft-gallery/backups`.
 - A second deploy skips the image transfer when the local and remote image IDs match, runs the
   backup and migration steps, and leaves the data volumes intact.

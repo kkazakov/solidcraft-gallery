@@ -8,11 +8,13 @@ import { syncGitHubProject } from '../../../../lib/server/external.js';
 import {
   activateVersion,
   publishDesign,
+  retryVersion,
   updateProjectDetails,
   updateProjectPublication,
 } from '../../../../lib/server/projects.js';
 
 const TAG = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const VISIBILITIES = new Set<ProjectVisibility>(['public', 'unlisted', 'private']);
 
 /** The domain returns English reasons; map the known ones to message keys. */
@@ -174,6 +176,27 @@ export const actions = {
     }
 
     throw redirect(303, `${event.url.pathname}?saved=active`);
+  },
+
+  retry: async (event) => {
+    const viewer = await requireViewer(event);
+    const t = (key: MessageKey, params?: MessageParams) => translate(event.locals.locale, key, params);
+    const form = await event.request.formData();
+    const versionId = String(form.get('versionId') ?? '').trim();
+    if (!UUID.test(versionId)) {
+      return fail(400, { retry: true, message: t('error.retryVersion') });
+    }
+
+    try {
+      await retryVersion({ viewer, projectId: event.params.id, versionId });
+    } catch (retryError) {
+      if (retryError instanceof AppError) {
+        return fail(retryError.status, { retry: true, message: retryError.message });
+      }
+      return fail(500, { retry: true, message: t('error.retryVersion') });
+    }
+
+    throw redirect(303, `${event.url.pathname}?saved=retry`);
   },
 
   sync: async (event) => {

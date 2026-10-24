@@ -17,6 +17,7 @@ import { directRenderPlan, renderPlan, runCommand, runPlan, type Command } from 
 import { artifactKey, sha256Hex, type LocalStorage } from '@gallery/storage';
 import type { WorkerConfig } from './config.js';
 import type { Logger } from './logger.js';
+import { describeRenderFailure } from './render-failure.js';
 
 export interface RenderContext {
   db: Database;
@@ -144,7 +145,6 @@ export async function renderVersion(versionId: string, ctx: RenderContext): Prom
     const run = await runPlan(required, { timeoutMs: ctx.config.timeoutSeconds * 1000 });
     if (!run.ok) {
       const failed = run.failed;
-      const code = failed?.result.timedOut ? 'render_timeout' : 'render_failed';
       ctx.log.error('render plan failed', {
         version_id: versionId,
         step: failed?.name,
@@ -152,10 +152,10 @@ export async function renderVersion(versionId: string, ctx: RenderContext): Prom
         stdout: failed?.result.stdout.slice(0, 1000),
         stderr: failed?.result.stderr.slice(0, 2000),
       });
-      throw new RenderFailure(
-        code,
-        `renderer stopped at ${failed?.name ?? 'an unknown step'} (exit ${failed?.result.code ?? '?'})`,
-      );
+      const failure = failed
+        ? describeRenderFailure(failed.name, failed.result)
+        : { code: 'render_failed' as const, detail: 'renderer stopped at an unknown step' };
+      throw new RenderFailure(failure.code, failure.detail);
     }
 
     for (const step of derivatives) {

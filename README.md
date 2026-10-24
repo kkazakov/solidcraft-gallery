@@ -183,7 +183,8 @@ Forgejo bootstrap, backups and rollback.
 ## Assumptions and constraints
 
 - Typical design is **under 5 MB**; large imported STEP assemblies are out of scope for v1.
-- SolidCraft **desktop 0.18+** and the matching `solidcraft-cli`; the CLI version is pinned per deployment.
+- SolidCraft **desktop 0.21+** and the matching `solidcraft-cli` (0.21.0 reads design format 34);
+  older designs still open, but the CLI version is pinned per deployment.
 - `.solidcraft` may be a ZIP container **or** pretty-printed JSON; the reader detects by signature, not extension.
 - Single region, single instance, English UI, EUR/USD hosting budget under €100/month for beta.
 - Public downloads are anonymous; private projects are visible to their owner only.

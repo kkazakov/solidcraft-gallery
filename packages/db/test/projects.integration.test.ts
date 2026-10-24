@@ -5,16 +5,20 @@ import {
   countProjectsForOwner,
   createLocalProject,
   findProjectByOwnerSlug,
+  findVersionById,
   insertVersion,
+  latestFailedVersion,
   latestReadyVersion,
   listArtifacts,
   listProjectsForOwner,
+  markVersionFailed,
   markVersionReady,
   markVersionRendering,
   setActiveVersion,
   updateProjectDetails,
   upsertArtifact,
 } from '../src/projects.js';
+import { requeueVersion } from '../src/jobs.js';
 import { ensureDevUser } from '../src/users.js';
 
 const url = process.env.DATABASE_URL;
@@ -165,5 +169,39 @@ maybe('projects and versions (integration)', () => {
     expect(await setActiveVersion(db, projectId, pending)).toBe(false);
     expect(await setActiveVersion(db, projectId, second)).toBe(true);
     expect((await latestReadyVersion(db, projectId))?.id).toBe(second);
+  });
+
+  it('requeues a failed version exactly once', async () => {
+    const sha = new Uint8Array(createHash('sha256').update('design v4').digest());
+    const versionId = await insertVersion(db, {
+      projectId,
+      commitSha: 'd'.repeat(40),
+      message: 'Publish v4',
+      authorName: 'Tester',
+      authoredAt: new Date(Date.now() + 180_000),
+      designPath: `designs/${slug}.solidcraft`,
+      designSha256: sha,
+      designBytes: 1234,
+      lean: true,
+    });
+    await markVersionFailed(db, versionId, 'renderer_outdated', 'format 34');
+    expect((await latestFailedVersion(db, projectId))?.id).toBe(versionId);
+
+    expect(await requeueVersion(db, versionId)).toBe(true);
+    const version = await findVersionById(db, versionId);
+    expect(version?.status).toBe('pending');
+    expect(version?.errorCode).toBeNull();
+    expect(version?.errorDetail).toBeNull();
+
+    const jobs = await db<{ kind: string; payload: { versionId: string } }[]>`
+      select kind, payload from jobs where payload->>'versionId' = ${versionId}
+    `;
+    expect(jobs).toHaveLength(1);
+    expect(jobs[0]!.kind).toBe('version.render');
+    expect(jobs[0]!.payload.versionId).toBe(versionId);
+
+    // The second click finds the version already pending and adds no job.
+    expect(await requeueVersion(db, versionId)).toBe(false);
+    await db`delete from jobs where payload->>'versionId' = ${versionId}`;
   });
 });
