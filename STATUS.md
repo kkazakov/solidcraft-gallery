@@ -136,6 +136,9 @@ The single-host stack is deployed with Ansible to `root@192.168.88.222` (see
   hosted projects now provision real Forgejo repositories instead of local git.
 - The project page shows four shots (isometric, top, front, bottom) in a clickable strip with a
   lightbox, and downloads name the design `.sc`.
+- **Interactive 3D viewer:** the project page loads the published STL into three.js on demand
+  (orbit, zoom, pan with mouse, trackpad and touch; reset and close). three.js is a lazy chunk, so
+  the initial page stays small.
 - The gallery is on a **closed beta**: `INVITE_REQUIRED=1`, so a new provider identity needs a
   valid invite unless it matches `ADMIN_USERNAMES`. New people register at
   `/auth/register?invite=<code>`, linked from the sign-in page (which has no invite input). An invite
