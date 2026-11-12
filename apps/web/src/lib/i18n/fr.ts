@@ -135,6 +135,7 @@ export const fr: Dictionary = {
   'project.view3dTooLarge':
     'Ce modèle est trop volumineux pour la visionneuse intégrée. Téléchargez le STL pour l’inspecter.',
   'project.view3dReset': 'Réinitialiser la vue',
+  'project.view3dFallback': 'La vue 3D n’est pas disponible ici. Utilisez les aperçus ci-dessus ou téléchargez le STL.',
   'project.view3dControls':
     'Glissez pour orbiter · molette ou pincement pour zoomer · clic droit ou deux doigts pour déplacer',
 

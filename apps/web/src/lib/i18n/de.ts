@@ -136,6 +136,8 @@ export const de: Dictionary = {
     'Das 3D-Modell konnte nicht geladen werden. Nutzen Sie die Vorschauen oder laden Sie das STL herunter.',
   'project.view3dTooLarge': 'Dieses Modell ist zu groß für die integrierte Ansicht. Laden Sie das STL herunter.',
   'project.view3dReset': 'Ansicht zurücksetzen',
+  'project.view3dFallback':
+    'Die 3D-Ansicht ist hier nicht verfügbar. Nutzen Sie die Vorschauen oben oder laden Sie das STL herunter.',
   'project.view3dControls':
     'Ziehen zum Drehen · Scrollen oder Pinch zum Zoomen · Rechtsklick oder zwei Finger zum Verschieben',
 

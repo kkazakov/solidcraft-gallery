@@ -316,29 +316,33 @@
 
     <dialog
       bind:this={viewerDialog}
-      class="viewer-dialog"
+      class="shot-dialog viewer-dialog"
       aria-label={t('project.view3d')}
       onclose={closeViewer}
       onclick={onViewerClick}
     >
-      <div class="viewer-head">
-        <h2>{t('project.view3d')}</h2>
-        <div class="viewer-actions">
-          <button type="button" class="button small" onclick={resetViewer} disabled={!viewer}>
+      <div class="shot-dialog-inner">
+        <button type="button" class="shot-close" onclick={closeViewer} aria-label={t('project.closeView')}> × </button>
+        <div class="viewer-stage">
+          <canvas bind:this={viewerCanvas} class="viewer-canvas"></canvas>
+          {#if viewerLoading}
+            <p class="viewer-overlay">{t('project.view3dLoading')}</p>
+          {:else if viewerError}
+            <p class="viewer-overlay error">{t('project.view3dError')}</p>
+          {/if}
+        </div>
+        <div class="viewer-caption">
+          <span>
+            {#if viewerError}
+              {t('project.view3dFallback')}
+            {:else}
+              {t('project.view3dControls')}
+            {/if}
+          </span>
+          <button type="button" class="viewer-reset" onclick={resetViewer} disabled={!viewer}>
             {t('project.view3dReset')}
           </button>
-          <button type="button" class="button small" onclick={closeViewer}>{t('project.closeView')}</button>
         </div>
-      </div>
-      <div class="viewer-stage">
-        <canvas bind:this={viewerCanvas} class="viewer-canvas"></canvas>
-        {#if viewerLoading}
-          <p class="viewer-overlay">{t('project.view3dLoading')}</p>
-        {:else if viewerError}
-          <p class="viewer-overlay error">{t('project.view3dError')}</p>
-        {:else if viewer}
-          <p class="viewer-hint">{t('project.view3dControls')}</p>
-        {/if}
       </div>
     </dialog>
 
@@ -498,41 +502,13 @@
   }
 
   .viewer-dialog {
-    width: min(1100px, 96vw);
-    padding: 0;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--panel);
-    color: var(--text);
-  }
-
-  .viewer-dialog::backdrop {
-    background: rgb(0 0 0 / 0.78);
-  }
-
-  .viewer-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .viewer-head h2 {
-    margin: 0;
-    font-size: 15px;
-  }
-
-  .viewer-actions {
-    display: flex;
-    gap: 6px;
+    width: min(1200px, 94vw);
   }
 
   .viewer-stage {
     position: relative;
-    height: min(68vh, 640px);
+    aspect-ratio: 4 / 3;
+    max-height: calc(94vh - 44px);
     background: var(--panel-2);
   }
 
@@ -548,11 +524,11 @@
     cursor: grabbing;
   }
 
-  .viewer-overlay,
-  .viewer-hint {
+  .viewer-overlay {
     position: absolute;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     margin: 0;
     color: var(--muted);
     font-size: 12.5px;
@@ -560,22 +536,50 @@
     pointer-events: none;
   }
 
-  .viewer-overlay {
-    top: 50%;
-    transform: translate(-50%, -50%);
-  }
-
   .viewer-overlay.error {
     color: var(--warn);
+    max-width: 48ch;
   }
 
-  .viewer-hint {
-    bottom: 10px;
+  .viewer-caption {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 14px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12.5px;
+  }
+
+  .viewer-reset {
+    flex: none;
+    padding: 4px 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--panel);
+    color: var(--text);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .viewer-reset:hover:not(:disabled) {
+    border-color: var(--text);
+    background: var(--panel-2);
+  }
+
+  .viewer-reset:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   @media (width <= 640px) {
-    .viewer-stage {
-      height: 60vh;
+    .viewer-caption {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
     }
   }
 </style>

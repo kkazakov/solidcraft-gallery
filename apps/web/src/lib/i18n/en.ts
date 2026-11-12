@@ -133,6 +133,7 @@ export const en = {
   'project.view3dError': 'The 3D model could not be loaded. Try the previews or download the STL.',
   'project.view3dTooLarge': 'This model is too large for the in-browser viewer. Download the STL to inspect it.',
   'project.view3dReset': 'Reset view',
+  'project.view3dFallback': 'The 3D viewer is unavailable here. Use the previews above or download the STL.',
   'project.view3dControls': 'Drag to orbit · scroll or pinch to zoom · right-drag or two fingers to pan',
 
   'newProject.title': 'Create project — SolidCraft Gallery',

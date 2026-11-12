@@ -90,6 +90,8 @@ export async function mountStlViewer(
   controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
 
   const geometry = await new STLLoader().loadAsync(url);
+  // SolidCraft exports Z-up geometry; three.js treats Y as up.
+  geometry.rotateX(-Math.PI / 2);
   geometry.computeBoundingBox();
   const box = geometry.boundingBox ?? new THREE.Box3();
   const size = box.getSize(new THREE.Vector3());
@@ -108,7 +110,8 @@ export async function mountStlViewer(
   scene.add(mesh);
 
   const radius = Math.max(size.length() / 2, 0.001);
-  const viewDirection = new THREE.Vector3(0.85, 0.62, 1.05).normalize();
+  // Classic isometric: 45° azimuth, ~35° elevation, matching the iso snapshot.
+  const viewDirection = new THREE.Vector3(1, 1, 1).normalize();
   const fit = () => {
     const width = canvas.clientWidth || 640;
     const height = canvas.clientHeight || 480;

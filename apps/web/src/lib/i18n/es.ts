@@ -135,6 +135,7 @@ export const es: Dictionary = {
   'project.view3dTooLarge':
     'Este modelo es demasiado grande para el visor integrado. Descarga el STL para inspeccionarlo.',
   'project.view3dReset': 'Restablecer vista',
+  'project.view3dFallback': 'La vista 3D no está disponible aquí. Usa las vistas previas de arriba o descarga el STL.',
   'project.view3dControls':
     'Arrastra para orbitar · rueda o pellizco para acercar · botón derecho o dos dedos para desplazar',
 
