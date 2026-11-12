@@ -44,4 +44,6 @@ jobs:
       - run: pnpm check
       - run: pnpm test
       - run: pnpm build
-      - run: docker compose -f infra/compose.yaml config --quiet
+      # .env.example documents every required value, so validating with it
+      # checks both the Compose file and the template.
+      - run: docker compose -f infra/compose.yaml --env-file .env.example config --quiet
