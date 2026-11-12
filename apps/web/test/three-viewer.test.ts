@@ -1,21 +1,31 @@
 import { describe, expect, it } from 'vitest';
-import { cameraDistance } from '../src/lib/three-viewer.js';
+import { fitDistance } from '../src/lib/three-viewer.js';
 
-describe('cameraDistance', () => {
-  it('places the camera far enough for the sphere to fit the vertical field of view', () => {
-    const distance = cameraDistance(10, 90, 1);
-    expect(distance).toBeCloseTo(10 / Math.sin(Math.PI / 4), 5);
+describe('fitDistance', () => {
+  it('fits the height of a tall model to the vertical field of view', () => {
+    const distance = fitDistance(1, 10, 90, 1, 1);
+    expect(distance).toBeCloseTo(10, 5);
   });
 
-  it('pulls back for a narrow field of view and pads by default', () => {
-    expect(cameraDistance(10, 30)).toBeGreaterThan(cameraDistance(10, 60));
-    expect(cameraDistance(10, 45, 1.2)).toBeCloseTo(cameraDistance(10, 45, 1) * 1.2, 5);
+  it('fits the width of a wide model to the horizontal field of view', () => {
+    const distance = fitDistance(10, 1, 90, 2, 1);
+    expect(distance).toBeCloseTo(10 / 2, 5);
+  });
+
+  it('pulls back for a narrow field of view and a narrow viewport', () => {
+    expect(fitDistance(5, 5, 30, 1)).toBeGreaterThan(fitDistance(5, 5, 60, 1));
+    expect(fitDistance(5, 5, 45, 0.6)).toBeGreaterThan(fitDistance(5, 5, 45, 1.6));
+  });
+
+  it('applies the padding factor', () => {
+    expect(fitDistance(5, 5, 45, 1, 1.5)).toBeCloseTo(fitDistance(5, 5, 45, 1, 1) * 1.5, 5);
   });
 
   it('rejects impossible inputs', () => {
-    expect(() => cameraDistance(0, 45)).toThrow();
-    expect(() => cameraDistance(-1, 45)).toThrow();
-    expect(() => cameraDistance(1, 0)).toThrow();
-    expect(() => cameraDistance(1, 180)).toThrow();
+    expect(() => fitDistance(0, 0, 45, 1)).toThrow();
+    expect(() => fitDistance(-1, 2, 45, 1)).toThrow();
+    expect(() => fitDistance(1, 1, 0, 1)).toThrow();
+    expect(() => fitDistance(1, 1, 180, 1)).toThrow();
+    expect(() => fitDistance(1, 1, 45, 0)).toThrow();
   });
 });
