@@ -127,6 +127,13 @@ export const en = {
   'project.viewBottom': 'Bottom',
   'project.altBottom': 'Bottom view of {title}',
   'project.previewTitle': '{title} — {view} view',
+  'project.view3d': 'View in 3D',
+  'project.view3dHint': 'Rotate with one finger or a drag, zoom with a pinch or the wheel.',
+  'project.view3dLoading': 'Loading the model…',
+  'project.view3dError': 'The 3D model could not be loaded. Try the previews or download the STL.',
+  'project.view3dTooLarge': 'This model is too large for the in-browser viewer. Download the STL to inspect it.',
+  'project.view3dReset': 'Reset view',
+  'project.view3dControls': 'Drag to orbit · scroll or pinch to zoom · right-drag or two fingers to pan',
 
   'newProject.title': 'Create project — SolidCraft Gallery',
   'newProject.breadcrumb': 'New project',

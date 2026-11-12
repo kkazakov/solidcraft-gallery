@@ -129,6 +129,15 @@ export const de: Dictionary = {
   'project.viewBottom': 'Unten',
   'project.altBottom': 'Ansicht von unten von {title}',
   'project.previewTitle': '{title} — Ansicht {view}',
+  'project.view3d': 'In 3D ansehen',
+  'project.view3dHint': 'Mit einem Finger oder Ziehen drehen, mit Pinch oder Mausrad zoomen.',
+  'project.view3dLoading': 'Modell wird geladen…',
+  'project.view3dError':
+    'Das 3D-Modell konnte nicht geladen werden. Nutzen Sie die Vorschauen oder laden Sie das STL herunter.',
+  'project.view3dTooLarge': 'Dieses Modell ist zu groß für die integrierte Ansicht. Laden Sie das STL herunter.',
+  'project.view3dReset': 'Ansicht zurücksetzen',
+  'project.view3dControls':
+    'Ziehen zum Drehen · Scrollen oder Pinch zum Zoomen · Rechtsklick oder zwei Finger zum Verschieben',
 
   'newProject.title': 'Projekt erstellen — SolidCraft Gallery',
   'newProject.breadcrumb': 'Neues Projekt',

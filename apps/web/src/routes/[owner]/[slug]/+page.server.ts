@@ -24,11 +24,13 @@ export async function load(event) {
   const versions = await listVersions(db, project.id);
   const images: Record<string, string> = {};
   const formats: Record<string, boolean> = { sc: latest !== null, step: false, stl: false };
+  let model: { url: string; bytes: number } | null = null;
   for (const artifact of artifacts) {
     if (['iso', 'top', 'front', 'bottom'].includes(artifact.kind)) {
       images[artifact.kind] = `/media/${artifact.storageKey}`;
     }
     if (artifact.kind === 'step' || artifact.kind === 'stl') formats[artifact.kind] = true;
+    if (artifact.kind === 'stl') model = { url: `/media/${artifact.storageKey}`, bytes: artifact.bytes };
   }
 
   const metrics = latest
@@ -46,6 +48,7 @@ export async function load(event) {
     versions,
     images,
     formats,
+    model,
     metrics,
     isOwner: viewer?.id === project.ownerId,
   };

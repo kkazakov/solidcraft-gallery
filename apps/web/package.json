@@ -13,15 +13,17 @@
   "dependencies": {
     "@gallery/core": "workspace:*",
     "@gallery/db": "workspace:*",
-    "@sveltejs/kit": "^3.1.0",
-    "svelte": "^5.57.2",
+    "@gallery/design": "workspace:*",
     "@gallery/git": "workspace:*",
     "@gallery/storage": "workspace:*",
-    "@gallery/design": "workspace:*"
+    "@sveltejs/kit": "^3.1.0",
+    "svelte": "^5.57.2",
+    "three": "^0.187.0"
   },
   "devDependencies": {
     "@sveltejs/adapter-node": "^6.0.0",
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "@types/three": "^0.187.0",
     "svelte-check": "^4.7.7",
     "vite": "^8.3.5"
   }
