@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from 'svelte';
   import { linkifyDescription } from '../../../lib/description-links';
   import { getI18n } from '../../../lib/i18n/context';
 
@@ -61,6 +62,64 @@
 
   function onDialogClick(event: MouseEvent): void {
     if (event.target === dialog) closeShot();
+  }
+
+  /** Cap for the interactive viewer; very large meshes stay download-only. */
+  const MODEL_VIEW_LIMIT = 64 * 1024 * 1024;
+
+  let viewerDialog = $state<HTMLDialogElement | null>(null);
+  let viewerCanvas = $state<HTMLCanvasElement | null>(null);
+  let viewerOpen = $state(false);
+  let viewerLoading = $state(false);
+  let viewerError = $state<string | null>(null);
+  let viewer = $state.raw<{ reset(): void; dispose(): void } | null>(null);
+  let viewerRun = 0;
+
+  const canView3d = $derived(Boolean(data.model) && (data.model?.bytes ?? 0) <= MODEL_VIEW_LIMIT);
+
+  async function openViewer(): Promise<void> {
+    if (!data.model || !canView3d) return;
+    viewerError = null;
+    viewerLoading = true;
+    viewerOpen = true;
+    viewerDialog?.showModal();
+    const run = ++viewerRun;
+    await tick();
+    const canvas = viewerCanvas;
+    if (!canvas) return;
+    try {
+      const { mountStlViewer } = await import('../../../lib/three-viewer');
+      if (run !== viewerRun) return;
+      viewer = await mountStlViewer(canvas, data.model.url);
+      if (run !== viewerRun) {
+        viewer.dispose();
+        viewer = null;
+        return;
+      }
+    } catch (error) {
+      if (run !== viewerRun) return;
+      viewerError = error instanceof Error ? error.message : String(error);
+    } finally {
+      if (run === viewerRun) viewerLoading = false;
+    }
+  }
+
+  function closeViewer(): void {
+    viewerRun += 1;
+    viewer?.dispose();
+    viewer = null;
+    viewerLoading = false;
+    viewerError = null;
+    viewerOpen = false;
+    viewerDialog?.close();
+  }
+
+  function resetViewer(): void {
+    viewer?.reset();
+  }
+
+  function onViewerClick(event: MouseEvent): void {
+    if (event.target === viewerDialog && !viewerLoading) closeViewer();
   }
 </script>
 
@@ -149,6 +208,16 @@
               </li>
             {/each}
           </ul>
+        {/if}
+        {#if data.model}
+          <div class="model-action">
+            {#if canView3d}
+              <button type="button" class="button" onclick={openViewer}>{t('project.view3d')}</button>
+              <span class="field-hint">{t('project.view3dHint')}</span>
+            {:else}
+              <span class="field-hint">{t('project.view3dTooLarge')}</span>
+            {/if}
+          </div>
         {/if}
       </div>
 
@@ -243,6 +312,34 @@
           <p>{t('project.previewTitle', { title: data.project.title, view: activeShot.label })}</p>
         </div>
       {/if}
+    </dialog>
+
+    <dialog
+      bind:this={viewerDialog}
+      class="viewer-dialog"
+      aria-label={t('project.view3d')}
+      onclose={closeViewer}
+      onclick={onViewerClick}
+    >
+      <div class="viewer-head">
+        <h2>{t('project.view3d')}</h2>
+        <div class="viewer-actions">
+          <button type="button" class="button small" onclick={resetViewer} disabled={!viewer}>
+            {t('project.view3dReset')}
+          </button>
+          <button type="button" class="button small" onclick={closeViewer}>{t('project.closeView')}</button>
+        </div>
+      </div>
+      <div class="viewer-stage">
+        <canvas bind:this={viewerCanvas} class="viewer-canvas"></canvas>
+        {#if viewerLoading}
+          <p class="viewer-overlay">{t('project.view3dLoading')}</p>
+        {:else if viewerError}
+          <p class="viewer-overlay error">{t('project.view3dError')}</p>
+        {:else if viewer}
+          <p class="viewer-hint">{t('project.view3dControls')}</p>
+        {/if}
+      </div>
     </dialog>
 
     <section class="versions-section">
@@ -385,6 +482,100 @@
     .shot-button span {
       padding: 6px;
       font-size: 10.5px;
+    }
+  }
+
+  .model-action {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 12px;
+    margin-top: 12px;
+  }
+
+  .model-action .field-hint {
+    margin: 0;
+  }
+
+  .viewer-dialog {
+    width: min(1100px, 96vw);
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--panel);
+    color: var(--text);
+  }
+
+  .viewer-dialog::backdrop {
+    background: rgb(0 0 0 / 0.78);
+  }
+
+  .viewer-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .viewer-head h2 {
+    margin: 0;
+    font-size: 15px;
+  }
+
+  .viewer-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .viewer-stage {
+    position: relative;
+    height: min(68vh, 640px);
+    background: var(--panel-2);
+  }
+
+  .viewer-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    cursor: grab;
+  }
+
+  .viewer-canvas:active {
+    cursor: grabbing;
+  }
+
+  .viewer-overlay,
+  .viewer-hint {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    color: var(--muted);
+    font-size: 12.5px;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  .viewer-overlay {
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .viewer-overlay.error {
+    color: var(--warn);
+  }
+
+  .viewer-hint {
+    bottom: 10px;
+  }
+
+  @media (width <= 640px) {
+    .viewer-stage {
+      height: 60vh;
     }
   }
 </style>

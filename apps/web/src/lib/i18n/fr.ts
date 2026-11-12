@@ -128,6 +128,15 @@ export const fr: Dictionary = {
   'project.viewBottom': 'Dessous',
   'project.altBottom': 'Vue de dessous de {title}',
   'project.previewTitle': '{title} — vue {view}',
+  'project.view3d': 'Voir en 3D',
+  'project.view3dHint': 'Faites tourner avec un doigt ou un glissement, zoomez avec un pincement ou la molette.',
+  'project.view3dLoading': 'Chargement du modèle…',
+  'project.view3dError': 'Le modèle 3D n’a pas pu être chargé. Utilisez les aperçus ou téléchargez le STL.',
+  'project.view3dTooLarge':
+    'Ce modèle est trop volumineux pour la visionneuse intégrée. Téléchargez le STL pour l’inspecter.',
+  'project.view3dReset': 'Réinitialiser la vue',
+  'project.view3dControls':
+    'Glissez pour orbiter · molette ou pincement pour zoomer · clic droit ou deux doigts pour déplacer',
 
   'newProject.title': 'Créer un projet — SolidCraft Gallery',
   'newProject.breadcrumb': 'Nouveau projet',

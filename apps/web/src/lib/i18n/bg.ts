@@ -125,6 +125,13 @@ export const bg: Dictionary = {
   'project.viewBottom': 'Отдолу',
   'project.altBottom': 'Изглед отдолу на {title}',
   'project.previewTitle': '{title} — изглед {view}',
+  'project.view3d': 'Вижте в 3D',
+  'project.view3dHint': 'Завъртайте с един пръст или с влачене, увеличавайте с щипка или колело.',
+  'project.view3dLoading': 'Моделът се зарежда…',
+  'project.view3dError': '3D моделът не можа да се зареди. Опитайте с прегледите или изтеглете STL.',
+  'project.view3dTooLarge': 'Този модел е твърде голям за вградения преглед. Изтеглете STL, за да го разгледате.',
+  'project.view3dReset': 'Нулирай изгледа',
+  'project.view3dControls': 'Влачете за завъртане · колело или щипка за мащаб · десен бутон или два пръста за местене',
 
   'newProject.title': 'Нов проект — SolidCraft Gallery',
   'newProject.breadcrumb': 'Нов проект',
