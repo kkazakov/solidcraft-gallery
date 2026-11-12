@@ -124,6 +124,8 @@ export const en = {
   'project.viewFront': 'Front',
   'project.openView': 'Open {view} view',
   'project.closeView': 'Close preview',
+  'project.viewBottom': 'Bottom',
+  'project.altBottom': 'Bottom view of {title}',
   'project.previewTitle': '{title} — {view} view',
 
   'newProject.title': 'Create project — SolidCraft Gallery',

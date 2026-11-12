@@ -32,7 +32,7 @@ The product is that place: **a public gallery with git underneath and a private 
   - Zero results shows suggestions (popular tags, clear filters).
 - **US-3** As a visitor I can open a project page and see renders, measurements, description,
   versions, license and downloads.
-  - Three renders (iso, top, front) with alt text; a placeholder if rendering failed.
+  - Four renders (iso, top, front, bottom) with alt text; a placeholder if rendering failed.
   - Volume, bounding box, body count and mass when available.
   - Download `.solidcraft`, STEP and STL; the `.solidcraft` is the exact committed file.
 - **US-4** As a visitor I can open the source repository and see the commit/tag for a version.

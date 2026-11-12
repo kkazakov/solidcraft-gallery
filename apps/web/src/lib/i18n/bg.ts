@@ -122,6 +122,8 @@ export const bg: Dictionary = {
   'project.viewFront': 'Отпред',
   'project.openView': 'Отворете изглед {view}',
   'project.closeView': 'Затворете прегледа',
+  'project.viewBottom': 'Отдолу',
+  'project.altBottom': 'Изглед отдолу на {title}',
   'project.previewTitle': '{title} — изглед {view}',
 
   'newProject.title': 'Нов проект — SolidCraft Gallery',

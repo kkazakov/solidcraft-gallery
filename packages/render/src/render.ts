@@ -1,6 +1,6 @@
 import { designInSandbox, outInSandbox, sandboxCommand, type Command } from './sandbox.js';
 
-export type View = 'iso' | 'top' | 'front';
+export type View = 'iso' | 'top' | 'front' | 'bottom';
 
 export interface RenderPlanInput {
   cli: string;
@@ -10,7 +10,7 @@ export interface RenderPlanInput {
 }
 
 export interface RenderStep {
-  name: 'iso' | 'top' | 'front' | 'metrics' | 'step' | 'stl';
+  name: View | 'metrics' | 'step' | 'stl';
   command: Command;
 }
 
@@ -18,6 +18,7 @@ const VIEWS: { view: View; file: string }[] = [
   { view: 'iso', file: 'iso.png' },
   { view: 'top', file: 'top.png' },
   { view: 'front', file: 'front.png' },
+  { view: 'bottom', file: 'bottom.png' },
 ];
 
 /**

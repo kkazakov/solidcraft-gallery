@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 import type { Command } from './sandbox.js';
 
-export type DirectStepName = 'iso' | 'top' | 'front' | 'metrics' | 'step' | 'stl';
+export type DirectStepName = 'iso' | 'top' | 'front' | 'bottom' | 'metrics' | 'step' | 'stl';
 
 export interface DirectStep {
   name: DirectStepName;
@@ -24,7 +24,7 @@ export function directRenderPlan(input: DirectPlanInput): DirectStep[] {
   const out = (name: string) => join(input.outDir, name);
   const steps: DirectStep[] = [];
 
-  for (const view of ['iso', 'top', 'front'] as const) {
+  for (const view of ['iso', 'top', 'front', 'bottom'] as const) {
     steps.push({
       name: view,
       command: {

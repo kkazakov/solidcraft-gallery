@@ -53,7 +53,7 @@ describe('directRenderPlan', () => {
       designPath: '/tmp/design.solidcraft',
       outDir: '/tmp/out',
     });
-    expect(plan.map((step) => step.name)).toEqual(['iso', 'top', 'front', 'metrics', 'step', 'stl']);
+    expect(plan.map((step) => step.name)).toEqual(['iso', 'top', 'front', 'bottom', 'metrics', 'step', 'stl']);
     expect(plan[0]!.command).toEqual({
       command: '/opt/solidcraft-cli',
       args: [

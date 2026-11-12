@@ -25,7 +25,7 @@ export async function load(event) {
   const images: Record<string, string> = {};
   const formats: Record<string, boolean> = { sc: latest !== null, step: false, stl: false };
   for (const artifact of artifacts) {
-    if (artifact.kind === 'iso' || artifact.kind === 'top' || artifact.kind === 'front') {
+    if (['iso', 'top', 'front', 'bottom'].includes(artifact.kind)) {
       images[artifact.kind] = `/media/${artifact.storageKey}`;
     }
     if (artifact.kind === 'step' || artifact.kind === 'stl') formats[artifact.kind] = true;
