@@ -8,7 +8,7 @@
   },
   "scripts": {
     "check": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --no-file-parallelism",
     "migrate": "tsx src/migrate.ts"
   },
   "dependencies": {

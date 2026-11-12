@@ -38,10 +38,10 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # The integration tests need the schema, so migrate before testing.
+      - run: pnpm db:migrate
       - run: pnpm lint
       - run: pnpm check
       - run: pnpm test
       - run: pnpm build
-      - run: pnpm db:migrate
-      - run: pnpm --filter @gallery/db test
       - run: docker compose -f infra/compose.yaml config --quiet
