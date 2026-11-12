@@ -119,7 +119,7 @@ export async function mountStlViewer(
     const up = new THREE.Vector3().crossVectors(viewDirection, right).normalize();
     const halfWidth = 0.5 * (size.x * Math.abs(right.x) + size.y * Math.abs(right.y) + size.z * Math.abs(right.z));
     const halfHeight = 0.5 * (size.x * Math.abs(up.x) + size.y * Math.abs(up.y) + size.z * Math.abs(up.z));
-    const distance = fitDistance(halfWidth, halfHeight, camera.fov, aspect, 1.1);
+    const distance = fitDistance(halfWidth, halfHeight, camera.fov, aspect, 1.32);
 
     camera.position.copy(viewDirection).multiplyScalar(distance);
     camera.near = Math.max(distance / 100, 0.01);
