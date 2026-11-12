@@ -17,7 +17,7 @@ from. [STATUS.md](STATUS.md) is the current source of truth for what runs.
 
 ## Screenshots
 
-Taken from the local staging stack: real Forgejo, real `solidcraft-cli`, nsjail worker.
+Taken from a running stack: real Forgejo, real `solidcraft-cli`, nsjail worker.
 
 | Public gallery | Project page |
 |---|---|
