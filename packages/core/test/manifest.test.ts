@@ -7,7 +7,7 @@ const valid = {
   description: 'Snap-fit enclosure.',
   tags: ['enclosure', 'raspberry-pi'],
   license: 'CC-BY-4.0',
-  design: 'designs/case.solidcraft',
+  design: 'designs/case.sc',
   authors: [{ name: 'Jane Doe', url: 'https://example.com/jane' }],
   links: { website: 'https://example.com' },
 };
@@ -40,7 +40,13 @@ describe('parseProjectManifest', () => {
     expect(parseProjectManifest({ ...valid, links: { website: 'http://example.com' } }).ok).toBe(false);
   });
 
+  it('accepts the current .sc extension and the legacy .solidcraft one', () => {
+    expect(parseProjectManifest({ ...valid, design: 'designs/case.sc' }).ok).toBe(true);
+    expect(parseProjectManifest({ ...valid, design: 'designs/case.solidcraft' }).ok).toBe(true);
+  });
+
   it('rejects a design path without the extension', () => {
     expect(parseProjectManifest({ ...valid, design: 'designs/case.step' }).ok).toBe(false);
+    expect(parseProjectManifest({ ...valid, design: 'designs/case' }).ok).toBe(false);
   });
 });

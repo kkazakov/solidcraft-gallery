@@ -6,6 +6,8 @@ import { git, storage } from '../../../../lib/server/config.js';
 import { getViewableProject, localRepo } from '../../../../lib/server/projects.js';
 
 const TYPES: Record<string, string> = {
+  sc: 'application/octet-stream',
+  // Legacy links used format=solidcraft; keep them working.
   solidcraft: 'application/octet-stream',
   step: 'application/step',
   stl: 'model/stl',
@@ -26,13 +28,13 @@ export async function GET(event) {
   const version = await latestReadyVersion(db, project.id);
   if (!version) throw error(404, 'No ready version');
 
-  const format = event.url.searchParams.get('format') ?? 'solidcraft';
+  const format = event.url.searchParams.get('format') ?? 'sc';
   if (!(format in TYPES)) throw error(400, 'Unknown format');
 
   let bytes: Uint8Array;
   let extension: string;
 
-  if (format === 'solidcraft') {
+  if (format === 'sc' || format === 'solidcraft') {
     try {
       if (version.designKey) {
         bytes = await storage.get(version.designKey);
@@ -44,7 +46,7 @@ export async function GET(event) {
     } catch {
       throw error(404, 'Design file is not available');
     }
-    extension = 'solidcraft';
+    extension = 'sc';
   } else {
     const artifacts = await listArtifacts(db, version.id);
     const artifact = artifacts.find((candidate) => candidate.kind === format);

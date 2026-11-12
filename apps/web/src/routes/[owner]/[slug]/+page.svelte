@@ -7,6 +7,55 @@
 
   const numberOptions: Intl.NumberFormatOptions = { maximumFractionDigits: 1 };
   const descriptionSegments = $derived(data.project.description ? linkifyDescription(data.project.description) : []);
+
+  type ShotKind = 'iso' | 'top' | 'front';
+  interface Shot {
+    kind: ShotKind;
+    src: string;
+    label: string;
+    alt: string;
+  }
+
+  const shots = $derived(
+    (
+      [
+        {
+          kind: 'iso',
+          src: data.images.iso,
+          label: t('project.viewIso'),
+          alt: t('project.altIso', { title: data.project.title }),
+        },
+        {
+          kind: 'top',
+          src: data.images.top,
+          label: t('project.viewTop'),
+          alt: t('project.altTop', { title: data.project.title }),
+        },
+        {
+          kind: 'front',
+          src: data.images.front,
+          label: t('project.viewFront'),
+          alt: t('project.altFront', { title: data.project.title }),
+        },
+      ] as { kind: ShotKind; src: string | undefined; label: string; alt: string }[]
+    ).filter((shot): shot is Shot => Boolean(shot.src)),
+  );
+
+  let dialog = $state<HTMLDialogElement | null>(null);
+  let activeShot = $state<Shot | null>(null);
+
+  function openShot(shot: Shot): void {
+    activeShot = shot;
+    dialog?.showModal();
+  }
+
+  function closeShot(): void {
+    dialog?.close();
+  }
+
+  function onDialogClick(event: MouseEvent): void {
+    if (event.target === dialog) closeShot();
+  }
 </script>
 
 <svelte:head>
@@ -78,29 +127,22 @@
             <div class="image-placeholder">{t('project.noPreview')}</div>
           {/if}
         </div>
-        {#if data.images.top || data.images.front}
-          <div class="image-row">
-            {#if data.images.top}
-              <div class="image-cell">
-                <img
-                  src={data.images.top}
-                  alt={t('project.altTop', { title: data.project.title })}
-                  width="1200"
-                  height="900"
-                />
-              </div>
-            {/if}
-            {#if data.images.front}
-              <div class="image-cell">
-                <img
-                  src={data.images.front}
-                  alt={t('project.altFront', { title: data.project.title })}
-                  width="1200"
-                  height="900"
-                />
-              </div>
-            {/if}
-          </div>
+        {#if shots.length > 0}
+          <ul class="shot-strip" aria-label={t('project.views')}>
+            {#each shots as shot (shot.kind)}
+              <li>
+                <button
+                  type="button"
+                  class="shot-button"
+                  onclick={() => openShot(shot)}
+                  aria-label={t('project.openView', { view: shot.label })}
+                >
+                  <img src={shot.src} alt={shot.alt} width="1200" height="900" />
+                  <span>{shot.label}</span>
+                </button>
+              </li>
+            {/each}
+          </ul>
         {/if}
       </div>
 
@@ -108,11 +150,8 @@
         <article class="card card-aside">
           <h2>{t('project.download')}</h2>
           <div class="download-list">
-            <a
-              class="button primary"
-              href={`/${data.project.ownerUsername}/${data.project.slug}/download?format=solidcraft`}
-            >
-              .solidcraft
+            <a class="button primary" href={`/${data.project.ownerUsername}/${data.project.slug}/download?format=sc`}>
+              .sc
             </a>
             {#if data.formats.step}
               <a class="button" href={`/${data.project.ownerUsername}/${data.project.slug}/download?format=step`}>
@@ -184,6 +223,22 @@
       </aside>
     </div>
 
+    <dialog
+      bind:this={dialog}
+      class="shot-dialog"
+      aria-label={t('project.views')}
+      onclose={() => (activeShot = null)}
+      onclick={onDialogClick}
+    >
+      {#if activeShot}
+        <div class="shot-dialog-inner">
+          <button type="button" class="shot-close" onclick={closeShot} aria-label={t('project.closeView')}> × </button>
+          <img src={activeShot.src} alt={activeShot.alt} width="1200" height="900" />
+          <p>{t('project.previewTitle', { title: data.project.title, view: activeShot.label })}</p>
+        </div>
+      {/if}
+    </dialog>
+
     <section class="versions-section">
       <h2>{t('project.versions')}</h2>
       <ul class="version-list">
@@ -203,3 +258,127 @@
     </section>
   {/if}
 </section>
+
+<style>
+  .shot-strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .shot-button {
+    display: grid;
+    width: 100%;
+    overflow: hidden;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--panel);
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: zoom-in;
+  }
+
+  .shot-button:hover {
+    border-color: var(--border-strong);
+  }
+
+  .shot-button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .shot-button img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    background: var(--panel-2);
+  }
+
+  .shot-button span {
+    padding: 7px 9px;
+    color: var(--muted);
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+
+  .shot-dialog {
+    width: min(1200px, 94vw);
+    max-height: 94vh;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--panel);
+    color: var(--text);
+  }
+
+  .shot-dialog::backdrop {
+    background: rgb(0 0 0 / 0.72);
+  }
+
+  .shot-dialog-inner {
+    position: relative;
+    display: grid;
+  }
+
+  .shot-dialog img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: calc(94vh - 44px);
+    object-fit: contain;
+    background: var(--panel-2);
+  }
+
+  .shot-dialog p {
+    margin: 0;
+    padding: 10px 14px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12.5px;
+  }
+
+  .shot-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid var(--border-strong);
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--panel) 88%, transparent);
+    color: var(--text);
+    font: inherit;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+  }
+
+  .shot-close:hover {
+    background: var(--panel);
+    border-color: var(--text);
+  }
+
+  @media (width <= 640px) {
+    .shot-strip {
+      gap: 6px;
+    }
+
+    .shot-button span {
+      padding: 6px;
+      font-size: 10.5px;
+    }
+  }
+</style>

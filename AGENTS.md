@@ -2,8 +2,7 @@
 
 ## 1. Project Overview
 
-SolidCraft Gallery is a git-backed public gallery and private workspace for SolidCraft `.solidcraft`
-designs: previews, search, versions, and downloads. Stack: Node 22, pnpm 10, SvelteKit 3 / Svelte 5,
+SolidCraft Gallery is a git-backed public gallery and private workspace for SolidCraft `.sc` (legacy `.solidcraft`) designs: previews, search, versions, and downloads. Stack: Node 22, pnpm 10, SvelteKit 3 / Svelte 5,
 TypeScript 6, PostgreSQL 16, Forgejo, Vitest. You are implementing and reviewing this repository;
 read `docs/00-decisions.md` before changing a contract. Refer to this project as “SolidCraft Gallery”.
 
@@ -63,7 +62,7 @@ DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/${
 | `apps/worker` | Postgres job loop and nsjail renderer; claims jobs with `FOR UPDATE SKIP LOCKED` |
 | `packages/core` | Pure domain: manifest schema, slugs, visibility, errors, limits |
 | `packages/db` | SQL schema/migrations, query helpers, job queue, invites and public search; the only place SQL lives |
-| `packages/design` | Reads `.solidcraft` containers and strips `cache/*` |
+| `packages/design` | Reads `.sc`/`.solidcraft` containers and strips `cache/*` |
 | `packages/git` | Local git backend, read-only GitHub client and the Forgejo contents API |
 | `packages/storage` | Content-addressed artifact store under `DATA_DIR/artifacts` |
 | `packages/render` | Builds and runs the nsjail/direct CLI plans with no shell |
@@ -139,7 +138,7 @@ and `design` may import `core`; no package imports an app.
 - Every project read/write goes through `can()` in `@gallery/core`; invisible resources are `404`,
   never `403`.
 - Validate external input with Zod at the boundary and throw `AppError` for the API envelope.
-- `.solidcraft` bytes are untrusted. Never spawn the CLI directly; use `packages/render` so the
+- `.sc` bytes (legacy `.solidcraft`) are untrusted. Never spawn the CLI directly; use `packages/render` so the
   design runs in nsjail with no network. No shell strings, no user paths in argv.
 - The worker image builds nsjail 3.4. `SANDBOX_MODE=direct` is development-only; production/compose
   uses `nsjail`, which needs `SYS_ADMIN` + `seccomp=unconfined` on the container and a managed CLI
@@ -255,7 +254,7 @@ do not append a browser URL.
   imports for local server modules; `tsconfig.json` extends `"$app/tsconfig"`.
 - pnpm is strict: a root script importing a workspace package needs that package in the root
   `devDependencies` (that is why `@gallery/core`, `@gallery/design` and `fflate` are there).
-- A `.solidcraft` is a ZIP **or** pretty JSON; detect it by signature, never by extension.
+- A `.sc` (legacy `.solidcraft`) is a ZIP **or** pretty JSON; detect it by signature, never by extension.
 - `cache/*` is stripped before commit; the embedded 240×150 thumbnail is therefore absent.
 - `public_projects` is the only listing source; do not query `projects` directly for public pages.
 - Public search is `searchPublicProjects` in `packages/db/src/search.ts`: dual `simple`/`english`

@@ -133,7 +133,7 @@ maybe('Forgejo hosted projects (integration)', () => {
     expect(stored).toMatchObject({
       repoProvider: 'forgejo',
       visibility: 'private',
-      designPath: `designs/forge-${stamp}.solidcraft`,
+      designPath: `designs/forge-${stamp}.sc`,
     });
 
     const createdRepo = await findRepoById(db, stored!.repoId);

@@ -24,7 +24,7 @@
   </p>
   <h1>{t('home.headlineLine1')}<br />{t('home.headlineLine2')}</h1>
   <p class="lede">
-    {t('home.lede.before')} <code>.solidcraft</code>
+    {t('home.lede.before')} <code>.sc</code>
     {t('home.lede.after')}
   </p>
 
@@ -52,7 +52,7 @@
     <article class="card empty-card">
       <h2>{t('home.emptyTitle')}</h2>
       <p>
-        {t('home.emptyBody.before')} <code>.solidcraft</code>
+        {t('home.emptyBody.before')} <code>.sc</code>
         {t('home.emptyBody.after')}
       </p>
       <p class="form-message"><a class="button primary" href={publishHref}>{t('home.startProject')}</a></p>
