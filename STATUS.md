@@ -134,6 +134,8 @@ The single-host stack is deployed with Ansible to `root@192.168.88.222` (see
 - A Forgejo admin token is configured as `FORGEJO_ADMIN_TOKEN`. A real `POST /api/v1/user/repos` /
   `DELETE /api/v1/repos/...` round trip with that token succeeded, and the web container has it, so
   hosted projects now provision real Forgejo repositories instead of local git.
+- The project page shows four shots (isometric, top, front, bottom) in a clickable strip with a
+  lightbox, and downloads name the design `.sc`.
 - The gallery is on a **closed beta**: `INVITE_REQUIRED=1`, so a new provider identity needs a
   valid invite unless it matches `ADMIN_USERNAMES`. New people register at
   `/auth/register?invite=<code>`, linked from the sign-in page (which has no invite input). An invite
