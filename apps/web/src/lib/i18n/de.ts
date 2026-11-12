@@ -126,6 +126,8 @@ export const de: Dictionary = {
   'project.viewFront': 'Vorne',
   'project.openView': 'Ansicht {view} öffnen',
   'project.closeView': 'Vorschau schließen',
+  'project.viewBottom': 'Unten',
+  'project.altBottom': 'Ansicht von unten von {title}',
   'project.previewTitle': '{title} — Ansicht {view}',
 
   'newProject.title': 'Projekt erstellen — SolidCraft Gallery',

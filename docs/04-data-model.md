@@ -195,7 +195,7 @@ Content-addressed derived files. One row per kind per version.
 | Column | Type | Notes |
 |---|---|---|
 | `version_id` | uuid FK | cascade |
-| `kind` | enum `thumb\|iso\|top\|front\|og\|step\|stl\|cover` | |
+| `kind` | enum `thumb\|iso\|top\|front\|bottom\|og\|step\|stl\|cover` | |
 | `storage_key` | text | `sha256/<hash>/<kind>.<ext>` |
 | `sha256` | bytea | content hash; dedupe across projects |
 | `bytes` | bigint | |

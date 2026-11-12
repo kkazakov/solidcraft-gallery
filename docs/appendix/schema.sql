@@ -32,7 +32,7 @@ create type project_status as enum ('pending', 'indexing', 'ready', 'error', 'qu
 
 create type version_status as enum ('pending', 'fetching', 'rendering', 'indexing', 'ready', 'failed');
 
-create type artifact_kind as enum ('thumb', 'iso', 'top', 'front', 'og', 'step', 'stl', 'cover');
+create type artifact_kind as enum ('thumb', 'iso', 'top', 'front', 'bottom', 'og', 'step', 'stl', 'cover');
 
 create type job_status as enum ('queued', 'running', 'done', 'failed', 'dead');
 

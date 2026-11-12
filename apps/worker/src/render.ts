@@ -187,10 +187,11 @@ export async function renderVersion(versionId: string, ctx: RenderContext): Prom
     }
 
     const sha = actual;
-    const images: { kind: 'iso' | 'top' | 'front'; file: string }[] = [
+    const images: { kind: 'iso' | 'top' | 'front' | 'bottom'; file: string }[] = [
       { kind: 'iso', file: 'iso.png' },
       { kind: 'top', file: 'top.png' },
       { kind: 'front', file: 'front.png' },
+      { kind: 'bottom', file: 'bottom.png' },
     ];
 
     let artifacts = 0;

@@ -128,7 +128,7 @@ used as the project's hero image.
 ### Commands
 
 ```sh
-# three views, transparent-free, no grid/axes
+# four views, transparent-free, no grid/axes
 solidcraft-cli snapshot "$DESIGN" --out iso.png   --width 1200 --height 900 --view iso   --no-grid --no-axes
 solidcraft-cli snapshot "$DESIGN" --out top.png   --width 1200 --height 900 --view top   --no-grid --no-axes
 solidcraft-cli snapshot "$DESIGN" --out front.png --width 1200 --height 900 --view front --no-grid --no-axes

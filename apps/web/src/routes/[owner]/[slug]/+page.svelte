@@ -8,7 +8,7 @@
   const numberOptions: Intl.NumberFormatOptions = { maximumFractionDigits: 1 };
   const descriptionSegments = $derived(data.project.description ? linkifyDescription(data.project.description) : []);
 
-  type ShotKind = 'iso' | 'top' | 'front';
+  type ShotKind = 'iso' | 'top' | 'front' | 'bottom';
   interface Shot {
     kind: ShotKind;
     src: string;
@@ -36,6 +36,12 @@
           src: data.images.front,
           label: t('project.viewFront'),
           alt: t('project.altFront', { title: data.project.title }),
+        },
+        {
+          kind: 'bottom',
+          src: data.images.bottom,
+          label: t('project.viewBottom'),
+          alt: t('project.altBottom', { title: data.project.title }),
         },
       ] as { kind: ShotKind; src: string | undefined; label: string; alt: string }[]
     ).filter((shot): shot is Shot => Boolean(shot.src)),
@@ -262,7 +268,7 @@
 <style>
   .shot-strip {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
     gap: 10px;
     margin: 10px 0 0;
     padding: 0;

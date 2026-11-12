@@ -117,6 +117,15 @@ maybe('projects and versions (integration)', () => {
       width: 1200,
       height: 900,
     });
+    await upsertArtifact(db, {
+      versionId,
+      kind: 'bottom',
+      storageKey: 'sha256/bb/bottom.png',
+      sha256: sha,
+      bytes: 120,
+      width: 1200,
+      height: 900,
+    });
     await markVersionReady(db, versionId, { bodies: 1, volume_mm3: 24000 }, []);
 
     const latest = await latestReadyVersion(db, projectId);
@@ -125,8 +134,7 @@ maybe('projects and versions (integration)', () => {
     expect(latest?.tag).toBe('v1.0.0');
 
     const artifacts = await listArtifacts(db, versionId);
-    expect(artifacts).toHaveLength(1);
-    expect(artifacts[0]!.kind).toBe('iso');
+    expect(artifacts.map((artifact) => artifact.kind).sort()).toEqual(['bottom', 'iso']);
   });
 
   it('uses the active ready version instead of the newest one', async () => {

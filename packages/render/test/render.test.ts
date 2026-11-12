@@ -37,9 +37,9 @@ describe('sandboxCommand', () => {
 });
 
 describe('renderPlan', () => {
-  it('renders three views, metrics, STEP and STL', () => {
+  it('renders four views, metrics, STEP and STL', () => {
     const plan = renderPlan(input);
-    expect(plan.map((step) => step.name)).toEqual(['iso', 'top', 'front', 'metrics', 'step', 'stl']);
+    expect(plan.map((step) => step.name)).toEqual(['iso', 'top', 'front', 'bottom', 'metrics', 'step', 'stl']);
     for (const step of plan) expect(step.command.command).toBe('nsjail');
   });
 

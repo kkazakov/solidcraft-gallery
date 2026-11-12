@@ -143,7 +143,7 @@ binary size, sandboxing); managed git (cost, lock-in).
 Thumbnails are small and latency-tolerant.
 
 **Decision.** Render on CPU in the worker, asynchronously, with a 60-second budget. No GPU host.
-Three views (`iso`, `top`, `front`) at 1200×900, plus a 1200×630 Open Graph image. Derivatives
+Four views (`iso`, `top`, `front`, `bottom`) at 1200×900, plus a 1200×630 Open Graph image. Derivatives
 (STEP, STL) are exported in the same job.
 
 **Consequences.** Renders cost CPU seconds; a queue and a per-file cache are mandatory. Large

@@ -84,7 +84,7 @@ Desktop two-column, mobile stacked:
 breadcrumb
 title · author · visibility badge · license badge
 ┌───────────────────────────────┬──────────────────────┐
-│  image gallery (iso/top/front)│  Download .sc│
+│  shots (iso/top/front/bottom)│  Download .sc│
 │  thumbnails / arrows          │  STEP · STL          │
 │                               │  dimensions, volume  │
 │                               │  bodies, mass        │
