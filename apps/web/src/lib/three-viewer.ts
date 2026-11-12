@@ -18,12 +18,26 @@ export interface StlViewer {
   dispose(): void;
 }
 
-/** Distance at which a sphere of `radius` fits a camera with a vertical `fovDegrees`. */
-export function cameraDistance(radius: number, fovDegrees: number, padding = 1.18): number {
-  if (!(radius > 0)) throw new Error('radius must be positive');
+/**
+ * Distance at which a box of the given half-extents, seen edge-on, fills a
+ * camera with a vertical `fovDegrees`. Framing the box instead of its bounding
+ * sphere keeps flat parts (plates, brackets) large on screen.
+ */
+export function fitDistance(
+  halfWidth: number,
+  halfHeight: number,
+  fovDegrees: number,
+  aspect: number,
+  padding = 1.08,
+): number {
+  if (!(halfWidth >= 0) || !(halfHeight >= 0) || halfWidth + halfHeight <= 0) {
+    throw new Error('the model has no size');
+  }
   if (!(fovDegrees > 0) || fovDegrees >= 180) throw new Error('fov must be between 0 and 180');
-  const halfFov = (fovDegrees * Math.PI) / 360;
-  return (radius / Math.sin(halfFov)) * padding;
+  if (!(aspect > 0)) throw new Error('aspect must be positive');
+  const tanVertical = Math.tan((fovDegrees * Math.PI) / 360);
+  const tanHorizontal = tanVertical * aspect;
+  return Math.max(halfHeight / tanVertical, halfWidth / tanHorizontal) * padding;
 }
 
 export async function mountStlViewer(
@@ -94,17 +108,26 @@ export async function mountStlViewer(
   scene.add(mesh);
 
   const radius = Math.max(size.length() / 2, 0.001);
-  const home = new THREE.Vector3(radius * 0.85, radius * 0.62, radius * 1.05);
-  const distance = cameraDistance(radius, camera.fov);
+  const viewDirection = new THREE.Vector3(0.85, 0.62, 1.05).normalize();
   const fit = () => {
-    const direction = home.clone().normalize();
-    camera.position.copy(direction.multiplyScalar(distance));
+    const width = canvas.clientWidth || 640;
+    const height = canvas.clientHeight || 480;
+    const aspect = width > 0 && height > 0 ? width / height : 1;
+    // Project the box onto the camera's right and up axes so the framing
+    // matches what the viewer actually sees.
+    const right = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), viewDirection).normalize();
+    const up = new THREE.Vector3().crossVectors(viewDirection, right).normalize();
+    const halfWidth = 0.5 * (size.x * Math.abs(right.x) + size.y * Math.abs(right.y) + size.z * Math.abs(right.z));
+    const halfHeight = 0.5 * (size.x * Math.abs(up.x) + size.y * Math.abs(up.y) + size.z * Math.abs(up.z));
+    const distance = fitDistance(halfWidth, halfHeight, camera.fov, aspect, 1.1);
+
+    camera.position.copy(viewDirection).multiplyScalar(distance);
     camera.near = Math.max(distance / 100, 0.01);
     camera.far = distance * 100;
     camera.updateProjectionMatrix();
     controls.target.set(0, 0, 0);
-    controls.minDistance = radius * 0.12;
-    controls.maxDistance = distance * 12;
+    controls.minDistance = Math.max(radius * 0.08, distance * 0.02);
+    controls.maxDistance = distance * 10;
     controls.update();
   };
   fit();
