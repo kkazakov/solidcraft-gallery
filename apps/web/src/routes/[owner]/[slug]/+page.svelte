@@ -295,6 +295,7 @@
   .shot-button img {
     display: block;
     width: 100%;
+    height: auto;
     aspect-ratio: 4 / 3;
     object-fit: cover;
     background: var(--panel-2);
