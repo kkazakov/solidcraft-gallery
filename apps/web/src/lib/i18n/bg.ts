@@ -131,6 +131,7 @@ export const bg: Dictionary = {
   'project.view3dError': '3D моделът не можа да се зареди. Опитайте с прегледите или изтеглете STL.',
   'project.view3dTooLarge': 'Този модел е твърде голям за вградения преглед. Изтеглете STL, за да го разгледате.',
   'project.view3dReset': 'Нулирай изгледа',
+  'project.view3dFallback': '3D прегледът не е достъпен тук. Използвайте прегледите по-горе или изтеглете STL.',
   'project.view3dControls': 'Влачете за завъртане · колело или щипка за мащаб · десен бутон или два пръста за местене',
 
   'newProject.title': 'Нов проект — SolidCraft Gallery',
