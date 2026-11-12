@@ -26,8 +26,10 @@ Taken from a running stack: real Forgejo, real `solidcraft-cli`, nsjail worker.
 | ![Search results](docs/screenshots/search.png) | ![Forgejo repository](docs/screenshots/forgejo.png) |
 | **Gallery in dark mode** | **Project page in dark mode** |
 | ![Gallery home in dark mode](docs/screenshots/home-dark.png) | ![Project page in dark mode](docs/screenshots/project-dark.png) |
-| **Administration — users** | **Administration — invite codes & delete confirmation** |
-| ![Admin users](docs/screenshots/admin-users.png) | ![Admin invite codes and delete confirmation](docs/screenshots/admin-invites.png) |
+| **Interactive 3D viewer** | **Administration — users** |
+| ![3D viewer](docs/screenshots/project-3d.png) | ![Admin users](docs/screenshots/admin-users.png) |
+| **Administration — invite codes** | |
+| ![Admin invite codes and delete confirmation](docs/screenshots/admin-invites.png) | |
 
 Despite the folder name, this is **not a SolidCraft plugin**. SolidCraft's plugin boundary is an
 in-document command executor with no storage, accounts, background sync or UI; a gallery needs all

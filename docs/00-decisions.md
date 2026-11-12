@@ -397,3 +397,26 @@ migration. The manifest accepts both extensions, and external-repository discove
 **Rejected.** Rewriting historical repositories (needless churn, breaks commit history); keeping the
 old extension for new projects (diverges from SolidCraft); rejecting legacy files (breaks existing
 projects).
+
+
+---
+
+## D20 — The 3D viewer renders the published STL in the browser
+
+**Context.** Static snapshots cannot show the underside or arbitrary angles, and the renderer already
+exports an STL for every ready version.
+
+**Decision.** The project page offers a **View in 3D** dialog that loads `three.js` and the version's
+STL artifact on demand. The viewer orbits around the model's centre, fits the model's bounding box to
+the viewport, and supports orbit, zoom and pan with mouse, trackpad and touch. `three.js` is a
+dynamic import so it never reaches visitors who do not open the viewer. Models above 64 MB are not
+loaded interactively; the download remains. If WebGL fails, the dialog explains and points at the
+snapshots and the STL.
+
+**Consequences.** Any published design is explorable from every side without server rendering cost.
+The STL is mesh-only, so exact BREP geometry still lives in the `.sc` download and in SolidCraft
+itself. Large assemblies need a simplification step before they can use the viewer.
+
+**Rejected.** Server-side turntable videos (storage and latency, no interaction); a WebGL viewer
+bundled into the main page (three.js is ~190 KB gzipped and most visitors never open it); STEP
+parsing in the browser (heavy, and STEP is often unavailable for mesh-only designs).
