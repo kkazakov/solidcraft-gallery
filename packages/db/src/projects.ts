@@ -105,7 +105,7 @@ export async function createLocalProject(db: Database, input: CreateLocalProject
         ${input.title},
         ${input.description ?? ''},
         ${input.license ?? null},
-        ${`designs/${input.slug}.solidcraft`},
+        ${`designs/${input.slug}.sc`},
         'private',
         'pending',
         ${tx.array(input.tags ?? [])}

@@ -61,6 +61,7 @@ maybe('projects and versions (integration)', () => {
     expect(project!.tags).toEqual(['enclosure', 'test']);
     expect(project!.repoProvider).toBe('local');
     expect(project!.localPath).toBe('/tmp/gallery-does-not-exist');
+    expect(project!.designPath).toBe(`designs/${slug}.sc`);
   });
 
   it('lists and counts projects for the owner', async () => {
