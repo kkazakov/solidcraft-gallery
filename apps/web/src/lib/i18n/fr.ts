@@ -119,18 +119,24 @@ export const fr: Dictionary = {
   'project.notSet': 'Non défini',
   'project.versions': 'Versions',
   'project.live': 'en ligne',
+  'project.views': 'Vues',
+  'project.viewIso': 'Isométrique',
+  'project.viewTop': 'Dessus',
+  'project.viewFront': 'Face',
+  'project.openView': 'Ouvrir la vue {view}',
+  'project.closeView': 'Fermer l’aperçu',
+  'project.previewTitle': '{title} — vue {view}',
 
   'newProject.title': 'Créer un projet — SolidCraft Gallery',
   'newProject.breadcrumb': 'Nouveau projet',
   'newProject.heading': 'Créer un projet',
-  'newProject.intro':
-    'Publiez un fichier .solidcraft comme nouvelle version. L’aperçu apparaît quand le rendu est terminé.',
+  'newProject.intro': 'Publiez un fichier .sc comme nouvelle version. L’aperçu apparaît quand le rendu est terminé.',
   'newProject.titleLabel': 'Titre du projet',
   'newProject.titlePlaceholder': 'Boîtier Raspberry Pi 4',
   'newProject.descriptionLabel': 'Description',
   'newProject.descriptionPlaceholder': 'À quoi sert le design.',
   'newProject.designFile': 'Fichier de design',
-  'newProject.chooseFile': 'Choisissez un fichier .solidcraft',
+  'newProject.chooseFile': 'Choisissez un fichier .sc',
   'newProject.designHint': 'Un conteneur SolidCraft ou un fichier JSON, jusqu’à 25 Mo.',
   'newProject.version': 'Version',
   'newProject.versionHint': 'Utilisé comme étiquette git pour cette version.',
@@ -156,7 +162,7 @@ export const fr: Dictionary = {
   'dashboard.projectCount.other': '{count} projets',
   'dashboard.signedInAs': 'connecté en tant que {role}',
   'dashboard.emptyTitle': 'Pas encore de projets',
-  'dashboard.emptyBody': 'Créez un projet, publiez un fichier .solidcraft et son aperçu apparaîtra ici.',
+  'dashboard.emptyBody': 'Créez un projet, publiez un fichier .sc et son aperçu apparaîtra ici.',
 
   'admin.title': 'Administration — SolidCraft Gallery',
   'admin.heading': 'Administration',
@@ -313,10 +319,10 @@ export const fr: Dictionary = {
   'about.intro':
     '<p>SolidCraft Gallery est une galerie publique, adossée à git, pour les designs <a href="https://github.com/tangency-labs/solidcraft">SolidCraft</a>. Elle offre aux designers un endroit où publier leur travail et à tous les autres un moyen de le parcourir, le rechercher, le prévisualiser et le télécharger.</p>',
   'about.repo':
-    '<p>Chaque projet est un dépôt git et chaque version un commit ou une étiquette. La galerie lit le dépôt, rend les aperçus, enregistre les mesures et indexe le design pour la recherche. Elle ne convertit ni ne réécrit le fichier : un téléchargement est exactement le <code>.solidcraft</code> enregistré par l’auteur.</p>',
+    '<p>Chaque projet est un dépôt git et chaque version un commit ou une étiquette. La galerie lit le dépôt, rend les aperçus, enregistre les mesures et indexe le design pour la recherche. Elle ne convertit ni ne réécrit le fichier : un téléchargement est exactement le <code>.sc</code> enregistré par l’auteur.</p>',
   'about.canDoHeading': 'Ce que vous pouvez faire',
   'about.canDo':
-    '<ul><li>Parcourir et rechercher des designs publics par titre, description, étiquette, licence et mesures.</li><li>Voir les aperçus, les dimensions, l’historique des versions et le README du projet.</li><li>Télécharger le fichier <code>.solidcraft</code>, ainsi que STEP ou STL quand l’auteur les a publiés.</li><li>Se connecter pour publier des designs, garder des projets privés et importer un dépôt GitHub public.</li></ul>',
+    '<ul><li>Parcourir et rechercher des designs publics par titre, description, étiquette, licence et mesures.</li><li>Voir les aperçus, les dimensions, l’historique des versions et le README du projet.</li><li>Télécharger le fichier <code>.sc</code>, ainsi que STEP ou STL quand l’auteur les a publiés.</li><li>Se connecter pour publier des designs, garder des projets privés et importer un dépôt GitHub public.</li></ul>',
   'about.purposeHeading': 'À quoi ça sert',
   'about.purpose':
     '<p>Le projet existe pour rendre les designs SolidCraft faciles à trouver, comparer et réutiliser sous la licence choisie par leurs auteurs. Il vise les amateurs, les makers et les petites équipes qui veulent un portfolio public léger tout en gardant git comme source de vérité.</p>',
@@ -372,7 +378,7 @@ export const fr: Dictionary = {
   'error.version': 'La version doit faire 1 à 64 lettres, chiffres, points, tirets bas ou tirets',
   'error.visibilityCreate': 'La visibilité doit être privée ou publique',
   'error.licenseRequired': 'Choisissez une licence avant de rendre le projet public',
-  'error.designRequired': 'Choisissez un fichier .solidcraft à publier',
+  'error.designRequired': 'Choisissez un fichier .sc à publier',
   'error.designTooLarge': 'Le design dépasse {mb} Mo',
   'error.createProject': 'Impossible de créer le projet',
   'error.publishProjectPartial': 'Projet créé, mais le design n’a pas pu être publié : {message}',

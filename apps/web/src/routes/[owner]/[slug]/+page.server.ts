@@ -23,7 +23,7 @@ export async function load(event) {
   const artifacts = latest ? await listArtifacts(db, latest.id) : [];
   const versions = await listVersions(db, project.id);
   const images: Record<string, string> = {};
-  const formats: Record<string, boolean> = { solidcraft: latest !== null, step: false, stl: false };
+  const formats: Record<string, boolean> = { sc: latest !== null, step: false, stl: false };
   for (const artifact of artifacts) {
     if (artifact.kind === 'iso' || artifact.kind === 'top' || artifact.kind === 'front') {
       images[artifact.kind] = `/media/${artifact.storageKey}`;

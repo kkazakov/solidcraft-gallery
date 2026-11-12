@@ -377,3 +377,23 @@ supply-chain risk, mitigated by the checksum, canary, previous-version retention
 development need reproducible binaries); rebuilding the worker image for each CLI release (slow and
 unnecessary); installing an unverified release without a canary (a bad release would reach users
 before anyone noticed).
+
+
+---
+
+## D19 — The current design extension is `.sc`
+
+**Context.** SolidCraft changed the saved design extension from `.solidcraft` to `.sc`. The bytes are
+the same container/JSON format, and existing repositories still use `.solidcraft`.
+
+**Decision.** The gallery accepts both `.sc` and `.solidcraft`, detects the format by content, writes
+new hosted projects to `designs/<slug>.sc`, and names design downloads `.sc`. The legacy
+`format=solidcraft` download query remains as an alias, and existing `.solidcraft` repository paths
+are not rewritten. This supersedes the extension naming in D1, not the container decision itself.
+
+**Consequences.** New projects use the upstream extension; old projects keep working without a
+migration. The manifest accepts both extensions, and external-repository discovery looks for both.
+
+**Rejected.** Rewriting historical repositories (needless churn, breaks commit history); keeping the
+old extension for new projects (diverges from SolidCraft); rejecting legacy files (breaks existing
+projects).

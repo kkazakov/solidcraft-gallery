@@ -84,7 +84,7 @@ Desktop two-column, mobile stacked:
 breadcrumb
 title · author · visibility badge · license badge
 ┌───────────────────────────────┬──────────────────────┐
-│  image gallery (iso/top/front)│  Download .solidcraft│
+│  image gallery (iso/top/front)│  Download .sc│
 │  thumbnails / arrows          │  STEP · STL          │
 │                               │  dimensions, volume  │
 │                               │  bodies, mass        │
@@ -101,7 +101,7 @@ Details:
 - Gallery: three renders; if one is missing, show the available ones; if all are missing, a
   neutral placeholder with “Preview unavailable”.
 - Measurements displayed with units and rounding: `120 × 80 × 32.5 mm`, `41.2 cm³`, `3 bodies`.
-- Download menu: primary `.solidcraft`, secondary STEP/STL; each with size and a short explanation
+- Download menu: primary `.sc`, secondary STEP/STL; each with size and a short explanation
   (“Open with SolidCraft”).
 - “Open in SolidCraft” expands to instructions; no custom protocol handler in v1.
 - Description: escaped plain text; absolute `http://` and `https://` URLs become links that open in
@@ -133,7 +133,7 @@ One job: show the owner's projects and the way to add one.
 
 One form, one submit:
 
-- Title, description, `.solidcraft` file (≤ 25 MB), and version tag.
+- Title, description, `.sc` file (≤ 25 MB), and version tag.
 - Visibility: private or public. Public shows the license picker.
 - License: GitHub's 13 common licenses; the picker is disabled while private. Required for public.
 - Slugs are derived from the title on the server; there is no slug input.

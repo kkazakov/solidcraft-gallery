@@ -45,7 +45,7 @@ Dedupe keys: `repo.sync` on `(repoId, afterSha)`; `version.ingest` and `version.
 1. Verify the delivery is for a connected repository; ignore unknown ids and ping events.
 2. Deduplicate on `(repoId, afterSha)` and on `last_commit_sha`.
 3. Determine the project's primary design path at that commit (`project.json` or the single
-   `*.solidcraft`).
+   `*.sc`).
 4. Upsert a `versions` row per new commit that changes the design or manifest (`pending`).
 5. Update `repos.last_commit_sha`, `last_synced_at`, `is_private`.
 6. Enqueue one `version.ingest` per new version (newest first).
@@ -112,7 +112,7 @@ no provider URLs with tokens) and stops.
 ### 5. Store the snapshot
 
 The committed bytes are not copied into the database. They remain in git; the ingest caches a
-**temporary** copy under `work/{versionId}/design.solidcraft` for the render job, deleted after the
+**temporary** copy under `work/{versionId}/design.sc` for the render job, deleted after the
 job (success or failure). The design hash is stored for cache lookups.
 
 ## `version.render`

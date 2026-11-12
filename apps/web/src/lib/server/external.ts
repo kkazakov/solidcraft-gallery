@@ -15,6 +15,7 @@ import { leanDesign } from '@gallery/design';
 import { GitHubClient, parseGitHubUrl, type GitHubRepoRef, type GitHubTreeEntry } from '@gallery/git';
 import { artifactKey, sha256Hex, type LocalStorage } from '@gallery/storage';
 import { storage } from './config.js';
+import { isDesignPath } from './design-path.js';
 import { uniqueProjectSlug } from './projects.js';
 
 function defaultGitHub(): GitHubClient {
@@ -88,16 +89,16 @@ async function locateDesign(
     manifest = result.value;
   }
 
-  const candidates = [...files.keys()].filter((path) => path.toLowerCase().endsWith('.solidcraft'));
+  const candidates = [...files.keys()].filter(isDesignPath);
   let designPath = manifest?.design;
   if (!designPath) {
     if (candidates.length === 0) {
-      throw new AppError('not_found', 'No .solidcraft file found in the repository');
+      throw new AppError('not_found', 'No .sc (or legacy .solidcraft) design file found in the repository');
     }
     if (candidates.length > 1) {
       throw new AppError(
         'validation_failed',
-        'More than one .solidcraft file; set `design` in project.json to choose one',
+        'More than one .sc/.solidcraft file; set `design` in project.json to choose one',
       );
     }
     designPath = candidates[0]!;

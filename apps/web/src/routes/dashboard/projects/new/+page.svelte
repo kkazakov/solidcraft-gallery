@@ -68,7 +68,7 @@
         <label class="upload-box" for="design">
           <span class="upload-title">{t('newProject.chooseFile')}</span>
           <span class="field-hint">{t('newProject.designHint')}</span>
-          <input id="design" name="design" type="file" accept=".solidcraft,application/zip,application/json" required />
+          <input id="design" name="design" type="file" accept=".sc,.sc,application/zip,application/json" required />
         </label>
       </div>
 
@@ -118,7 +118,7 @@
   <details class="card connect-panel" open={Boolean(form?.connect)}>
     <summary>{t('newProject.importSummary')}</summary>
     <p>
-      {t('newProject.importBody.before')} <code>.solidcraft</code>
+      {t('newProject.importBody.before')} <code>.sc</code>
       {t('newProject.importBody.middle')}
       <code>project.json</code>
       {t('newProject.importBody.after')}

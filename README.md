@@ -39,16 +39,16 @@ four. The rationale is recorded in [docs/00 — Decisions](docs/00-decisions.md)
 
 | Surface | What it does |
 |---|---|
-| **Public** (anonymous) | Browse, search, tag, view a design with rendered images and measurements, read its README, download `.solidcraft` / STEP / STL, open the source repository, open the design in SolidCraft. |
+| **Public** (anonymous) | Browse, search, tag, view a design with rendered images and measurements, read its README, download `.sc` / STEP / STL, open the source repository, open the design in SolidCraft. |
 | **Signed in** | Dashboard with your projects and connected repositories, create or import a project, publish a version, choose public / unlisted / private, manage tags and metadata, API tokens, account settings. |
 | **Admin** | Operator dashboard for accounts and beta invite codes: paginated users, paginated invite codes, one-time code creation with uses and expiry, and two-step deletion confirmation. Only `role = admin` accounts see the link; signed-in non-admins get `404`. Reports, moderation and audit are planned. |
 
-Every project is a git repository containing one or more `.solidcraft` files exactly as the app
+Every project is a git repository containing one or more `.sc` files exactly as the app
 saves them. The site indexes the repository and renders previews; it does not own a second copy of
 the design. The same project works whether the repository lives on the service's Forgejo instance
 or on GitHub, GitLab, Gitea, or Codeberg.
 
-**The central bet:** a few-megabyte `.solidcraft` container is a good git object when the app's
+**The central bet:** a few-megabyte `.sc` container is a good git object when the app's
 disposable model cache is stripped. That gives direct format support, readable history, and no
 custom storage layer. See [docs/03-repo-format.md](docs/03-repo-format.md).
 
@@ -77,7 +77,7 @@ recorded as [D17](docs/00-decisions.md).
 
 | # | Decision | Why |
 |---|---|---|
-| D1 | Commit `.solidcraft` as-is (ZIP container) | Direct support; no conversion format; the app opens exactly what the site serves |
+| D1 | Commit `.sc` as-is (ZIP container) | Direct support; no conversion format; the app opens exactly what the site serves |
 | D2 | Strip `cache/*` before committing; 25 MB per-file cap; no LFS in MVP | The model cache is the only large, churning payload; LFS is unnecessary at this size |
 | D3 | Forgejo for hosted git | Users, orgs, OAuth2, webhooks, repo browsing and quotas without writing a git server |
 | D4 | External repositories are read-only for the site | No pushing into someone's GitHub; the user pushes, the site indexes |
@@ -169,7 +169,7 @@ Forgejo bootstrap, backups and rollback.
 | Requirement | Where it is designed | Where it is built |
 |---|---|---|
 | Public site with thumbnails and search | [10 — Frontend](docs/10-frontend.md), [09 — Search](docs/09-search.md) | M2 |
-| `.solidcraft` supported directly | [03 — Repo format](docs/03-repo-format.md) | M0–M1 |
+| `.sc` supported directly | [03 — Repo format](docs/03-repo-format.md) | M0–M1 |
 | Git backend, hosted or user-owned | [07 — Git integration](docs/07-git-integration.md) | M1, M3 |
 | Public and logged-in surfaces | [01 — Product](docs/01-product.md), [08 — Auth](docs/08-auth.md) | M1–M3 |
 | Admin dashboard for users and invite codes | [10 — Frontend](docs/10-frontend.md), [08 — Auth](docs/08-auth.md) | M4 slice |
@@ -185,7 +185,7 @@ Forgejo bootstrap, backups and rollback.
 - Typical design is **under 5 MB**; large imported STEP assemblies are out of scope for v1.
 - SolidCraft desktop and the matching `solidcraft-cli`. The gallery accepts every design format the
   installed CLI supports and tracks the latest stable CLI on production; older designs still open.
-- `.solidcraft` may be a ZIP container **or** pretty-printed JSON; the reader detects by signature, not extension.
+- `.sc` may be a ZIP container **or** pretty-printed JSON; the reader detects by signature, not extension.
 - Single region, single instance, English UI, EUR/USD hosting budget under €100/month for beta.
 - Public downloads are anonymous; private projects are visible to their owner only.
 - No live collaboration, no browserside editing, no plugin dependency.
@@ -193,12 +193,12 @@ Forgejo bootstrap, backups and rollback.
 
 ## Definition of done for the MVP
 
-1. A user signs in with Forgejo, creates a project, publishes a lean `.solidcraft`, and sees the public page within 30 seconds.
+1. A user signs in with Forgejo, creates a project, publishes a lean `.sc`, and sees the public page within 30 seconds.
 2. A second user searches by title, tag and parameter name and finds it.
 3. A design page shows three renders, measurements, metadata, version history, and downloads.
 4. A private project is invisible in search, sitemap, API listings and CDN.
 5. An external public GitHub repository can be connected and indexed without a token.
-6. A malformed or hostile `.solidcraft` cannot escape the render sandbox or block the queue.
+6. A malformed or hostile `.sc` cannot escape the render sandbox or block the queue.
 7. A push to a connected repository updates the page through a signed webhook.
 8. Backups restore the database, repositories and artifacts in a documented drill.
 

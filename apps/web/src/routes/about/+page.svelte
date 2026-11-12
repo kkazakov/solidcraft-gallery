@@ -16,14 +16,14 @@
   <p>
     Every project is a git repository, and every version is a commit or tag. The gallery reads the repository, renders
     previews, records measurements and indexes the design for search. It does not convert or rewrite the file, so a
-    download is the same <code>.solidcraft</code> the author saved.
+    download is the same <code>.sc</code> the author saved.
   </p>
 
   <h2>What you can do</h2>
   <ul>
     <li>Browse and search public designs by title, description, tag and license.</li>
     <li>View previews, dimensions, version history and the project README.</li>
-    <li>Download the <code>.solidcraft</code> file, and STEP or STL when the author published them.</li>
+    <li>Download the <code>.sc</code> file, and STEP or STL when the author published them.</li>
     <li>Sign in to publish designs, keep private projects and import a public GitHub repository.</li>
   </ul>
 

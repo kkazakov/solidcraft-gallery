@@ -70,7 +70,7 @@ export async function createHostedProject(input: {
   const held = await listProjectSlugs(db, input.viewer.id);
   const slug = uniqueProjectSlug(input.slug?.trim() || title, held);
   if (!isValidSlug(slug)) throw new AppError('validation_failed', 'invalid project slug');
-  const designPath = `designs/${slug}.solidcraft`;
+  const designPath = `designs/${slug}.sc`;
 
   const forgejo = forgejoContext();
   if (forgejo) {

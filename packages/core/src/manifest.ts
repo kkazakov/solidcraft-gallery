@@ -55,7 +55,7 @@ export const projectManifestSchema = z
       .string()
       .min(1)
       .max(255)
-      .regex(/\.solidcraft$/)
+      .regex(/\.(sc|solidcraft)$/)
       .optional(),
     cover: z
       .string()

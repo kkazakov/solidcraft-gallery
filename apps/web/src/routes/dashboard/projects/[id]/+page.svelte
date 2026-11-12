@@ -130,7 +130,7 @@
                   id="design"
                   name="design"
                   type="file"
-                  accept=".solidcraft,application/zip,application/json"
+                  accept=".sc,.solidcraft,application/zip,application/json"
                   required
                 />
               </label>

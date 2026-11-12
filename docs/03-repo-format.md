@@ -3,9 +3,9 @@
 This is the contract between a project repository and the site. It is intentionally small: a
 manifest, a design file, a README and a license, all in git.
 
-## What a `.solidcraft` is
+## What a `.sc` is
 
-Two representations are valid, and the reader distinguishes them by content, not by extension:
+Two representations are valid, and the reader distinguishes them by content, not by extension. The current extension is `.sc`; legacy `.solidcraft` files are still accepted:
 
 | Form | Bytes start with | Contents |
 |---|---|---|
@@ -21,19 +21,19 @@ The site never requires a conversion. It serves the committed bytes and opens th
 
 ```text
 project.json                     # optional but recommended
-designs/<name>.solidcraft        # primary design, or a single *.solidcraft anywhere
+designs/<name>.sc        # primary design, or a single *.sc anywhere
 README.md                        # optional; rendered on the project page
 LICENSE                          # required for public projects
-.gitattributes                   # recommended: *.solidcraft -text
+.gitattributes                   # recommended: *.sc -text
 renders/                         # optional; author-supplied images, never required
 ```
 
 Rules:
 
-- Exactly one **primary** design. It is `project.json.design` when present; otherwise the only
-  `*.solidcraft` in the repository (root or `designs/`). Zero or more than one is an error.
+- The current extension is `.sc`; `.solidcraft` remains a legacy alias. Exactly one **primary** design. It is `project.json.design` when present; otherwise the only
+  `*.sc` in the repository (root or `designs/`). Zero or more than one is an error.
 - Paths are relative, use `/`, contain no `..`, and stay inside the repository.
-- Additional `.solidcraft` files are listed as downloadable files but do not create pages.
+- Additional `.sc` files are listed as downloadable files but do not create pages.
 - The default branch is the latest version. Tags are releases.
 - A repository may be a monorepo of several projects **later**; v1 indexes one project per repo.
 - Reserved owner names: `u`, `t`, `admin`, `api`, `media`, `dashboard`, `login`, `auth`, `search`,
@@ -48,7 +48,7 @@ Minimal:
   "schema": 1,
   "title": "Raspberry Pi 4 case",
   "license": "CC-BY-4.0",
-  "design": "designs/case.solidcraft"
+  "design": "designs/case.sc"
 }
 ```
 
@@ -61,7 +61,7 @@ Full:
   "description": "Snap-fit enclosure with M2.5 standoffs, port cut-outs and a vent field.",
   "tags": ["enclosure", "raspberry-pi", "snap-fit", "petg"],
   "license": "CC-BY-4.0",
-  "design": "designs/case.solidcraft",
+  "design": "designs/case.sc",
   "cover": "renders/iso.png",
   "authors": [{ "name": "Jane Doe", "url": "https://example.com/jane" }],
   "links": {
@@ -78,7 +78,7 @@ Full:
 | `description` | string | no | ≤ 2,000 chars; plain text or Markdown |
 | `tags` | string[] | no | ≤ 10; each 1–32 chars; `[a-z0-9-]`; unique |
 | `license` | string | public only | SPDX identifier; repository must contain the license text |
-| `design` | string | recommended | relative path to the primary `.solidcraft` |
+| `design` | string | recommended | relative path to the primary `.sc` |
 | `cover` | string | no | relative path to a PNG/JPEG/WebP; used as a fallback image |
 | `authors` | object[] | no | each `{name, url?}`; defaults to the repository owner |
 | `links` | object | no | keys `website`, `video`, `docs`, `printables`, `thingiverse`; HTTPS URLs only |
@@ -94,7 +94,7 @@ The JSON Schema is [appendix/project.schema.json](appendix/project.schema.json).
 | `description` | First paragraph of `README.md`, truncated to 300 chars |
 | `tags` | Provider topics (GitHub/GitLab) if available, else empty |
 | `license` | Detected from `LICENSE`/`COPYING` (SPDX scan); `NOASSERTION` if unknown |
-| `design` | The only `*.solidcraft` file in the repository |
+| `design` | The only `*.sc` file in the repository |
 | `authors` | Repository owner |
 
 Public visibility still requires a resolved license; a `NOASSERTION` project is created as
@@ -108,19 +108,19 @@ The container's optional `cache/*` entries are the only part that grows badly:
   geometry edit and compress poorly.
 - `cache/thumbnail.png` is small but tied to the same document hash.
 
-**Policy:** the committed `.solidcraft` should contain no `cache/*` entries. The local working file
+**Policy:** the committed `.sc` should contain no `cache/*` entries. The local working file
 may keep them.
 
 ```sh
 # simplest, format-level, no rebuild; cache is optional to the reader
-cp case.solidcraft case.lean.solidcraft
-zip -d case.lean.solidcraft 'cache/*'
+cp case.sc case.lean.sc
+zip -d case.lean.sc 'cache/*'
 
 # canonical, via the app (opens and re-saves without the cache)
 cat > lean.json <<'EOF'
-{"commands":[{"command":"file.save_as","params":{"path":"case.lean.solidcraft","cache":false}}]}
+{"commands":[{"command":"file.save_as","params":{"path":"case.lean.sc","cache":false}}]}
 EOF
-solidcraft-cli run lean.json --in case.solidcraft
+solidcraft-cli run lean.json --in case.sc
 ```
 
 Enforcement:
@@ -128,7 +128,7 @@ Enforcement:
 | Where | Behaviour |
 |---|---|
 | Hosted publish (site) | Server strips `cache/*` before committing; the user cannot upload a cached file |
-| Hosted direct push | `pre-receive` hook: if a `*.solidcraft` is > 10 MB **and** contains `cache/`, reject with the `zip -d` hint |
+| Hosted direct push | `pre-receive` hook: if a `*.sc` is > 10 MB **and** contains `cache/`, reject with the `zip -d` hint |
 | External repo | Advisory: the dashboard shows “cache included (12.4 MB)” and links to this section |
 | Download | Serves committed bytes; an optional “lean download” re-packs without the cache |
 
@@ -202,9 +202,9 @@ outside itself is not portable: another machine, or the renderer, cannot resolve
 - A repository should contain the dependency closure, typically:
 
 ```text
-designs/assembly.solidcraft
-designs/parts/bracket.solidcraft
-designs/parts/plate.solidcraft
+designs/assembly.sc
+designs/parts/bracket.sc
+designs/parts/plate.sc
 ```
 
 - The site does not rewrite links.
@@ -212,18 +212,18 @@ designs/parts/plate.solidcraft
 ## `.gitattributes`
 
 ```gitattributes
-*.solidcraft -text
+*.sc -text
 ```
 
 `-text` marks the file binary: no EOL conversion, no line-based diff, no merge attempts. For JSON
-`.solidcraft` files an author may opt into `diff` with a custom driver; not required.
+`.sc` files an author may opt into `diff` with a custom driver; not required.
 
 ## Author workflows
 
 ### Desktop app (GUI)
 
 1. Save the design normally (cache included is fine locally).
-2. Run `craftpub lean designs/case.solidcraft` (or the zip command) before committing.
+2. Run `craftpub lean designs/case.sc` (or the zip command) before committing.
 3. `git add`, `git commit`, `git push`; tag for a release.
 4. The site indexes the push automatically (hosted) or via webhook/poll (external).
 
@@ -234,16 +234,16 @@ designs/parts/plate.solidcraft
 
 ```sh
 cat > lean.json <<'EOF'
-{"commands":[{"command":"file.save_as","params":{"path":"case.lean.solidcraft","format":"container","cache":false}}]}
+{"commands":[{"command":"file.save_as","params":{"path":"case.lean.sc","format":"container","cache":false}}]}
 EOF
-solidcraft-cli run lean.json --in case.solidcraft
+solidcraft-cli run lean.json --in case.sc
 ```
 
 `craftpub lean` wraps this and verifies the result opens.
 
 ### Web upload (hosted, no git client)
 
-The dashboard accepts a `.solidcraft` up to 25 MB, strips the cache server-side, creates the
+The dashboard accepts a `.sc` up to 25 MB, strips the cache server-side, creates the
 repository if needed, and commits with a generated message. The user still gets a real git remote
 they can clone later.
 

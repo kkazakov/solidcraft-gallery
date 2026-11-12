@@ -116,18 +116,24 @@ export const bg: Dictionary = {
   'project.notSet': 'Не е зададен',
   'project.versions': 'Версии',
   'project.live': 'на живо',
+  'project.views': 'Изгледи',
+  'project.viewIso': 'Изометрия',
+  'project.viewTop': 'Отгоре',
+  'project.viewFront': 'Отпред',
+  'project.openView': 'Отворете изглед {view}',
+  'project.closeView': 'Затворете прегледа',
+  'project.previewTitle': '{title} — изглед {view}',
 
   'newProject.title': 'Нов проект — SolidCraft Gallery',
   'newProject.breadcrumb': 'Нов проект',
   'newProject.heading': 'Създай проект',
-  'newProject.intro':
-    'Публикувайте .solidcraft файл като нова версия. Прегледът се появява, след като рендерът приключи.',
+  'newProject.intro': 'Публикувайте .sc файл като нова версия. Прегледът се появява, след като рендерът приключи.',
   'newProject.titleLabel': 'Заглавие на проекта',
   'newProject.titlePlaceholder': 'Кутия за Raspberry Pi 4',
   'newProject.descriptionLabel': 'Описание',
   'newProject.descriptionPlaceholder': 'За какво служи дизайнът.',
   'newProject.designFile': 'Файл на дизайна',
-  'newProject.chooseFile': 'Изберете .solidcraft файл',
+  'newProject.chooseFile': 'Изберете .sc файл',
   'newProject.designHint': 'SolidCraft контейнер или JSON файл, до 25 MB.',
   'newProject.version': 'Версия',
   'newProject.versionHint': 'Използва се като git етикет за тази версия.',
@@ -153,7 +159,7 @@ export const bg: Dictionary = {
   'dashboard.projectCount.other': '{count} проекта',
   'dashboard.signedInAs': 'влязохте като {role}',
   'dashboard.emptyTitle': 'Все още нямате проекти',
-  'dashboard.emptyBody': 'Създайте проект, качете .solidcraft файл и прегледът му ще се появи тук.',
+  'dashboard.emptyBody': 'Създайте проект, качете .sc файл и прегледът му ще се появи тук.',
 
   'admin.title': 'Администрация — SolidCraft Gallery',
   'admin.heading': 'Администрация',
@@ -309,10 +315,10 @@ export const bg: Dictionary = {
   'about.intro':
     '<p>SolidCraft Gallery е публична, git-базирана галерия за <a href="https://github.com/tangency-labs/solidcraft">SolidCraft</a> дизайни. Тя дава на дизайнерите място да публикуват работата си, а на всички останали — начин да я разглеждат, търсят, преглеждат и изтеглят.</p>',
   'about.repo':
-    '<p>Всеки проект е git хранилище, а всяка версия — комит или етикет. Галерията чете хранилището, рендира прегледи, записва размери и индексира дизайна за търсене. Тя не конвертира и не пренаписва файла, така че изтегленото е същото <code>.solidcraft</code>, което авторът е записал.</p>',
+    '<p>Всеки проект е git хранилище, а всяка версия — комит или етикет. Галерията чете хранилището, рендира прегледи, записва размери и индексира дизайна за търсене. Тя не конвертира и не пренаписва файла, така че изтегленото е същото <code>.sc</code>, което авторът е записал.</p>',
   'about.canDoHeading': 'Какво можете да правите',
   'about.canDo':
-    '<ul><li>Разглеждайте и търсете публични дизайни по заглавие, описание, етикет, лиценз и размери.</li><li>Виждайте прегледи, размери, история на версиите и README на проекта.</li><li>Изтегляйте <code>.solidcraft</code> файла, а също STEP или STL, ако авторът ги е публикувал.</li><li>Влезте, за да публикувате дизайни, да пазите лични проекти и да импортирате публично GitHub хранилище.</li></ul>',
+    '<ul><li>Разглеждайте и търсете публични дизайни по заглавие, описание, етикет, лиценз и размери.</li><li>Виждайте прегледи, размери, история на версиите и README на проекта.</li><li>Изтегляйте <code>.sc</code> файла, а също STEP или STL, ако авторът ги е публикувал.</li><li>Влезте, за да публикувате дизайни, да пазите лични проекти и да импортирате публично GitHub хранилище.</li></ul>',
   'about.purposeHeading': 'За какво е',
   'about.purpose':
     '<p>Проектът съществува, за да прави SolidCraft дизайните лесни за намиране, сравняване и повторна употреба под лиценза, който авторите им избират. Предназначен е за хобисти, майстори и малки екипи, които искат лек публичен портфолио, като git остава източникът на истина.</p>',
@@ -368,7 +374,7 @@ export const bg: Dictionary = {
   'error.version': 'Версията трябва да е 1–64 букви, цифри, точки, долни черти или тирета',
   'error.visibilityCreate': 'Видимостта трябва да е лична или публична',
   'error.licenseRequired': 'Изберете лиценз, преди да направите проекта публичен',
-  'error.designRequired': 'Изберете .solidcraft файл за публикуване',
+  'error.designRequired': 'Изберете .sc файл за публикуване',
   'error.designTooLarge': 'Дизайнът е по-голям от {mb} MB',
   'error.createProject': 'Проектът не можа да бъде създаден',
   'error.publishProjectPartial': 'Проектът е създаден, но дизайнът не можа да бъде публикуван: {message}',

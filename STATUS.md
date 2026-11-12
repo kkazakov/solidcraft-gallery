@@ -38,7 +38,7 @@ Verified with the installed `solidcraft-cli` and `fixtures/real/box.solidcraft`:
    `version.render`.
 4. The worker renders three 1200×900 PNGs, STEP/STL and metrics; version and project become `ready`.
 5. The public page shows the images and measurements; `/media/...` serves them anonymously.
-6. `.solidcraft`, STEP and STL downloads work; the `.solidcraft` download is lean (449 bytes).
+6. `.sc`, STEP and STL downloads work; the `.sc` download is lean (449 bytes).
 7. **Home shows the project card with its render; `/search?q=box` finds it; license and tag filters
    work; `/sitemap.xml` lists it; `robots.txt` is served.**
 8. **The dashboard settings form changes visibility.** Private returns 404 for page, media and
